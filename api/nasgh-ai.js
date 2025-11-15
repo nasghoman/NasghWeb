@@ -1,4 +1,7 @@
+// Simple Node serverless function for Nasgh + Gemini on Vercel
+
 module.exports = async (req, res) => {
+  // نسمح فقط بطلبات POST
   if (req.method !== "POST") {
     res.status(405).send("Only POST allowed");
     return;
@@ -13,6 +16,7 @@ module.exports = async (req, res) => {
   try {
     const body = req.body || {};
     const soil = body.soil || {};
+    const language = body.language || "ar";
 
     const {
       id = "NASGH-1",
@@ -64,14 +68,16 @@ ${readingSummary}
 أرجِع نصًا عربيًا فقط منظمًا بالنقاط والعناوين القصيرة، بدون JSON وبدون تنسيق ماركداون.
 `.trim();
 
-    const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
+    const url =
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" +
+      apiKey;
 
     const geminiRes = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
+        contents: [{ parts: [{ text: prompt }] }],
+      }),
     });
 
     if (!geminiRes.ok) {
@@ -88,13 +94,15 @@ ${readingSummary}
       data.candidates[0] &&
       data.candidates[0].content &&
       data.candidates[0].content.parts &&
-      data.candidates[0].content.parts.map(p => p.text || "").join("\n");
+      data.candidates[0].content.parts.map((p) => p.text || "").join("\n");
 
     res
       .status(200)
       .send(text || "لم أستطع توليد استجابة مناسبة من النموذج.");
   } catch (err) {
     console.error("Nasgh AI error:", err);
-    res.status(500).send("حدث خطأ في معالجة طلب الذكاء الاصطناعي.");
+    res
+      .status(500)
+      .send("حدث خطأ في معالجة طلب الذكاء الاصطناعي: " + err.message);
   }
 };
