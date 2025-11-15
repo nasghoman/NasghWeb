@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>لوحة قراءات نَسغ</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -12,6 +13,7 @@
       padding: 16px;
       color: #123322;
     }
+
     .card {
       max-width: 800px;
       margin: 0 auto;
@@ -21,18 +23,21 @@
       padding: 16px 20px 20px;
       margin-bottom: 16px;
     }
+
     h1 {
       font-size: 22px;
       margin-top: 0;
       margin-bottom: 8px;
       text-align: center;
     }
+
     .subtitle {
       text-align: center;
       font-size: 14px;
       color: #4f6f5d;
       margin-bottom: 16px;
     }
+
     #status {
       font-size: 14px;
       margin-bottom: 12px;
@@ -41,11 +46,13 @@
       background: #e8f5e9;
       border: 1px solid #c8e6c9;
     }
+
     .error {
       background: #ffebee !important;
       border-color: #ffcdd2 !important;
       color: #b71c1c;
     }
+
     .btn {
       display: inline-block;
       border: none;
@@ -58,61 +65,74 @@
       color: #ffffff;
       transition: background 0.15s ease, transform 0.05s ease;
     }
+
     .btn.secondary {
       background: #00695c;
       margin-right: 8px;
     }
+
     .btn.ai {
       background: #1565c0;
       margin-top: 8px;
     }
+
     .btn:active {
       transform: scale(0.98);
     }
+
     .btn:disabled {
       background: #a5d6a7;
       cursor: default;
       transform: none;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 8px;
       font-size: 14px;
     }
+
     th, td {
       border: 1px solid #e0e0e0;
       padding: 6px 4px;
       text-align: center;
     }
+
     th {
       background: #e0f2f1;
       font-weight: 600;
     }
+
     tr:nth-child(even) td {
       background: #fafafa;
     }
+
     .reading-id {
       font-size: 13px;
       color: #607d8b;
       margin-bottom: 4px;
     }
+
     .time {
       font-size: 12px;
       color: #90a4ae;
       text-align: left;
     }
+
     .ai-title {
       font-size: 16px;
       font-weight: 600;
       margin-bottom: 6px;
       color: #1b5e20;
     }
+
     .ai-status {
       font-size: 13px;
       margin-bottom: 4px;
       color: #455a64;
     }
+
     .ai-box {
       margin-top: 8px;
       padding: 10px 12px;
@@ -126,14 +146,19 @@
   </style>
 </head>
 <body>
+  <!-- بطاقة القراءات -->
   <div class="card">
     <h1>لوحة قراءات نَسغ</h1>
     <div class="subtitle">اتصال مباشر مع المسبار عبر Bluetooth Low Energy</div>
+
     <div id="status">الحالة: غير متصل</div>
+
     <button id="connectBtn" class="btn">اتصال بالمسبار</button>
     <button id="disconnectBtn" class="btn secondary" disabled>قطع الاتصال</button>
+
     <div class="reading-id" id="readingMeta">لا توجد قراءات بعد</div>
     <div class="time" id="timeLabel"></div>
+
     <table>
       <thead>
         <tr>
@@ -142,21 +167,49 @@
         </tr>
       </thead>
       <tbody>
-        <tr><td>درجة الحرارة</td><td id="tValue">-- °م</td></tr>
-        <tr><td>رطوبة التربة</td><td id="mValue">-- ٪</td></tr>
-        <tr><td>الملوحة (EC)</td><td id="ecValue">-- µS/cm</td></tr>
-        <tr><td>درجة الحموضة (pH)</td><td id="phValue">-- pH</td></tr>
-        <tr><td>النيتروجين (N)</td><td id="nValue">-- mg/kg</td></tr>
-        <tr><td>الفوسفور (P)</td><td id="pValue">-- mg/kg</td></tr>
-        <tr><td>البوتاسيوم (K)</td><td id="kValue">-- mg/kg</td></tr>
-        <tr><td>مؤشر الهيوميك أسيد</td><td id="humValue">--</td></tr>
-        <tr><td>مؤشر صحة التربة (SHS)</td><td id="shsValue">--</td></tr>
+        <tr>
+          <td>درجة الحرارة</td>
+          <td id="tValue">-- °م</td>
+        </tr>
+        <tr>
+          <td>رطوبة التربة</td>
+          <td id="mValue">-- ٪</td>
+        </tr>
+        <tr>
+          <td>الملوحة (EC)</td>
+          <td id="ecValue">-- µS/cm</td>
+        </tr>
+        <tr>
+          <td>درجة الحموضة (pH)</td>
+          <td id="phValue">-- pH</td>
+        </tr>
+        <tr>
+          <td>النيتروجين (N)</td>
+          <td id="nValue">-- mg/kg</td>
+        </tr>
+        <tr>
+          <td>الفوسفور (P)</td>
+          <td id="pValue">-- mg/kg</td>
+        </tr>
+        <tr>
+          <td>البوتاسيوم (K)</td>
+          <td id="kValue">-- mg/kg</td>
+        </tr>
+        <tr>
+          <td>مؤشر الهيوميك أسيد</td>
+          <td id="humValue">--</td>
+        </tr>
+        <tr>
+          <td>مؤشر صحة التربة (SHS)</td>
+          <td id="shsValue">--</td>
+        </tr>
       </tbody>
     </table>
   </div>
 
+  <!-- بطاقة توصية الذكاء الاصطناعي -->
   <div class="card">
-    <div class="ai-title">توصية نَسغ بالذكاء الاصطناعي (Gemini)</div>
+    <div class="ai-title">توصية نَسغ بالذكاء الاصطناعي </div>
     <div class="ai-status" id="aiStatus">لم يتم طلب التوصية بعد.</div>
     <button id="aiBtn" class="btn ai">تحليل القراءات وإعطاء توصية</button>
     <div class="ai-box" id="aiAdvice">
@@ -165,17 +218,21 @@
   </div>
 
   <script>
+    // ================== إعدادات BLE (مطابقة لكود ESP32) ==================
     const SERVICE_UUID        = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
     const CHARACTERISTIC_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+
     let device = null;
     let characteristic = null;
-    let lastData = null;
+    let lastData = null; // نخزن آخر JSON مستلم من العصا
 
     const statusEl   = document.getElementById("status");
     const connectBtn = document.getElementById("connectBtn");
     const disconnectBtn = document.getElementById("disconnectBtn");
+
     const readingMetaEl = document.getElementById("readingMeta");
     const timeLabelEl   = document.getElementById("timeLabel");
+
     const aiStatusEl = document.getElementById("aiStatus");
     const aiAdviceEl = document.getElementById("aiAdvice");
     const aiBtn      = document.getElementById("aiBtn");
@@ -193,28 +250,38 @@
       });
     }
 
+    // ================== اتصال BLE ==================
+
     async function connect() {
       if (!navigator.bluetooth) {
         setStatus("المتصفح لا يدعم Web Bluetooth", true);
         alert("Web Bluetooth غير مدعوم في هذا المتصفح. جرب Google Chrome على أندرويد أو على الحاسوب.");
         return;
       }
+
       try {
         setStatus("جاري البحث عن المسبار...");
         connectBtn.disabled = true;
+
         device = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true,
+          filters: [{ services: [SERVICE_UUID] }],
           optionalServices: [SERVICE_UUID]
         });
+
         device.addEventListener("gattserverdisconnected", onDisconnected);
+
         setStatus("جاري الاتصال بالجهاز...");
         const server = await device.gatt.connect();
+
         const service = await server.getPrimaryService(SERVICE_UUID);
         characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
         await characteristic.startNotifications();
         characteristic.addEventListener("characteristicvaluechanged", handleNotification);
+
         setStatus("متصل بالمسبار بنجاح ✅");
         disconnectBtn.disabled = false;
+
       } catch (err) {
         console.error(err);
         setStatus("فشل في الاتصال: " + err.message, true);
@@ -230,31 +297,80 @@
 
     async function disconnect() {
       if (!device) return;
-      try { await device.gatt.disconnect(); } catch (e) { console.error(e); }
-      finally { onDisconnected(); }
+      try {
+        await device.gatt.disconnect();
+      } catch (e) {
+        console.error(e);
+      } finally {
+        onDisconnected();
+      }
     }
+
+    // ================== استقبال بيانات BLE ==================
 
     function handleNotification(event) {
       const value = event.target.value;
       const decoder = new TextDecoder("utf-8");
       const text = decoder.decode(value);
+
       console.log("RAW BLE text:", text);
+
       try {
         const data = JSON.parse(text);
-        lastData = data;
+        // JSON المتوقع من ESP32:
+        // { "id":"NASGH-1","t":25.3,"m":31.1,"ec":1512,"ph":6.4,"n":12,"p":8,"k":20,"shs":77.5,"hum":52.4 }
+
+        lastData = data; // نخزن آخر قراءة
+
         const now = new Date();
         readingMetaEl.textContent = "آخر قراءة من: " + (data.id || "مسبار غير معروف");
         timeLabelEl.textContent   = "الوقت: " + formatTime(now);
 
-        if (typeof data.t   !== "undefined") document.getElementById("tValue").textContent   = Number(data.t).toFixed(1) + " °م";
-        if (typeof data.m   !== "undefined") document.getElementById("mValue").textContent   = Number(data.m).toFixed(1) + " ٪";
-        if (typeof data.ec  !== "undefined") document.getElementById("ecValue").textContent  = Number(data.ec).toFixed(0) + " µS/cm";
-        if (typeof data.ph  !== "undefined") document.getElementById("phValue").textContent  = Number(data.ph).toFixed(2) + " pH";
-        if (typeof data.n   !== "undefined") document.getElementById("nValue").textContent   = Number(data.n).toFixed(0) + " mg/kg";
-        if (typeof data.p   !== "undefined") document.getElementById("pValue").textContent   = Number(data.p).toFixed(0) + " mg/kg";
-        if (typeof data.k   !== "undefined") document.getElementById("kValue").textContent   = Number(data.k).toFixed(0) + " mg/kg";
-        if (typeof data.hum !== "undefined") document.getElementById("humValue").textContent = Number(data.hum).toFixed(1);
-        if (typeof data.shs !== "undefined") document.getElementById("shsValue").textContent = Number(data.shs).toFixed(1);
+        if (typeof data.t   !== "undefined") {
+          document.getElementById("tValue").textContent =
+            Number(data.t).toFixed(1) + " °م";
+        }
+
+        if (typeof data.m   !== "undefined") {
+          document.getElementById("mValue").textContent =
+            Number(data.m).toFixed(1) + " ٪";
+        }
+
+        if (typeof data.ec  !== "undefined") {
+          document.getElementById("ecValue").textContent =
+            Number(data.ec).toFixed(0) + " µS/cm";
+        }
+
+        if (typeof data.ph  !== "undefined") {
+          document.getElementById("phValue").textContent =
+            Number(data.ph).toFixed(2) + " pH";
+        }
+
+        if (typeof data.n   !== "undefined") {
+          document.getElementById("nValue").textContent =
+            Number(data.n).toFixed(0) + " mg/kg";
+        }
+
+        if (typeof data.p   !== "undefined") {
+          document.getElementById("pValue").textContent =
+            Number(data.p).toFixed(0) + " mg/kg";
+        }
+
+        if (typeof data.k   !== "undefined") {
+          document.getElementById("kValue").textContent =
+            Number(data.k).toFixed(0) + " mg/kg";
+        }
+
+        if (typeof data.hum !== "undefined") {
+          document.getElementById("humValue").textContent =
+            Number(data.hum).toFixed(1);
+        }
+
+        if (typeof data.shs !== "undefined") {
+          document.getElementById("shsValue").textContent =
+            Number(data.shs).toFixed(1);
+        }
+
       } catch (e) {
         console.error("JSON parse error:", e);
         setStatus("وُجدت بيانات غير صالحة من البلوتوث", true);
@@ -264,16 +380,20 @@
     connectBtn.addEventListener("click", connect);
     disconnectBtn.addEventListener("click", disconnect);
 
-    const AI_API_URL = "/api/nasgh-ai";
+    // ================== استدعاء توصية جيميني عبر السيرفر ==================
+
+    // غيّر هذا الرابط إلى عنوان الـ API في سيرفرك:
+    const AI_API_URL = "https://file:///C:/Users/halgh/Desktop/Nasgh/index.html/api/nasgh-ai";
 
     async function callAI() {
       if (!lastData) {
         aiStatusEl.textContent = "لا توجد قراءة حديثة لإرسالها. الرجاء تشغيل المسبار وأخذ قراءة أولاً.";
         return;
       }
+
       aiBtn.disabled = true;
       aiStatusEl.textContent = "جاري إرسال البيانات وتحليلها...";
-      aiAdviceEl.textContent = "جاري التواصل مع نموذج الذكاء الاصطناعي (Gemini)...";
+      aiAdviceEl.textContent = "جاري التواصل مع نموذج الذكاء الاصطناعي ...";
 
       try {
         const payload = {
@@ -294,20 +414,26 @@
 
         const res = await fetch(AI_API_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify(payload)
         });
 
-        if (!res.ok) throw new Error("HTTP " + res.status);
+        if (!res.ok) {
+          throw new Error("HTTP " + res.status);
+        }
+
+        // نفترض أن السيرفر يرجع نص توصية مباشرة (plain text)
         const adviceText = await res.text();
+
         aiStatusEl.textContent = "تم استلام التوصية بنجاح ✅";
         aiAdviceEl.textContent = adviceText;
+
       } catch (err) {
         console.error(err);
         aiStatusEl.textContent = "حدث خطأ أثناء طلب التوصية.";
-        aiAdviceEl.textContent = "تحقق من اتصال الإنترنت.
-
-التفاصيل التقنية: " + err.message;
+        aiAdviceEl.textContent = "تحقق من اتصال الإنترنت وعنوان الـ API في الكود.\n\nالتفاصيل التقنية: " + err.message;
       } finally {
         aiBtn.disabled = false;
       }
