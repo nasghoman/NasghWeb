@@ -1,88 +1,122 @@
-// /api/nasgh-ai.js
-// Serverless Function عادية على Vercel مع CORS + Gemini
+// api/nasgh-ai.js
 
-module.exports = async (req, res) => {
-  // CORS
+// نخلي الـ Function تشتغل على Node العادي (مش Edge)
+export const config = {
+  runtime: "nodejs18.x",
+};
+
+export default async function handler(req, res) {
+  // ===== CORS =====
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // Preflight
   if (req.method === "OPTIONS") {
     return res.status(204).end();
   }
 
-  // السماح فقط بـ POST
   if (req.method !== "POST") {
     return res.status(405).send("Only POST allowed");
   }
 
   try {
+    // جسم الطلب القادم من الواجهة
     const body = req.body || {};
     const soil = body.soil || {};
+    const language = body.language || "ar";
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      console.error("Missing GEMINI_API_KEY");
-      return res.status(500).send("API key missing");
+      return res.status(500).send("Missing GEMINI_API_KEY env var");
     }
 
-    const summary = `
-قراءات تربة من جهاز نَسغ:
-الحرارة: ${soil.temp} °م
-رطوبة التربة: ${soil.moisture} %
-الملوحة (EC): ${soil.ec} µS/cm
-درجة الحموضة (pH): ${soil.ph}
-النيتروجين (N): ${soil.n} mg/kg
-الفوسفور (P): ${soil.p} mg/kg
-البوتاسيوم (K): ${soil.k} mg/kg
-مؤشر صحة التربة (SHS): ${soil.shs}
-مؤشر الهيوميك أسيد: ${soil.humic}
-`.trim();
+    // 🧠 قائمة الموديلات من الأقوى للأضعف (أو الأحدث للأقدم)
+    const MODELS = [
+      "gemini-1.5-pro-latest",
+      "gemini-1.5-flash-latest",
+      "gemini-pro",
+      "gemini-1.0-pro"
+    ];
 
     const prompt = `
-أنت مساعد زراعي ذكي تابع لمشروع "نَسغ".
-حلّل هذه القراءات ثم أعطِ:
-1) ملخص لحالة التربة
-2) توصيات ري
-3) توصيات تسميد NPK
-4) ملاحظات عن الملوحة والحموضة والمادة العضوية/الهيوميك
+أنت خبير زراعي ذكي ضمن مشروع "نَسغ".
+حلل القياسات التالية للتربة، ثم أعطِ:
+- تشخيص لحالة التربة بشكل مختصر.
+- توصية ري واضحة (كم مرة أو كمية تقريبية).
+- توصية تسميد (نوع السماد أو المادة + ملاحظة عن الجرعة بشكل عام).
+- ملاحظة عامة عن صحة التربة.
 
-اكتب بالعربية الفصحى المبسطة وبشكل نقاط واضحة.
+الرد يكون باللغة: ${language === "ar" ? "العربية" : "Arabic"}،
+وبأسلوب بسيط يستطيع المزارع العادي فهمه.
 
-البيانات:
-${summary}
-`.trim();
+البيانات المقاسة:
+${JSON.stringify(soil, null, 2)}
+`;
 
-    const url =
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" +
-      apiKey;
+    let lastError = null;
+    let finalText = null;
+    let usedModel = null;
 
-    const aiRes = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-      }),
-    });
+    // 🔁 جرّب الموديلات واحد واحد إلى أن ينجح واحد
+    for (const model of MODELS) {
+      try {
+        const apiUrl =
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-    if (!aiRes.ok) {
-      const txt = await aiRes.text();
-      console.error("Gemini error:", aiRes.status, txt);
-      return res.status(500).send("Gemini API error: " + aiRes.status);
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [{ text: prompt }],
+              },
+            ],
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.error) {
+          // 404 أو 400 أو غيرها → جرّب الموديل اللي بعده
+          console.error(`Gemini error on model ${model}:`, result.error);
+          lastError = result.error;
+          continue;
+        }
+
+        const text =
+          result.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+        if (!text) {
+          lastError = { message: "Empty response from model " + model };
+          continue;
+        }
+
+        usedModel = model;
+        finalText =
+          `الموديل المستخدم: ${model}\n\n` +
+          text;
+        break; // وقف بعد أول نجاح
+      } catch (err) {
+        console.error(`Request failed for model ${model}:`, err);
+        lastError = { message: err.message };
+        continue;
+      }
     }
 
-    const data = await aiRes.json();
+    if (!finalText) {
+      return res
+        .status(500)
+        .send(
+          "Gemini API failed on all models. Last error: " +
+            (lastError?.message || "unknown")
+        );
+    }
 
-    const aiText =
-      data?.candidates?.[0]?.content?.parts
-        ?.map((p) => p.text || "")
-        .join("\n")
-        .trim() || "لم أستطع توليد استجابة مناسبة من النموذج.";
-
-    return res.status(200).send(aiText);
+    // ✅ رجع التوصية
+    return res.status(200).send(finalText);
   } catch (err) {
-    console.error("Nasgh AI server error:", err);
-    return res.status(500).send("Internal error: " + err.message);
+    console.error("Server error:", err);
+    return res.status(500).send("Server error: " + err.message);
   }
-};
+}
