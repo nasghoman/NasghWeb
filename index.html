@@ -156,12 +156,14 @@
   <!-- بطاقة القراءات -->
   <div class="card">
     <h1>لوحة قراءات نَسغ</h1>
-    <div class="subtitle">اتصال مباشر مع المسبار عبر Bluetooth Low Energy</div>
+    <div class="subtitle">اتصال مباشر مع المسبار عبر Bluetooth Low Energy أو عبر السيرفر (واي فاي)</div>
 
     <div id="status">الحالة: غير متصل</div>
 
     <button id="connectBtn" class="btn">اتصال بالمسبار</button>
     <button id="disconnectBtn" class="btn secondary" disabled>قطع الاتصال</button>
+    <button id="cloudBtn" class="btn secondary">تحديث من السيرفر (واي فاي)</button>
+    <span id="cloudStatus" style="font-size:13px; color:#607d8b; margin-right:8px;"></span>
 
     <div class="reading-id" id="readingMeta">لا توجد قراءات بعد</div>
     <div class="time" id="timeLabel"></div>
@@ -231,7 +233,7 @@
 
     let device = null;
     let characteristic = null;
-    let lastData = null; // نخزن آخر JSON مستلم من العصا
+    let lastData = null; // نخزن آخر JSON مستلم من العصا أو من السيرفر
 
     const statusEl   = document.getElementById("status");
     const connectBtn = document.getElementById("connectBtn");
@@ -243,6 +245,12 @@
     const aiStatusEl = document.getElementById("aiStatus");
     const aiAdviceEl = document.getElementById("aiAdvice");
     const aiBtn      = document.getElementById("aiBtn");
+
+    const cloudBtn = document.getElementById("cloudBtn");
+    const cloudStatusEl = document.getElementById("cloudStatus");
+
+    // API لقراءات الواي فاي (ESP32 → Vercel)
+    const CLOUD_API_URL = "/api/soil-data";
 
     function setStatus(text, isError = false) {
       statusEl.textContent = "الحالة: " + text;
@@ -257,12 +265,68 @@
       });
     }
 
+    // دالة عامة لتطبيق القراءات على الجدول (سواء من BLE أو من السيرفر)
+    function applyReading(data, sourceLabel = "المسبار") {
+      if (!data) return;
+
+      lastData = data;
+
+      const now = new Date();
+      readingMetaEl.textContent = "آخر قراءة من: " + (data.id || sourceLabel);
+      timeLabelEl.textContent   = "الوقت: " + formatTime(now);
+
+      if (typeof data.t !== "undefined") {
+        document.getElementById("tValue").textContent =
+          Number(data.t).toFixed(1) + " °م";
+      }
+
+      if (typeof data.m !== "undefined") {
+        document.getElementById("mValue").textContent =
+          Number(data.m).toFixed(1) + " ٪";
+      }
+
+      if (typeof data.ec !== "undefined") {
+        document.getElementById("ecValue").textContent =
+          Number(data.ec).toFixed(0) + " µS/cm";
+      }
+
+      if (typeof data.ph !== "undefined") {
+        document.getElementById("phValue").textContent =
+          Number(data.ph).toFixed(2) + " pH";
+      }
+
+      if (typeof data.n !== "undefined") {
+        document.getElementById("nValue").textContent =
+          Number(data.n).toFixed(0) + " mg/kg";
+      }
+
+      if (typeof data.p !== "undefined") {
+        document.getElementById("pValue").textContent =
+          Number(data.p).toFixed(0) + " mg/kg";
+      }
+
+      if (typeof data.k !== "undefined") {
+        document.getElementById("kValue").textContent =
+          Number(data.k).toFixed(0) + " mg/kg";
+      }
+
+      if (typeof data.hum !== "undefined") {
+        document.getElementById("humValue").textContent =
+          Number(data.hum).toFixed(1);
+      }
+
+      if (typeof data.shs !== "undefined") {
+        document.getElementById("shsValue").textContent =
+          Number(data.shs).toFixed(1);
+      }
+    }
+
     // ================== اتصال BLE ==================
 
     async function connect() {
       if (!navigator.bluetooth) {
         setStatus("المتصفح لا يدعم Web Bluetooth", true);
-        alert("Web Bluetooth غير مدعوم في هذا المتصفح. جرب Google Chrome على أندرويد أو على الحاسوب.");
+        alert("Web Bluetooth غير مدعوم في هذا المتصفح. جرب Google Chrome على أندرويد أو على الحاسوب، أو Bluefy على iOS.");
         return;
       }
 
@@ -326,58 +390,7 @@
         const data = JSON.parse(text);
         // JSON المتوقع من ESP32:
         // { "id":"NASGH-1","t":25.3,"m":31.1,"ec":1512,"ph":6.4,"n":12,"p":8,"k":20,"shs":77.5,"hum":52.4 }
-
-        lastData = data; // نخزن آخر قراءة
-
-        const now = new Date();
-        readingMetaEl.textContent = "آخر قراءة من: " + (data.id || "مسبار غير معروف");
-        timeLabelEl.textContent   = "الوقت: " + formatTime(now);
-
-        if (typeof data.t   !== "undefined") {
-          document.getElementById("tValue").textContent =
-            Number(data.t).toFixed(1) + " °م";
-        }
-
-        if (typeof data.m   !== "undefined") {
-          document.getElementById("mValue").textContent =
-            Number(data.m).toFixed(1) + " ٪";
-        }
-
-        if (typeof data.ec  !== "undefined") {
-          document.getElementById("ecValue").textContent =
-            Number(data.ec).toFixed(0) + " µS/cm";
-        }
-
-        if (typeof data.ph  !== "undefined") {
-          document.getElementById("phValue").textContent =
-            Number(data.ph).toFixed(2) + " pH";
-        }
-
-        if (typeof data.n   !== "undefined") {
-          document.getElementById("nValue").textContent =
-            Number(data.n).toFixed(0) + " mg/kg";
-        }
-
-        if (typeof data.p   !== "undefined") {
-          document.getElementById("pValue").textContent =
-            Number(data.p).toFixed(0) + " mg/kg";
-        }
-
-        if (typeof data.k   !== "undefined") {
-          document.getElementById("kValue").textContent =
-            Number(data.k).toFixed(0) + " mg/kg";
-        }
-
-        if (typeof data.hum !== "undefined") {
-          document.getElementById("humValue").textContent =
-            Number(data.hum).toFixed(1);
-        }
-
-        if (typeof data.shs !== "undefined") {
-          document.getElementById("shsValue").textContent =
-            Number(data.shs).toFixed(1);
-        }
-
+        applyReading(data, "المسبار (BLE)");
       } catch (e) {
         console.error("JSON parse error:", e);
         setStatus("وُجدت بيانات غير صالحة من البلوتوث", true);
@@ -387,6 +400,33 @@
     connectBtn.addEventListener("click", connect);
     disconnectBtn.addEventListener("click", disconnect);
 
+    // ================== جلب آخر قراءة من السيرفر (واي فاي) ==================
+
+    async function loadCloudData() {
+      cloudStatusEl.textContent = "جاري جلب البيانات من السيرفر...";
+      try {
+        const res = await fetch(CLOUD_API_URL, { method: "GET" });
+        if (!res.ok) {
+          throw new Error("HTTP " + res.status);
+        }
+
+        const data = await res.json();
+        if (!data || Object.keys(data).length === 0) {
+          cloudStatusEl.textContent = "لا توجد قراءات مخزنة في السيرفر بعد.";
+          return;
+        }
+
+        applyReading(data, "السيرفر (WiFi)");
+        cloudStatusEl.textContent = "تم تحميل آخر قراءة من السيرفر ✅";
+
+      } catch (err) {
+        console.error(err);
+        cloudStatusEl.textContent = "خطأ في الاتصال بالسيرفر: " + err.message;
+      }
+    }
+
+    cloudBtn.addEventListener("click", loadCloudData);
+
     // ================== استدعاء توصية جيميني عبر السيرفر ==================
 
     // الآن نستخدم دائمًا الـ API على Vercel
@@ -394,7 +434,7 @@
 
     async function callAI() {
       if (!lastData) {
-        aiStatusEl.textContent = "لا توجد قراءة حديثة لإرسالها. الرجاء تشغيل المسبار وأخذ قراءة أولاً.";
+        aiStatusEl.textContent = "لا توجد قراءة حديثة لإرسالها. الرجاء تشغيل المسبار أو جلب آخر قراءة من السيرفر.";
         return;
       }
 
