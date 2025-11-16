@@ -1,20 +1,9 @@
 export const config = {
-  runtime: "nodejs"
+  runtime: "nodejs",
 };
 
-// نستدعي الـ API من Google AI
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// قائمة الموديلات اللي نجربها
-const MODELS = [
-  "gemini-1.5-pro",
-  "gemini-1.5-flash",
-  "gemini-1.0-pro",
-  "gemini-1.0-pro-vision"
-];
-
 export default async function handler(req, res) {
-  // السماح بالـ CORS
+  // ===== CORS =====
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -28,7 +17,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // قراءة البودي بشكل متوافق مع Node (بدل req.json)
+    // ===== قراءة الـ body بطريقة NodeJS (بدون req.json) =====
     const bodyString = await new Promise((resolve, reject) => {
       let data = "";
       req.on("data", chunk => (data += chunk));
@@ -36,52 +25,100 @@ export default async function handler(req, res) {
       req.on("error", err => reject(err));
     });
 
-    const body = JSON.parse(bodyString);
-    const { soil, language } = body;
+    let body;
+    try {
+      body = JSON.parse(bodyString || "{}");
+    } catch (e) {
+      return res.status(400).send("Invalid JSON body");
+    }
+
+    const soil = body.soil;
+    const language = body.language || "ar";
 
     if (!soil) {
       return res.status(400).send("Missing soil readings");
     }
 
+    // ===== مفتاح Gemini من الـ Environment =====
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return res.status(500).send("Missing Gemini API Key");
+      return res.status(500).send("Missing GEMINI_API_KEY env var");
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
+    // ===== إعداد الـ prompt =====
+    const promptText = `
+هذه قراءات تربة من جهاز نَسغ:
+${JSON.stringify(soil, null, 2)}
 
-    let lastError = "";
-    let reply = null;
+حلّل القراءات وقدّم توصية عملية ومختصرة باللغة ${language} تشمل:
+- حالة الرطوبة والري المقترح
+- ملاحظة عن الملوحة و pH
+- تقييم تقريبي لتوازن NPK
+- اقتراحات عامة لتحسين صحة التربة (بدون أدوية بشرية أو أشياء خطرة).
+`;
 
-    // تجربة الموديلات واحد واحد
-    for (let modelName of MODELS) {
+    const payload = {
+      contents: [
+        {
+          parts: [{ text: promptText }],
+        },
+      ],
+    };
+
+    // ===== قائمة الموديلات التي نجربها بالترتيب =====
+    const MODELS = [
+      "gemini-1.5-pro-latest",
+      "gemini-1.5-pro",
+      "gemini-1.5-flash-latest",
+      "gemini-1.5-flash",
+    ];
+
+    const baseUrl =
+      "https://generativelanguage.googleapis.com/v1beta/models";
+
+    let lastError = null;
+
+    for (const model of MODELS) {
       try {
-        const model = genAI.getGenerativeModel({ model: modelName });
+        const url = `${baseUrl}/${model}:generateContent?key=${apiKey}`;
 
-        const prompt = `
-        حلّل القراءات التالية للتربة وأعطني توصية واضحة ومختصرة للري والتسميد بدون حشو:
-        ${JSON.stringify(soil, null, 2)}
-        اللغة المطلوبة: ${language || "ar"}
-        `;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
 
-        const result = await model.generateContent(prompt);
-        const text = await result.response.text();
+        const json = await response.json();
 
-        reply = `Model used: ${modelName}\n\n${text}`;
-        break; // نجح.. نخرج من اللوب
+        if (!response.ok) {
+          lastError = json.error || response.statusText;
+          continue; // جرّب الموديل اللي بعده
+        }
+
+        const text =
+          json.candidates?.[0]?.content?.parts?.[0]?.text || null;
+
+        if (text) {
+          // نجاح ✅
+          return res.status(200).send(
+            `Model used: ${model}\n\n` + text
+          );
+        } else {
+          lastError = "Empty response from " + model;
+        }
       } catch (e) {
         lastError = e.message;
       }
     }
 
-    if (!reply) {
-      return res
-        .status(500)
-        .send("Gemini API failed on all models. Last error: " + lastError);
-    }
-
-    res.status(200).send(reply);
+    // لو ولا موديل اشتغل
+    return res
+      .status(500)
+      .send(
+        "Gemini API failed on all models. Last error: " +
+          JSON.stringify(lastError)
+      );
   } catch (error) {
-    res.status(500).send("Server error: " + error.toString());
+    return res.status(500).send("Server error: " + error.toString());
   }
 }
