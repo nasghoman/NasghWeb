@@ -5,6 +5,13 @@
   <title>لوحة قراءات نَسغ</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- لو فتحته محليًا من ملف، حوّله إجباريًا إلى موقع Vercel -->
+  <script>
+    if (location.protocol === "file:") {
+      window.location.href = "https://nasghweb.vercel.app";
+    }
+  </script>
+
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -382,8 +389,8 @@
 
     // ================== استدعاء توصية جيميني عبر السيرفر ==================
 
-    // غيّر هذا الرابط إلى عنوان الـ API في سيرفرك:
-    const AI_API_URL = "https://file:///C:/Users/halgh/Desktop/Nasgh/index.html/api/nasgh-ai";
+    // الآن نستخدم دائمًا الـ API على Vercel
+    const AI_API_URL = "https://nasghweb.vercel.app/api/nasgh-ai";
 
     async function callAI() {
       if (!lastData) {
@@ -424,7 +431,6 @@
           throw new Error("HTTP " + res.status);
         }
 
-        // نفترض أن السيرفر يرجع نص توصية مباشرة (plain text)
         const adviceText = await res.text();
 
         aiStatusEl.textContent = "تم استلام التوصية بنجاح ✅";
@@ -433,7 +439,7 @@
       } catch (err) {
         console.error(err);
         aiStatusEl.textContent = "حدث خطأ أثناء طلب التوصية.";
-        aiAdviceEl.textContent = "تحقق من اتصال الإنترنت وعنوان الـ API في الكود.\n\nالتفاصيل التقنية: " + err.message;
+        aiAdviceEl.textContent = "تحقق من اتصال الإنترنت.\n\nالتفاصيل التقنية: " + err.message;
       } finally {
         aiBtn.disabled = false;
       }
