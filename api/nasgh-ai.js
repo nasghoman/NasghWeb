@@ -1,5 +1,3 @@
-// api/nasgh-ai.js
-
 export const config = {
   runtime: "nodejs",
 };
@@ -10,7 +8,6 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-
   if (req.method === "OPTIONS") {
     return res.status(204).end();
   }
@@ -20,103 +17,65 @@ export default async function handler(req, res) {
   }
 
   try {
-    // جسم الطلب القادم من الواجهة
-    const body = req.body || {};
-    const soil = body.soil || {};
-    const language = body.language || "ar";
-
+    const body = await req.json();
     const apiKey = process.env.GEMINI_API_KEY;
+
     if (!apiKey) {
-      return res.status(500).send("Missing GEMINI_API_KEY env var");
+      return res.status(500).send("Missing Gemini API key on server");
     }
 
-    // 🧠 قائمة الموديلات من الأقوى للأضعف (أو الأحدث للأقدم)
+    const payload = {
+      contents: [{
+        parts: [{
+          text:
+            `هذه قراءات تربة: ${JSON.stringify(body.soil)}.
+            قدّم توصية زراعية دقيقة بالعربية بخصوص الري، 
+            التسميد، تحسين الحموضة، والملوحة.`
+        }]
+      }]
+    };
+
+    // 4 موديلات نجرّبهن بالترتيب
     const MODELS = [
       "gemini-1.5-pro-latest",
+      "gemini-1.5-pro",
       "gemini-1.5-flash-latest",
-      "gemini-pro",
-      "gemini-1.0-pro"
+      "gemini-1.5-flash"
     ];
 
-    const prompt = `
-أنت خبير زراعي ذكي ضمن مشروع "نَسغ".
-حلل القياسات التالية للتربة، ثم أعطِ:
-- تشخيص لحالة التربة بشكل مختصر.
-- توصية ري واضحة (كم مرة أو كمية تقريبية).
-- توصية تسميد (نوع السماد أو المادة + ملاحظة عن الجرعة بشكل عام).
-- ملاحظة عامة عن صحة التربة.
-
-الرد يكون باللغة: ${language === "ar" ? "العربية" : "Arabic"}،
-وبأسلوب بسيط يستطيع المزارع العادي فهمه.
-
-البيانات المقاسة:
-${JSON.stringify(soil, null, 2)}
-`;
-
     let lastError = null;
-    let finalText = null;
-    let usedModel = null;
 
-    // 🔁 جرّب الموديلات واحد واحد إلى أن ينجح واحد
     for (const model of MODELS) {
       try {
-        const apiUrl =
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        console.log("Trying model:", model);
 
-        const response = await fetch(apiUrl, {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+        const response = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [{ text: prompt }],
-              },
-            ],
-          }),
+          body: JSON.stringify(payload)
         });
 
         const result = await response.json();
 
-        if (result.error) {
-          // 404 أو 400 أو غيرها → جرّب الموديل اللي بعده
-          console.error(`Gemini error on model ${model}:`, result.error);
-          lastError = result.error;
-          continue;
+        if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+          return res
+            .status(200)
+            .send(result.candidates[0].content.parts[0].text);
         }
 
-        const text =
-          result.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-        if (!text) {
-          lastError = { message: "Empty response from model " + model };
-          continue;
-        }
-
-        usedModel = model;
-        finalText =
-          `الموديل المستخدم: ${model}\n\n` +
-          text;
-        break; // وقف بعد أول نجاح
-      } catch (err) {
-        console.error(`Request failed for model ${model}:`, err);
-        lastError = { message: err.message };
-        continue;
+        lastError = result.error || result;
+      } catch (e) {
+        lastError = e.message;
       }
     }
 
-    if (!finalText) {
-      return res
-        .status(500)
-        .send(
-          "Gemini API failed on all models. Last error: " +
-            (lastError?.message || "unknown")
-        );
-    }
+    return res.status(500).send(
+      "Gemini API failed on all models. Last error: " + JSON.stringify(lastError)
+    );
 
-    // ✅ رجع التوصية
-    return res.status(200).send(finalText);
   } catch (err) {
-    console.error("Server error:", err);
     return res.status(500).send("Server error: " + err.message);
   }
 }
