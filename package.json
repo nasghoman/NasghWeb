@@ -1,6 +1,4 @@
 {
-  "name": "nasgh-web",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {}
+  "name": "nasghweb",
+  "version": "1.0.0"
 }
