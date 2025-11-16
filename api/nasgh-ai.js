@@ -1,73 +1,71 @@
+// السماح لـ CORS
 export const config = {
-  runtime: "edge",
+  runtime: "nodejs18.x",
 };
 
-export default async function handler(req) {
-  // CORS headers
+export default async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
-    });
+    return res.status(204).end();
   }
 
   if (req.method !== "POST") {
-    return new Response("Only POST allowed", {
-      status: 405,
-      headers: {
-        "Access-Control-Allow-Origin": "*"
-      }
-    });
+    return res.status(405).send("Only POST allowed");
   }
 
   try {
-    const body = await req.json();
+    const body = req.body;
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return new Response("Missing GEMINI_API_KEY", {
-        status: 500,
-        headers: { "Access-Control-Allow-Origin": "*" }
-      });
+      console.error("Gemini key missing!");
+      return res.status(500).send("API key not found");
     }
 
-    const prompt = `
-    حلل هذه القراءات الزراعية وأعطِ توصية مختصرة واحترافية بالعربية:
-    ${JSON.stringify(body.soil, null, 2)}
+    // تجهيز النص للذكاء الاصطناعي
+    const text = `
+      تحليل قراءات تربة نَسغ:
+      الحرارة: ${body.soil.temp}
+      الرطوبة: ${body.soil.moisture}
+      EC: ${body.soil.ec}
+      pH: ${body.soil.ph}
+      نيتروجين: ${body.soil.n}
+      فوسفور: ${body.soil.p}
+      بوتاسيوم: ${body.soil.k}
+      صحة التربة: ${body.soil.shs}
+      هيوميك أسيد: ${body.soil.humic}
+
+      اكتب توصية واضحة لري وتسميد المزرعة باللغة العربية.
     `;
 
-    const geminiRes = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + apiKey,
+    // إرسال الطلب لـ Gemini
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" +
+        apiKey,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
+          contents: [{ parts: [{ text }] }],
+        }),
       }
     );
 
-    const geminiJson = await geminiRes.json();
-    const reply =
-      geminiJson?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "لم يصل رد من نموذج Gemini.";
+    const data = await response.json();
 
-    return new Response(reply, {
-      status: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Content-Type": "text/plain",
-      },
-    });
+    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      console.error("Bad AI response:", data);
+      return res.status(500).send("AI error");
+    }
 
+    const aiReply = data.candidates[0].content.parts[0].text;
+
+    return res.status(200).send(aiReply);
   } catch (err) {
-    return new Response("Server Error: " + err.message, {
-      status: 500,
-      headers: { "Access-Control-Allow-Origin": "*" }
-    });
+    console.error("SERVER ERROR:", err);
+    return res.status(500).send("Internal error: " + err.message);
   }
 }
