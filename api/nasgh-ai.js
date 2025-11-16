@@ -1,8 +1,7 @@
 // api/nasgh-ai.js
 
-// نخلي الـ Function تشتغل على Node العادي (مش Edge)
 export const config = {
-  runtime: "nodejs18.x",
+  runtime: "nodejs",
 };
 
 export default async function handler(req, res) {
@@ -10,6 +9,7 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
 
   if (req.method === "OPTIONS") {
     return res.status(204).end();
