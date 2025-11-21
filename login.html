@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>NASGH | Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --nasgh-green: #4caf50;
+      --nasgh-dark-green: #135a3b;
+      --nasgh-yellow: #f1c232;
+      --bg-light: #f5fff7;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top left, #eafff3, #f4fff9 40%, #ffffff 100%);
+    }
+
+    .auth-wrapper {
+      width: 100%;
+      max-width: 400px;
+      padding: 24px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 28px 24px 24px;
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e0f2e9;
+    }
+
+    .logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .logo img {
+      width: 90px;
+      height: auto;
+      margin-bottom: 8px;
+    }
+
+    .logo-title {
+      font-weight: 700;
+      font-size: 20px;
+      color: var(--nasgh-dark-green);
+      letter-spacing: 0.08em;
+    }
+
+    .logo-subtitle {
+      font-size: 14px;
+      color: #4a4a4a;
+      margin-top: 2px;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-bottom: 6px;
+      color: var(--nasgh-dark-green);
+      text-align: center;
+    }
+
+    .hint {
+      font-size: 13px;
+      color: #65737e;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    form {
+      margin-top: 10px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 5px;
+      color: #415257;
+    }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px 11px;
+      border-radius: 10px;
+      border: 1px solid #c9e4d5;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+      background: #f9fffb;
+    }
+
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--nasgh-green);
+      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.18);
+      background: #ffffff;
+    }
+
+    .row-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      margin-top: 4px;
+    }
+
+    .checkbox {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #4b5b63;
+    }
+
+    .checkbox input {
+      width: 14px;
+      height: 14px;
+      accent-color: var(--nasgh-green);
+    }
+
+    .link {
+      font-size: 12px;
+      color: var(--nasgh-green);
+      text-decoration: none;
+    }
+
+    .link:hover {
+      text-decoration: underline;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--nasgh-green), var(--nasgh-yellow));
+      color: #ffffff;
+      box-shadow: 0 10px 25px rgba(19, 90, 59, 0.3);
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 30px rgba(19, 90, 59, 0.38);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0px) scale(0.99);
+      box-shadow: 0 6px 16px rgba(19, 90, 59, 0.3);
+    }
+
+    .footer-text {
+      margin-top: 14px;
+      font-size: 12px;
+      text-align: center;
+      color: #6b7a80;
+    }
+
+    .footer-text a {
+      color: var(--nasgh-green);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .footer-text a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 480px) {
+      .card {
+        padding: 24px 18px 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="card">
+      <div class="logo">
+        <!-- غيّر المسار حسب مكان صورة اللوجو في مشروعك -->
+        <img src="images/nasgh-logo.png" alt="NASGH logo">
+        <div class="logo-title">NASGH نسغ</div>
+        <div class="logo-subtitle">Smart Soil · Smart Irrigation</div>
+      </div>
+
+      <h2>Login to Nasgh Dashboard</h2>
+      <p class="hint">راقب تربتك وقرارات الري من مكان واحد.</p>
+
+      <form id="loginForm">
+        <div class="field">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="yourname@example.com" required>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" required>
+        </div>
+
+        <div class="row-between">
+          <label class="checkbox">
+            <input type="checkbox" id="remember"> Remember me
+          </label>
+          <a href="#" class="link">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="btn-primary">Sign in</button>
+      </form>
+
+      <div class="footer-text">
+        New to Nasgh?
+        <a href="register.html">Create an account</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // مؤقتاً فقط: نمنع الريفريش ونطبع البيانات في الكونسول
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      console.log("Login data:", { email, password });
+
+      // هنا لاحقاً نستبدلها بطلب حقيقي للباك-إند (API)
+      alert("Login UI جاهز 🌱\nسنربطه بالقاعدة لاحقاً.");
+    });
+  </script>
+</body>
+</html>
