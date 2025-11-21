@@ -5,370 +5,298 @@
   <title>لوحة تحليلات نَسغ</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <style>
-    :root {
-      --nasgh-green: #4caf50;
-      --nasgh-dark-green: #135a3b;
-      --nasgh-yellow: #f1c232;
-      --bg-light: #f5fff7;
-    }
+<style>
+  :root {
+    --nasgh-green: #4caf50;
+    --nasgh-dark-green: #135a3b;
+    --nasgh-yellow: #f1c232;
+    --bg-light: #f5fff7;
+  }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
 
-    body {
-      min-height: 100vh;
-      background: radial-gradient(circle at top left, #eafff3, #f4fff9 40%, #ffffff 100%);
-      color: #123322;
-    }
+  body {
+    min-height: 100vh;
+    background: radial-gradient(circle at top left, #eafff3, #f4fff9 40%, #ffffff 100%);
+    color: #123322;
+  }
 
-    .page {
-      max-width: 1150px;
-      margin: 0 auto;
-      padding: 16px;
-      padding-bottom: 80px;
-    }
+  .page {
+    max-width: 1150px;
+    margin: 0 auto;
+    padding: 12px 10px 80px;
+  }
 
-    /* الشريط العلوي مع اللوجو */
-    .topbar {
-      background: #ffffff;
-      border-radius: 18px;
-      padding: 10px 18px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
-      border: 1px solid #e0f2e9;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
+  /* الشريط العلوي */
+  .topbar {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 8px 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e0f2e9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
 
-    .topbar-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-    .logo-img {
-      width: 42px;
-      height: auto;
-    }
+  .logo-img {
+    width: 38px;
+    height: auto;
+  }
 
-    .logo-text-main {
-      font-weight: 700;
-      font-size: 18px;
-      color: var(--nasgh-dark-green);
-      letter-spacing: 0.08em;
-    }
+  .logo-text-main {
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--nasgh-dark-green);
+    letter-spacing: 0.08em;
+  }
 
-    .logo-text-sub {
-      font-size: 12px;
-      color: #4a4a4a;
-    }
+  .logo-text-sub {
+    font-size: 11px;
+    color: #4a4a4a;
+  }
 
-    .topbar-right a {
-      text-decoration: none;
-      font-size: 13px;
-      padding: 8px 14px;
-      border-radius: 999px;
-      border: 1px solid #c8e6c9;
-      color: var(--nasgh-dark-green);
-      background: #f5fff7;
-      transition: 0.12s;
-      margin-left: 6px;
-    }
+  .topbar-right a {
+    text-decoration: none;
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid #c8e6c9;
+    color: var(--nasgh-dark-green);
+    background: #f5fff7;
+    transition: 0.12s;
+    margin-left: 4px;
+    white-space: nowrap;
+  }
 
-    .topbar-right a:hover {
-      background: linear-gradient(135deg, var(--nasgh-green), var(--nasgh-yellow));
-      color: #ffffff;
-      border-color: transparent;
-    }
+  .topbar-right a:hover {
+    background: linear-gradient(135deg, var(--nasgh-green), var(--nasgh-yellow));
+    color: #ffffff;
+    border-color: transparent;
+  }
 
+  /* الشبكة الرئيسية */
+  .grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1.1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .card {
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    padding: 12px 14px 14px;
+    border: 1px solid #e0f2e9;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+    gap: 8px;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--nasgh-dark-green);
+  }
+
+  .card-sub {
+    font-size: 11px;
+    color: #607d8b;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 6px;
+    margin-bottom: 4px;
+  }
+
+  .stat {
+    background: #f5fff7;
+    border-radius: 12px;
+    padding: 6px 8px;
+    border: 1px solid #e0f2e9;
+    font-size: 12px;
+  }
+
+  .stat-label {
+    color: #607d8b;
+    margin-bottom: 2px;
+  }
+
+  .stat-value {
+    font-weight: 600;
+    color: #1b5e20;
+    font-size: 13px;
+  }
+
+  .stat-chip {
+    display: inline-block;
+    margin-top: 3px;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  /* الجدول داخل حاوية سكرول */
+  .table-wrapper {
+    margin-top: 6px;
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    min-width: 520px; /* عشان ما ينخنق مرة */
+  }
+
+  th, td {
+    border: 1px solid #e0e0e0;
+    padding: 5px 4px;
+    text-align: center;
+  }
+
+  th {
+    background: #e0f2f1;
+    font-weight: 600;
+    font-size: 11px;
+  }
+
+  tr:nth-child(even) td {
+    background: #fafafa;
+  }
+
+  .advice-cell {
+    text-align: right;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .stage-chip {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #fff8e1;
+    color: #f57f17;
+    font-size: 10px;
+  }
+
+  .chart-container {
+    position: relative;
+    height: 220px;
+    margin-top: 8px;
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #e3f2fd;
+    color: #1565c0;
+    margin-right: 3px;
+  }
+
+  .empty-msg {
+    font-size: 12px;
+    color: #78909c;
+    margin-top: 4px;
+  }
+
+  /* زر الشات ولوحة الشات نفس ما هي تقريبا */
+
+  .chat-toggle {
+    position: fixed;
+    bottom: 12px;
+    left: 12px;
+    z-index: 50;
+    border-radius: 999px;
+    border: none;
+    padding: 9px 16px;
+    background: linear-gradient(135deg, var(--nasgh-green), var(--nasgh-yellow));
+    color: #ffffff;
+    font-size: 13px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+    cursor: pointer;
+  }
+
+  .chat-panel {
+    position: fixed;
+    bottom: 64px;
+    left: 12px;
+    width: 320px;
+    max-height: 70vh;
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 14px 30px rgba(0,0,0,0.3);
+    border: 1px solid #e0f2e9;
+    display: none;
+    flex-direction: column;
+    z-index: 60;
+    overflow: hidden;
+  }
+
+  /* باقي ستايل الشات اللي عندك يقدر يبقى مثل ما هو */
+
+  @media (max-width: 800px) {
     .grid {
-      display: grid;
-      grid-template-columns: 1.6fr 1.1fr;
-      gap: 16px;
-      margin-bottom: 16px;
+      grid-template-columns: 1fr;
     }
-
+    .page {
+      padding: 10px 8px 80px;
+    }
     .card {
-      background: #ffffff;
-      border-radius: 18px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-      padding: 16px 18px 18px;
-      border: 1px solid #e0f2e9;
+      padding: 10px 10px 12px;
+      border-radius: 14px;
     }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 8px;
-    }
-
-    .card-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--nasgh-dark-green);
-    }
-
-    .card-sub {
-      font-size: 12px;
-      color: #607d8b;
-    }
-
     .stats-row {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 8px;
-      margin-bottom: 4px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
-    .stat {
-      background: #f5fff7;
-      border-radius: 12px;
-      padding: 8px 10px;
-      border: 1px solid #e0f2e9;
-      font-size: 13px;
-    }
-
-    .stat-label {
-      color: #607d8b;
-      margin-bottom: 4px;
-    }
-
-    .stat-value {
-      font-weight: 600;
-      color: #1b5e20;
-    }
-
-    .stat-chip {
-      display: inline-block;
-      margin-top: 4px;
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: #e8f5e9;
-      color: #2e7d32;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 8px;
-      font-size: 13px;
-    }
-
-    th, td {
-      border: 1px solid #e0e0e0;
-      padding: 6px 4px;
-      text-align: center;
-    }
-
-    th {
-      background: #e0f2f1;
-      font-weight: 600;
-      font-size: 12px;
-    }
-
-    tr:nth-child(even) td {
-      background: #fafafa;
-    }
-
-    .advice-cell {
-      text-align: right;
-      font-size: 12px;
-      line-height: 1.5;
-    }
-
-    .stage-chip {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: #fff8e1;
-      color: #f57f17;
-      font-size: 11px;
-    }
-
     .chart-container {
-      position: relative;
-      height: 260px;
-      margin-top: 8px;
+      height: 180px;
     }
-
-    .tag {
-      display: inline-block;
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: #e3f2fd;
-      color: #1565c0;
-      margin-right: 4px;
+    .topbar {
+      border-radius: 14px;
+      padding: 8px 10px;
     }
-
-    .empty-msg {
-      font-size: 13px;
-      color: #78909c;
-      margin-top: 6px;
-    }
-
-    /* شات بوت نسغ */
-    .chat-toggle {
-      position: fixed;
-      bottom: 16px;
-      left: 16px;
-      z-index: 50;
-      border-radius: 999px;
-      border: none;
-      padding: 10px 18px;
-      background: linear-gradient(135deg, var(--nasgh-green), var(--nasgh-yellow));
-      color: #ffffff;
-      font-size: 13px;
-      box-shadow: 0 8px 18px rgba(0,0,0,0.25);
-      cursor: pointer;
-    }
-
-    .chat-panel {
-      position: fixed;
-      bottom: 70px;
-      left: 16px;
-      width: 320px;
-      max-height: 70vh;
-      background: #ffffff;
-      border-radius: 18px;
-      box-shadow: 0 14px 30px rgba(0,0,0,0.3);
-      border: 1px solid #e0f2e9;
-      display: none;
-      flex-direction: column;
-      z-index: 60;
-      overflow: hidden;
-    }
-
-    .chat-header {
-      padding: 10px 12px;
-      border-bottom: 1px solid #e0f2e9;
+    .topbar-right {
+      width: 100%;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #f5fff7;
-    }
-
-    .chat-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--nasgh-dark-green);
-    }
-
-    .chat-subtitle {
-      font-size: 11px;
-      color: #607d8b;
-    }
-
-    .chat-close {
-      border: none;
-      background: none;
-      font-size: 16px;
-      cursor: pointer;
-      color: #78909c;
-    }
-
-    .chat-body {
-      padding: 10px;
-      overflow-y: auto;
-      flex: 1;
-      background: #fafafa;
-    }
-
-    .msg {
-      margin-bottom: 8px;
-      max-width: 90%;
-    }
-
-    .msg.user {
-      margin-left: auto;
-      text-align: left;
-    }
-
-    .msg.assistant {
-      margin-right: auto;
-      text-align: right;
-    }
-
-    .bubble {
-      display: inline-block;
-      padding: 7px 10px;
-      border-radius: 12px;
-      font-size: 13px;
-      line-height: 1.5;
-      white-space: pre-wrap;
-    }
-
-    .msg.user .bubble {
-      background: #e3f2fd;
-      color: #0d47a1;
-      border-top-right-radius: 2px;
-    }
-
-    .msg.assistant .bubble {
-      background: #e8f5e9;
-      color: #1b5e20;
-      border-top-left-radius: 2px;
-    }
-
-    .msg-meta {
-      font-size: 10px;
-      color: #90a4ae;
-      margin-top: 2px;
-    }
-
-    .chat-footer {
-      padding: 8px;
-      border-top: 1px solid #e0f2e9;
-      background: #ffffff;
-      display: flex;
+      justify-content: flex-start;
       gap: 6px;
+      flex-wrap: wrap;
     }
-
-    .chat-input {
-      flex: 1;
-      border-radius: 999px;
-      border: 1px solid #cfd8dc;
-      padding: 6px 10px;
-      font-size: 13px;
-      outline: none;
+    .chat-panel {
+      left: 8px;
+      right: 8px;
+      width: auto;
     }
-
-    .chat-send {
-      border-radius: 999px;
-      border: none;
-      padding: 6px 10px;
-      background: #2e7d32;
-      color: #ffffff;
-      font-size: 12px;
-      cursor: pointer;
-    }
-
-    .chat-status {
-      font-size: 10px;
-      color: #90a4ae;
-      padding: 0 10px 6px;
-    }
-
-    @media (max-width: 800px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-      .chat-panel {
-        left: 8px;
-        right: 8px;
-        width: auto;
-      }
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
   <div class="page">
