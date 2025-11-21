@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>لوحة تحليلات نَسغ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    :root {
+      --nasgh-green: #4caf50;
+      --nasgh-dark-green: #135a3b;
+      --nasgh-yellow: #f1c232;
+      --bg-light: #f5fff7;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at top left, #eafff3, #f4fff9 40%, #ffffff 100%);
+      color: #123322;
+    }
+
+    .page {
+      max-width: 1150px;
+      margin: 0 auto;
+      padding: 16px;
+      padding-bottom: 80px;
+    }
+
+    /* الشريط العلوي مع اللوجو */
+    .topbar {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 10px 18px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+      border: 1px solid #e0f2e9;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-img {
+      width: 42px;
+      height: auto;
+    }
+
+    .logo-text-main {
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--nasgh-dark-green);
+      letter-spacing: 0.08em;
+    }
+
+    .logo-text-sub {
+      font-size: 12px;
+      color: #4a4a4a;
+    }
+
+    .topbar-right a {
+      text-decoration: none;
+      font-size: 13px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid #c8e6c9;
+      color: var(--nasgh-dark-green);
+      background: #f5fff7;
+      transition: 0.12s;
+      margin-left: 6px;
+    }
+
+    .topbar-right a:hover {
+      background: linear-gradient(135deg, var(--nasgh-green), var(--nasgh-yellow));
+      color: #ffffff;
+      border-color: transparent;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.6fr 1.1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+      padding: 16px 18px 18px;
+      border: 1px solid #e0f2e9;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--nasgh-dark-green);
+    }
+
+    .card-sub {
+      font-size: 12px;
+      color: #607d8b;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+      margin-bottom: 4px;
+    }
+
+    .stat {
+      background: #f5fff7;
+      border-radius: 12px;
+      padding: 8px 10px;
+      border: 1px solid #e0f2e9;
+      font-size: 13px;
+    }
+
+    .stat-label {
+      color: #607d8b;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      color: #1b5e20;
+    }
+
+    .stat-chip {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+
+    th, td {
+      border: 1px solid #e0e0e0;
+      padding: 6px 4px;
+      text-align: center;
+    }
+
+    th {
+      background: #e0f2f1;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    tr:nth-child(even) td {
+      background: #fafafa;
+    }
+
+    .advice-cell {
+      text-align: right;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .stage-chip {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #fff8e1;
+      color: #f57f17;
+      font-size: 11px;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 260px;
+      margin-top: 8px;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e3f2fd;
+      color: #1565c0;
+      margin-right: 4px;
+    }
+
+    .empty-msg {
+      font-size: 13px;
+      color: #78909c;
+      margin-top: 6px;
+    }
+
+    /* شات بوت نسغ */
+    .chat-toggle {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      z-index: 50;
+      border-radius: 999px;
+      border: none;
+      padding: 10px 18px;
+      background: linear-gradient(135deg, var(--nasgh-green), var(--nasgh-yellow));
+      color: #ffffff;
+      font-size: 13px;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+      cursor: pointer;
+    }
+
+    .chat-panel {
+      position: fixed;
+      bottom: 70px;
+      left: 16px;
+      width: 320px;
+      max-height: 70vh;
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 14px 30px rgba(0,0,0,0.3);
+      border: 1px solid #e0f2e9;
+      display: none;
+      flex-direction: column;
+      z-index: 60;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e0f2e9;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f5fff7;
+    }
+
+    .chat-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--nasgh-dark-green);
+    }
+
+    .chat-subtitle {
+      font-size: 11px;
+      color: #607d8b;
+    }
+
+    .chat-close {
+      border: none;
+      background: none;
+      font-size: 16px;
+      cursor: pointer;
+      color: #78909c;
+    }
+
+    .chat-body {
+      padding: 10px;
+      overflow-y: auto;
+      flex: 1;
+      background: #fafafa;
+    }
+
+    .msg {
+      margin-bottom: 8px;
+      max-width: 90%;
+    }
+
+    .msg.user {
+      margin-left: auto;
+      text-align: left;
+    }
+
+    .msg.assistant {
+      margin-right: auto;
+      text-align: right;
+    }
+
+    .bubble {
+      display: inline-block;
+      padding: 7px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .msg.user .bubble {
+      background: #e3f2fd;
+      color: #0d47a1;
+      border-top-right-radius: 2px;
+    }
+
+    .msg.assistant .bubble {
+      background: #e8f5e9;
+      color: #1b5e20;
+      border-top-left-radius: 2px;
+    }
+
+    .msg-meta {
+      font-size: 10px;
+      color: #90a4ae;
+      margin-top: 2px;
+    }
+
+    .chat-footer {
+      padding: 8px;
+      border-top: 1px solid #e0f2e9;
+      background: #ffffff;
+      display: flex;
+      gap: 6px;
+    }
+
+    .chat-input {
+      flex: 1;
+      border-radius: 999px;
+      border: 1px solid #cfd8dc;
+      padding: 6px 10px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .chat-send {
+      border-radius: 999px;
+      border: none;
+      padding: 6px 10px;
+      background: #2e7d32;
+      color: #ffffff;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .chat-status {
+      font-size: 10px;
+      color: #90a4ae;
+      padding: 0 10px 6px;
+    }
+
+    @media (max-width: 800px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .chat-panel {
+        left: 8px;
+        right: 8px;
+        width: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- الشريط العلوي -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <img src="images/nasgh-logo.png" alt="NASGH logo" class="logo-img" />
+        <div>
+          <div class="logo-text-main">NASGH نسغ</div>
+          <div class="logo-text-sub">Smart Soil · Smart Irrigation</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <a href="index.html">لوحة القراءات المباشرة</a>
+        <a href="login.html">تبديل الحساب</a>
+      </div>
+    </header>
+
+    <!-- الشبكة الرئيسية: ملخص + جدول + رسومات -->
+    <div class="grid">
+      <!-- يسار: ملخص + جدول آخر 10 قراءات -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">آخر ١٠ قراءات</div>
+          <div class="card-sub" id="historyMeta">جاري تحميل البيانات...</div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat">
+            <div class="stat-label">آخر رطوبة</div>
+            <div class="stat-value" id="statMoisture">-- ٪</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">آخر درجة حرارة</div>
+            <div class="stat-value" id="statTemp">-- °م</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">متوسط pH</div>
+            <div class="stat-value" id="statPh">--</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">متوسط SHS</div>
+            <div class="stat-value" id="statShs">--</div>
+          </div>
+        </div>
+
+        <div class="stat" style="margin-top:8px;">
+          <div class="stat-label">مرحلة نمو النبات (آخر قراءة)</div>
+          <div class="stat-value" id="statStage">--</div>
+          <div class="stat-chip" id="statStageChip">مرحلة غير محددة بعد</div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>الوقت</th>
+              <th>رطوبة ٪</th>
+              <th>°م</th>
+              <th>pH</th>
+              <th>EC</th>
+              <th>SHS</th>
+              <th>مرحلة النمو</th>
+              <th>نصيحة نسغ AI</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody">
+            <!-- الصفوف تعبّى من JS -->
+          </tbody>
+        </table>
+
+        <div class="empty-msg" id="historyEmptyMsg" style="display:none;">
+          لا توجد قراءات كافية حتى الآن. أول ما توصل بيانات من المسبار أو السيرفر بتظهر هنا 🌱
+        </div>
+      </div>
+
+      <!-- يمين: الرسوم البيانية -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">رسوم بيانية</div>
+          <div class="card-sub">
+            <span class="tag">Moisture</span>
+            <span class="tag">Temperature</span>
+            <span class="tag">pH &amp; EC</span>
+            <span class="tag">SHS</span>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <canvas id="chartMoisture"></canvas>
+        </div>
+        <div class="chart-container">
+          <canvas id="chartTemp"></canvas>
+        </div>
+        <div class="chart-container">
+          <canvas id="chartPhEc"></canvas>
+        </div>
+        <div class="chart-container">
+          <canvas id="chartShs"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- زر فتح شات بوت نسغ -->
+  <button class="chat-toggle" id="chatToggle">
+    💬 نسغ AI
+  </button>
+
+  <!-- لوحة الشات -->
+  <div class="chat-panel" id="chatPanel">
+    <div class="chat-header">
+      <div>
+        <div class="chat-title">مساعد نَسغ</div>
+        <div class="chat-subtitle">يرد عليك عربي + لمسة عمانية 😉</div>
+      </div>
+      <button class="chat-close" id="chatClose">&times;</button>
+    </div>
+    <div class="chat-body" id="chatBody">
+      <div class="msg assistant">
+        <div class="bubble">
+          هلا وسهلا 👋  
+          أنا مساعد نَسغ، اسألني عن حالة التربة، التسميد، الري، أو أي شي يخطر في بالك عن مزرعتك، وبعطيك شرح مبسّط على جوّنا العماني 🌴
+        </div>
+        <div class="msg-meta">نَسغ AI</div>
+      </div>
+    </div>
+    <div class="chat-status" id="chatStatus">جاهز لسماع سؤالك 🌱</div>
+    <div class="chat-footer">
+      <input type="text" id="chatInput" class="chat-input" placeholder="اكتب سؤالك هنا..." />
+      <button id="chatSend" class="chat-send">إرسال</button>
+    </div>
+  </div>
+
+  <!-- مكتبة Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    // ================== إعدادات API ==================
+    const HISTORY_API_URL = "/api/soil-history?limit=10"; // عدّلها حسب الباك إند
+    const CHAT_API_URL = "/api/nasgh-chat";               // Endpoint الشات مع Gemini
+
+    let historyData = [];
+    let charts = {};
+
+    function formatTimeLabel(ts) {
+      try {
+        const d = new Date(ts);
+        return d.toLocaleString("ar", {
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      } catch {
+        return ts;
+      }
+    }
+
+    function fillHistoryTable() {
+      const tbody = document.getElementById("historyTableBody");
+      const emptyMsg = document.getElementById("historyEmptyMsg");
+      tbody.innerHTML = "";
+
+      if (!historyData.length) {
+        emptyMsg.style.display = "block";
+        return;
+      }
+      emptyMsg.style.display = "none";
+
+      historyData.forEach((row, idx) => {
+        const tr = document.createElement("tr");
+
+        const indexCell = document.createElement("td");
+        indexCell.textContent = idx + 1;
+        tr.appendChild(indexCell);
+
+        const timeCell = document.createElement("td");
+        timeCell.textContent = row.timestamp ? formatTimeLabel(row.timestamp) : "--";
+        tr.appendChild(timeCell);
+
+        const mCell = document.createElement("td");
+        mCell.textContent = typeof row.m !== "undefined" ? Number(row.m).toFixed(1) : "--";
+        tr.appendChild(mCell);
+
+        const tCell = document.createElement("td");
+        tCell.textContent = typeof row.t !== "undefined" ? Number(row.t).toFixed(1) : "--";
+        tr.appendChild(tCell);
+
+        const phCell = document.createElement("td");
+        phCell.textContent = typeof row.ph !== "undefined" ? Number(row.ph).toFixed(2) : "--";
+        tr.appendChild(phCell);
+
+        const ecCell = document.createElement("td");
+        ecCell.textContent = typeof row.ec !== "undefined" ? Number(row.ec).toFixed(0) : "--";
+        tr.appendChild(ecCell);
+
+        const shsCell = document.createElement("td");
+        shsCell.textContent = typeof row.shs !== "undefined" ? Number(row.shs).toFixed(1) : "--";
+        tr.appendChild(shsCell);
+
+        const stageCell = document.createElement("td");
+        const stage = row.stage || "غير محددة";
+        stageCell.innerHTML = '<span class="stage-chip">' + stage + "</span>";
+        tr.appendChild(stageCell);
+
+        const adviceCell = document.createElement("td");
+        adviceCell.className = "advice-cell";
+        adviceCell.textContent = row.advice || "—";
+        tr.appendChild(adviceCell);
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function fillSummaryStats() {
+      const statMoisture = document.getElementById("statMoisture");
+      const statTemp = document.getElementById("statTemp");
+      const statPh = document.getElementById("statPh");
+      const statShs = document.getElementById("statShs");
+      const statStage = document.getElementById("statStage");
+      const statStageChip = document.getElementById("statStageChip");
+      const historyMeta = document.getElementById("historyMeta");
+
+      if (!historyData.length) {
+        statMoisture.textContent = "-- ٪";
+        statTemp.textContent = "-- °م";
+        statPh.textContent = "--";
+        statShs.textContent = "--";
+        statStage.textContent = "--";
+        statStageChip.textContent = "مرحلة غير محددة بعد";
+        historyMeta.textContent = "لا توجد قراءات بعد";
+        return;
+      }
+
+      const last = historyData[0]; // نفترض أن التاريخ مرتب من الأحدث للأقدم
+
+      statMoisture.textContent =
+        typeof last.m !== "undefined" ? Number(last.m).toFixed(1) + " ٪" : "-- ٪";
+      statTemp.textContent =
+        typeof last.t !== "undefined" ? Number(last.t).toFixed(1) + " °م" : "-- °م";
+
+      const phVals = historyData
+        .map(r => r.ph)
+        .filter(v => typeof v !== "undefined");
+      const shsVals = historyData
+        .map(r => r.shs)
+        .filter(v => typeof v !== "undefined");
+
+      const avg = arr => arr.reduce((s,v) => s+v,0) / (arr.length || 1);
+
+      statPh.textContent = phVals.length ? avg(phVals).toFixed(2) : "--";
+      statShs.textContent = shsVals.length ? avg(shsVals).toFixed(1) : "--";
+
+      const stage = last.stage || "غير محددة";
+      statStage.textContent = stage;
+      statStageChip.textContent = stage;
+
+      const fromTime = historyData[historyData.length - 1].timestamp;
+      const toTime = last.timestamp;
+      if (fromTime && toTime) {
+        historyMeta.textContent =
+          "آخر ١٠ قراءات من " + formatTimeLabel(fromTime) + " إلى " + formatTimeLabel(toTime);
+      } else {
+        historyMeta.textContent = "آخر ١٠ قراءات حسب البيانات المتوفرة";
+      }
+    }
+
+    function createOrUpdateChart(id, label, labels, data, extra = {}) {
+      const ctx = document.getElementById(id).getContext("2d");
+
+      if (charts[id]) {
+        charts[id].data.labels = labels;
+        charts[id].data.datasets[0].data = data;
+        charts[id].update();
+        return;
+      }
+
+      charts[id] = new Chart(ctx, {
+        type: extra.type || "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label,
+              data,
+              tension: 0.3,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: true }
+          },
+          scales: {
+            x: { ticks: { autoSkip: true, maxTicksLimit: 5 } }
+          }
+        }
+      });
+    }
+
+    function updateCharts() {
+      if (!historyData.length) return;
+
+      const labels = historyData.map(r =>
+        r.timestamp ? formatTimeLabel(r.timestamp) : ""
+      ).reverse(); // الأقدم إلى الأحدث للعرض
+
+      const mArr = historyData.map(r => r.m ?? null).reverse();
+      const tArr = historyData.map(r => r.t ?? null).reverse();
+      const phArr = historyData.map(r => r.ph ?? null).reverse();
+      const ecArr = historyData.map(r => r.ec ?? null).reverse();
+      const shsArr = historyData.map(r => r.shs ?? null).reverse();
+
+      createOrUpdateChart("chartMoisture", "رطوبة التربة ٪", labels, mArr);
+      createOrUpdateChart("chartTemp", "درجة الحرارة °م", labels, tArr);
+
+      // pH و EC مع بعض
+      const ctxPhEc = document.getElementById("chartPhEc").getContext("2d");
+      if (!charts["chartPhEc"]) {
+        charts["chartPhEc"] = new Chart(ctxPhEc, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              { label: "pH", data: phArr, tension: 0.3 },
+              { label: "EC µS/cm", data: ecArr, tension: 0.3 }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: true } },
+            scales: {
+              x: { ticks: { autoSkip: true, maxTicksLimit: 5 } }
+            }
+          }
+        });
+      } else {
+        charts["chartPhEc"].data.labels = labels;
+        charts["chartPhEc"].data.datasets[0].data = phArr;
+        charts["chartPhEc"].data.datasets[1].data = ecArr;
+        charts["chartPhEc"].update();
+      }
+
+      createOrUpdateChart("chartShs", "مؤشر صحة التربة SHS", labels, shsArr);
+    }
+
+    async function loadHistory() {
+      const historyMeta = document.getElementById("historyMeta");
+      historyMeta.textContent = "جاري تحميل البيانات...";
+
+      try {
+        const res = await fetch(HISTORY_API_URL, { method: "GET" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+
+        if (!Array.isArray(data) || !data.length) {
+          historyData = [];
+        } else {
+          // نتوقع أن الباك إند يرجّع الأحدث أولاً
+          historyData = data;
+        }
+
+        fillHistoryTable();
+        fillSummaryStats();
+        updateCharts();
+      } catch (err) {
+        console.error(err);
+        historyMeta.textContent = "خطأ في تحميل البيانات: " + err.message;
+      }
+    }
+
+    // ================== شات بوت نَسغ ==================
+    const chatToggle = document.getElementById("chatToggle");
+    const chatPanel = document.getElementById("chatPanel");
+    const chatClose = document.getElementById("chatClose");
+    const chatBody = document.getElementById("chatBody");
+    const chatInput = document.getElementById("chatInput");
+    const chatSend = document.getElementById("chatSend");
+    const chatStatus = document.getElementById("chatStatus");
+
+    let chatHistory = []; // [{role:"user"/"assistant", content:"..."}]
+
+    function appendMessage(role, text) {
+      const msg = document.createElement("div");
+      msg.className = "msg " + (role === "user" ? "user" : "assistant");
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = text;
+
+      const meta = document.createElement("div");
+      meta.className = "msg-meta";
+      meta.textContent = role === "user" ? "أنت" : "نَسغ AI";
+
+      msg.appendChild(bubble);
+      msg.appendChild(meta);
+      chatBody.appendChild(msg);
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    chatToggle.addEventListener("click", () => {
+      chatPanel.style.display = chatPanel.style.display === "flex" ? "none" : "flex";
+    });
+
+    chatClose.addEventListener("click", () => {
+      chatPanel.style.display = "none";
+    });
+
+    chatSend.addEventListener("click", sendChatMessage);
+    chatInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendChatMessage();
+      }
+    });
+
+    async function sendChatMessage() {
+      const text = chatInput.value.trim();
+      if (!text) return;
+
+      appendMessage("user", text);
+      chatHistory.push({ role: "user", content: text });
+      chatInput.value = "";
+      chatStatus.textContent = "نسغ قاعد يفكر لك بجواب مرتب... 😉";
+
+      try {
+        const payload = {
+          message: text,
+          history: chatHistory,
+          style: "nasgh-ar-omani" // عشان الباك إند يضبط البرومبت بصيغة نسغ
+        };
+
+        const res = await fetch(CHAT_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error("HTTP " + res.status);
+
+        const data = await res.json();
+        const reply = data.reply || "حصلت مشكلة بسيطة في الرد، جرّب تسأل مرّة ثانية لو سمحت 🙏";
+
+        // نضيف أسلوب نسغ حتى لو الباك إند رجّع نص عام
+        const finalReply =
+          reply +
+          "\n\n(ملاحظة من نسغ 🌿: هذي إجابة عامة، لا تنسَ تراجع ظروف مزرعتك بالضبط، الجو، ونوع التربة عندك في عمان)";
+
+        appendMessage("assistant", finalReply);
+        chatHistory.push({ role: "assistant", content: finalReply });
+        chatStatus.textContent = "جاهز لسؤال ثاني 😄";
+      } catch (err) {
+        console.error(err);
+        appendMessage("assistant", "صار خطأ في الاتصال بالخادم، جرّب بعد شوية أو تأكد من النت 🙏");
+        chatStatus.textContent = "صار خطأ في الاتصال.";
+      }
+    }
+
+    // تحميل البيانات عند الدخول للداشبورد
+    loadHistory();
+  </script>
+</body>
+</html>
