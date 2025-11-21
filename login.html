@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>NASGH | Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
     :root {
       --nasgh-green: #4caf50;
@@ -45,7 +46,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
 
     .logo img {
@@ -62,7 +63,7 @@
     }
 
     .logo-subtitle {
-      font-size: 14px;
+      font-size: 13px;
       color: #4a4a4a;
       margin-top: 2px;
     }
@@ -78,11 +79,11 @@
       font-size: 13px;
       color: #65737e;
       text-align: center;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
 
     form {
-      margin-top: 10px;
+      margin-top: 8px;
     }
 
     .field {
@@ -188,6 +189,26 @@
       text-decoration: underline;
     }
 
+    .error-box {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #b00020;
+      background: #ffe8e8;
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: none;
+    }
+
+    .success-box {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #1b5e20;
+      background: #e6ffe9;
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: none;
+    }
+
     @media (max-width: 480px) {
       .card {
         padding: 24px 18px 18px;
@@ -206,7 +227,7 @@
       </div>
 
       <h2>Login to Nasgh Dashboard</h2>
-      <p class="hint">راقب تربتك وقرارات الري من مكان واحد.</p>
+      <p class="hint">سجّل دخولك لمتابعة حالة التربة والري.</p>
 
       <form id="loginForm">
         <div class="field">
@@ -227,6 +248,9 @@
         </div>
 
         <button type="submit" class="btn-primary">Sign in</button>
+
+        <div id="errorBox" class="error-box"></div>
+        <div id="successBox" class="success-box"></div>
       </form>
 
       <div class="footer-text">
@@ -236,17 +260,104 @@
     </div>
   </div>
 
-  <script>
-    // مؤقتاً فقط: نمنع الريفريش ونطبع البيانات في الكونسول
-    document.getElementById("loginForm").addEventListener("submit", function (e) {
+  <!-- سكربت تسجيل الدخول مع Firebase -->
+  <script type="module">
+    // 1) استيراد Firebase من الـ CDN
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+    } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+
+    // 2) إعدادات Firebase (استبدل القيم بقيم مشروعك)
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID",
+    };
+
+    // 3) تهيئة Firebase و Auth
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const form = document.getElementById("loginForm");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const rememberInput = document.getElementById("remember");
+    const errorBox = document.getElementById("errorBox");
+    const successBox = document.getElementById("successBox");
+
+    function showError(message) {
+      errorBox.textContent = message;
+      errorBox.style.display = "block";
+      successBox.style.display = "none";
+    }
+
+    function showSuccess(message) {
+      successBox.textContent = message;
+      successBox.style.display = "block";
+      errorBox.style.display = "none";
+    }
+
+    // 4) تسجيل الدخول
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
 
-      console.log("Login data:", { email, password });
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
 
-      // هنا لاحقاً نستبدلها بطلب حقيقي للباك-إند (API)
-      alert("Login UI جاهز 🌱\nسنربطه بالقاعدة لاحقاً.");
+      if (!email || !password) {
+        showError("الرجاء إدخال البريد الإلكتروني وكلمة المرور.");
+        return;
+      }
+
+      try {
+        // خيار remember me
+        auth.persistence =
+          rememberInput.checked ?
+          "local" : // يبقى حتى بعد إغلاق المتصفح
+          "session"; // يختفي بعد إغلاق المتصفح
+
+        const userCredential = await signInWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+
+        const user = userCredential.user;
+        console.log("Logged in:", user.uid);
+
+        showSuccess("تم تسجيل الدخول بنجاح 🌱");
+
+        // هنا تقدر تحول المستخدم للـ Dashboard الخاصة بنسغ:
+        // window.location.href = "dashboard.html";
+      } catch (error) {
+        console.error(error);
+        let msg = "حدث خطأ أثناء تسجيل الدخول.";
+
+        if (error.code === "auth/user-not-found") {
+          msg = "لا يوجد مستخدم بهذا البريد.";
+        } else if (error.code === "auth/wrong-password") {
+          msg = "كلمة المرور غير صحيحة.";
+        } else if (error.code === "auth/invalid-email") {
+          msg = "صيغة البريد الإلكتروني غير صحيحة.";
+        }
+
+        showError(msg);
+      }
+    });
+
+    // 5) لو المستخدم أصلاً مسجّل دخول، نقدر نحوله مباشرة
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("Already logged in:", user.uid);
+        // مثال:
+        // window.location.href = "dashboard.html";
+      }
     });
   </script>
 </body>
