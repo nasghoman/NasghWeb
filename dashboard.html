@@ -339,6 +339,7 @@
       overflow: hidden;
       max-height: 70vh;
       z-index: 1001;
+      transition: bottom 0.25s ease; /* عشان يتحرك بسلاسة فوق الكيبورد */
     }
 
     .chat-header {
@@ -930,6 +931,20 @@
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         sendChatMessage();
+      }
+    });
+
+    // ======== رفع شات نسغ فوق الكيبورد في الجوال ========
+    let initialHeight = window.innerHeight;
+
+    window.addEventListener("resize", () => {
+      const newHeight = window.innerHeight;
+      const keyboardOpened = newHeight < initialHeight - 150;
+      // لما يفتح الكيبورد نرفع اللوحة، ولما يختفي نرجعها
+      if (keyboardOpened) {
+        chatPanel.style.bottom = "320px";
+      } else {
+        chatPanel.style.bottom = "70px";
       }
     });
 
