@@ -933,20 +933,17 @@
         sendChatMessage();
       }
     });
+// لما يفتح الكيبورد (فوكس على حقل الشات) ارفع اللوحة فوق
+chatInput.addEventListener("focus", () => {
+  // جرّب 260 أو 300 لو 320 كثير
+  chatPanel.style.bottom = "320px";
+});
 
-    // ======== رفع شات نسغ فوق الكيبورد في الجوال ========
-    let initialHeight = window.innerHeight;
-
-    window.addEventListener("resize", () => {
-      const newHeight = window.innerHeight;
-      const keyboardOpened = newHeight < initialHeight - 150;
-      // لما يفتح الكيبورد نرفع اللوحة، ولما يختفي نرجعها
-      if (keyboardOpened) {
-        chatPanel.style.bottom = "320px";
-      } else {
-        chatPanel.style.bottom = "70px";
-      }
-    });
+// لما يسكر الكيبورد (يطلع من الحقل) رجّعها لمكانها الطبيعي
+chatInput.addEventListener("blur", () => {
+  chatPanel.style.bottom = "70px";
+});
+   
 
     // ======== INIT ========
     document.addEventListener("DOMContentLoaded", () => {
