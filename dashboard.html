@@ -339,7 +339,7 @@
       overflow: hidden;
       max-height: 70vh;
       z-index: 1001;
-      transition: bottom 0.25s ease; /* عشان يتحرك بسلاسة فوق الكيبورد */
+      transition: bottom 0.25s ease;
     }
 
     .chat-header {
@@ -386,7 +386,7 @@
 
     .chat-msg.user {
       text-align: left;
-      direction: ltr; /* عشان الرسالة تبان مختلفة */
+      direction: ltr;
     }
 
     .chat-msg.assistant {
@@ -482,7 +482,7 @@
       <section class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">آخر ١٠ قراءات</div>
+            <div class="card-title">آخر ١٠ جلسات محفوظة</div>
             <div id="historyRange" class="card-sub">جاري تحميل البيانات...</div>
           </div>
           <div id="historyStatus" class="status-badge">جاري الاتصال...</div>
@@ -508,7 +508,7 @@
           </div>
         </div>
 
-        <div class="plant-stage-title">مرحلة نمو النبات (آخر قراءة)</div>
+        <div class="plant-stage-title">مرحلة نمو النبات (آخر جلسة)</div>
         <div id="plantStageLabel" class="card-sub" style="margin-top:2px;">-</div>
         <div id="plantStageChip" class="plant-stage-chip">مرحلة غير محددة بعد</div>
 
@@ -542,13 +542,13 @@
         <div class="card-header">
           <div>
             <div class="card-title">رسوم بيانية</div>
-            <div class="card-sub">Moisture · Temperature · pH · EC · SHS</div>
+            <div class="card-sub">Moisture &amp; Temp · NPK · SHS</div>
           </div>
         </div>
 
         <div class="chart-tabs">
           <span class="chart-tab">Moisture &amp; Temperature</span>
-          <span class="chart-tab">pH &amp; EC</span>
+          <span class="chart-tab">N · P · K</span>
           <span class="chart-tab">SHS Index</span>
         </div>
 
@@ -558,9 +558,9 @@
         <div class="chart-title">رطوبة التربة (%) ودرجة الحرارة (°م) عبر الوقت</div>
 
         <div class="chart-container">
-          <canvas id="chartPhEc"></canvas>
+          <canvas id="chartNpk"></canvas>
         </div>
-        <div class="chart-title">pH و EC (µS/cm) عبر الوقت</div>
+        <div class="chart-title">NPK (mg/kg) عبر الوقت</div>
 
         <div class="chart-container">
           <canvas id="chartShs"></canvas>
@@ -592,11 +592,12 @@
 
   <script>
     // ======== DATA LOADING ========
-    const HISTORY_API_URL = "/api/soil-history?limit=10";
+    // يستقبل نفس البيانات التي يرسلها index إلى /api/soil-session
+    const HISTORY_API_URL = "/api/soil-session?limit=10";
 
     let historyData = [];
     let chartMoistTemp = null;
-    let chartPhEc = null;
+    let chartNpk = null;
     let chartShs = null;
 
     function formatTime(ts) {
@@ -631,7 +632,7 @@
         return;
       }
 
-      // نفترض الترتيب من الأحدث للأقدم، فقط للتأكد نرتب بحسب timestamp تنازلي
+      // تأكد الترتيب من الأحدث للأقدم
       historyData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
       const latest = historyData[0];
@@ -640,7 +641,7 @@
       rangeEl.textContent =
         "آخر " +
         historyData.length +
-        " قراءات من " +
+        " جلسات من " +
         formatTime(last.timestamp) +
         " إلى " +
         formatTime(latest.timestamp);
@@ -650,9 +651,9 @@
 
       // Summary
       statMoisture.textContent =
-        (latest.m != null ? latest.m.toFixed(1) : "--") + " ٪";
+        (latest.m != null && !isNaN(latest.m) ? latest.m.toFixed(1) : "--") + " ٪";
       statTemp.textContent =
-        (latest.t != null ? latest.t.toFixed(1) : "--") + " °م";
+        (latest.t != null && !isNaN(latest.t) ? latest.t.toFixed(1) : "--") + " °م";
 
       const avgPh =
         historyData.reduce((sum, r) => sum + (r.ph || 0), 0) /
@@ -677,11 +678,11 @@
         tr.innerHTML = `
           <td>${idx + 1}</td>
           <td>${formatTime(row.timestamp)}</td>
-          <td>${row.m != null ? row.m.toFixed(1) : "--"}</td>
-          <td>${row.t != null ? row.t.toFixed(1) : "--"}</td>
-          <td>${row.ph != null ? row.ph.toFixed(2) : "--"}</td>
-          <td>${row.ec != null ? row.ec.toFixed(0) : "--"}</td>
-          <td>${row.shs != null ? row.shs.toFixed(1) : "--"}</td>
+          <td>${row.m != null && !isNaN(row.m) ? row.m.toFixed(1) : "--"}</td>
+          <td>${row.t != null && !isNaN(row.t) ? row.t.toFixed(1) : "--"}</td>
+          <td>${row.ph != null && !isNaN(row.ph) ? row.ph.toFixed(2) : "--"}</td>
+          <td>${row.ec != null && !isNaN(row.ec) ? row.ec.toFixed(0) : "--"}</td>
+          <td>${row.shs != null && !isNaN(row.shs) ? row.shs.toFixed(1) : "--"}</td>
           <td class="stage-cell">
             ${
               row.stage
@@ -698,44 +699,29 @@
     }
 
     function updateCharts() {
-      const labels = historyData
+      const sorted = historyData
         .slice()
-        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-        .map((r) =>
-          new Date(r.timestamp).toLocaleTimeString("ar-EG", {
-            hour: "2-digit",
-            minute: "2-digit"
-          })
-        );
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-      const moistArr = historyData
-        .slice()
-        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-        .map((r) => r.m || 0);
+      const labels = sorted.map((r) =>
+        new Date(r.timestamp).toLocaleTimeString("ar-EG", {
+          hour: "2-digit",
+          minute: "2-digit"
+        })
+      );
 
-      const tempArr = historyData
-        .slice()
-        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-        .map((r) => r.t || 0);
+      const moistArr = sorted.map((r) => (r.m && !isNaN(r.m) ? r.m : 0));
+      const tempArr  = sorted.map((r) => (r.t && !isNaN(r.t) ? r.t : 0));
 
-      const phArr = historyData
-        .slice()
-        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-        .map((r) => r.ph || 0);
+      const nArr = sorted.map((r) => (r.n && !isNaN(r.n) ? r.n : 0));
+      const pArr = sorted.map((r) => (r.p && !isNaN(r.p) ? r.p : 0));
+      const kArr = sorted.map((r) => (r.k && !isNaN(r.k) ? r.k : 0));
 
-      const ecArr = historyData
-        .slice()
-        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-        .map((r) => r.ec || 0);
-
-      const shsArr = historyData
-        .slice()
-        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-        .map((r) => r.shs || 0);
+      const shsArr = sorted.map((r) => (r.shs && !isNaN(r.shs) ? r.shs : 0));
 
       // Destroy old charts if they exist
       if (chartMoistTemp) chartMoistTemp.destroy();
-      if (chartPhEc) chartPhEc.destroy();
+      if (chartNpk) chartNpk.destroy();
       if (chartShs) chartShs.destroy();
 
       const ctx1 = document.getElementById("chartMoistTemp").getContext("2d");
@@ -771,21 +757,27 @@
         }
       });
 
-      const ctx2 = document.getElementById("chartPhEc").getContext("2d");
-      chartPhEc = new Chart(ctx2, {
+      const ctx2 = document.getElementById("chartNpk").getContext("2d");
+      chartNpk = new Chart(ctx2, {
         type: "line",
         data: {
           labels,
           datasets: [
             {
-              label: "pH",
-              data: phArr,
+              label: "N (mg/kg)",
+              data: nArr,
               borderWidth: 2,
               tension: 0.3
             },
             {
-              label: "EC µS/cm",
-              data: ecArr,
+              label: "P (mg/kg)",
+              data: pArr,
+              borderWidth: 2,
+              tension: 0.3
+            },
+            {
+              label: "K (mg/kg)",
+              data: kArr,
               borderWidth: 2,
               tension: 0.3
             }
@@ -842,8 +834,30 @@
         if (!res.ok) {
           throw new Error("HTTP " + res.status);
         }
-        const data = await res.json();
-        historyData = Array.isArray(data) ? data : [];
+        const raw = await res.json();
+
+        // نحول الجلسات لشكل مسطّح historyData
+        historyData = (Array.isArray(raw) ? raw : []).map((session) => {
+          const soil = session.soil || {};
+          return {
+            timestamp:
+              session.timestamp ||
+              soil.timestamp ||
+              null,
+            t:   Number(soil.temp     ?? soil.t  ?? NaN),
+            m:   Number(soil.moisture ?? soil.m  ?? NaN),
+            ec:  Number(soil.ec ?? NaN),
+            ph:  Number(soil.ph ?? NaN),
+            n:   Number(soil.n ?? NaN),
+            p:   Number(soil.p ?? NaN),
+            k:   Number(soil.k ?? NaN),
+            shs: Number(soil.shs ?? NaN),
+            plantName: session.plantName || "",
+            stage:     session.stage || "",
+            advice:    session.advice || ""
+          };
+        });
+
         updateSummaryAndTable();
         if (historyData.length) updateCharts();
       } catch (err) {
@@ -933,22 +947,19 @@
         sendChatMessage();
       }
     });
-// لما يفتح الكيبورد (فوكس على حقل الشات) ارفع اللوحة فوق
-chatInput.addEventListener("focus", () => {
-  // جرّب 260 أو 300 لو 320 كثير
-  chatPanel.style.bottom = "280px";
-});
 
-// لما يسكر الكيبورد (يطلع من الحقل) رجّعها لمكانها الطبيعي
-chatInput.addEventListener("blur", () => {
-  chatPanel.style.bottom = "70px";
-});
-   
+    // رفع لوحة الشات فوق الكيبورد في الموبايل
+    chatInput.addEventListener("focus", () => {
+      chatPanel.style.bottom = "280px";
+    });
+
+    chatInput.addEventListener("blur", () => {
+      chatPanel.style.bottom = "70px";
+    });
 
     // ======== INIT ========
     document.addEventListener("DOMContentLoaded", () => {
       loadHistory();
-      // رسالة ترحيب في الشات
       appendMessage(
         "assistant",
         "حياك أخوي، أنا مساعد نَسغ الزراعي. اسألني عن التربة، الري أو التسميد وبجاوبك بأبسط طريقة أقدر عليها 🌿"
