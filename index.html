@@ -807,83 +807,85 @@
     aiBtn.addEventListener("click", callAI);
   </script>
 
-  <!-- سكربت شات مساعد نسغ (إرسال من أول ضغطة) -->
-  <script>
-    const CHAT_API_URL = "/api/nasgh-chat";
+// ================== شات بوت نسغ ==================
+    // ملاحظة: هذا الشات مخصّص فقط لأسئلة الزراعة والتربة
+    const chatFab = document.createElement("button");
+    chatFab.className = "chat-fab";
+    chatFab.innerHTML = '<span class="icon">💬</span><span>نسغ AI</span>';
 
-    const chatFab      = document.getElementById("nasghChatFab");
-    const chatPanel    = document.getElementById("nasghChatPanel");
-    const chatCloseBtn = document.getElementById("nasghChatClose");
-    const chatForm     = document.getElementById("nasghChatForm");
-    const chatInput    = document.getElementById("nasghChatInput");
-    const chatMessages = document.getElementById("nasghChatMessages");
+    const chatPanel = document.createElement("div");
+    chatPanel.className = "chat-panel";
+    chatPanel.innerHTML = `
+      <div class="chat-header">
+        <div class="chat-header-title">
+          <span class="name">مساعد نسغ</span>
+          <span class="hint">يشرح لك التوصية وقراءات التربة (أسئلة زراعية فقط)</span>
+        </div>
+        <button class="chat-close" aria-label="إغلاق">×</button>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-bubble from-bot">
+          حياك أخوي 🌱، هذا مساعد نسغ. إذا ما كانت التوصية واضحة أو حاب تعرف أكثر عن حالة التربة والري والتسميد، اسألني وبردّ عليك بأسلوب بسيط.
+          تنبيه بسيط: أجاوب فقط عن الزراعة والتربة، وما أرد على الأسئلة اللي خارج هذا الموضوع.
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <textarea id="chatInput" placeholder="اكتب سؤالك هنا عن التوصية أو التربة..."></textarea>
+        <button id="chatSend">إرسال</button>
+      </div>
+    `;
 
-    function getSoilForChat() {
-      try {
-        return window.latestSoilReading || null;
-      } catch {
-        return null;
-      }
-    }
+    document.body.appendChild(chatFab);
+    document.body.appendChild(chatPanel);
 
-    function getAdviceForChat() {
-      try {
-        return window.latestAiAdviceText || "";
-      } catch {
-        return "";
-      }
-    }
+    const chatMessages = chatPanel.querySelector("#chatMessages");
+    const chatInput = chatPanel.querySelector("#chatInput");
+    const chatSend = chatPanel.querySelector("#chatSend");
+    const chatCloseBtn = chatPanel.querySelector(".chat-close");
 
-    function addChatBubble(text, fromAI) {
+    // فتح الشات
+    chatFab.addEventListener("click", () => {
+      chatPanel.style.display = "flex";
+      chatPanel.style.bottom = "70px";
+      chatInput.focus();
+    });
+
+    // إغلاق الشات
+    chatCloseBtn.addEventListener("click", () => {
+      chatPanel.style.display = "none";
+    });
+
+    // إضافة فقاعة رسالة
+    function addMessage(text, fromBot = false) {
       const div = document.createElement("div");
-      div.className = "nasgh-chat-bubble " + (fromAI ? "ai" : "me");
+      div.className = "chat-bubble " + (fromBot ? "from-bot" : "from-user");
       div.textContent = text;
       chatMessages.appendChild(div);
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    function openChat() {
-      chatPanel.style.display = "block";
-      chatFab.style.display = "none";
-      setTimeout(() => chatInput.focus(), 50);
-    }
-
-    function closeChat() {
-      chatPanel.style.display = "none";
-      chatFab.style.display = "block";
-    }
-
-    chatFab.addEventListener("click", openChat);
-    chatCloseBtn.addEventListener("click", closeChat);
-
-    // الإرسال عن طريق submit
-    chatForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      await sendNasghChatMessage();
-    });
-
-    async function sendNasghChatMessage() {
+    async function sendChatMessage() {
       const text = chatInput.value.trim();
       if (!text) return;
 
-      addChatBubble(text, false);
-
+      // تظهر رسالة المستخدم مباشرة
+      addMessage(text, false);
       chatInput.value = "";
-      chatInput.blur(); // ينزل الكيبورد بعد الإرسال
+      chatInput.focus();
 
-      const loadingId = "nasgh-loading-" + Date.now();
-      const loadingDiv = document.createElement("div");
-      loadingDiv.className = "nasgh-chat-bubble ai";
-      loadingDiv.id = loadingId;
-      loadingDiv.textContent = "جاري التفكير في إجابة تناسب قراءات جهاز نسغ...";
-      chatMessages.appendChild(loadingDiv);
+      // رسالة انتظار بسيطة
+      chatSend.disabled = true;
+      const thinkingBubble = document.createElement("div");
+      thinkingBubble.className = "chat-bubble from-bot";
+      thinkingBubble.textContent = "جالس أجهز لك إجابة تناسب قراءات جهاز نسغ...";
+      chatMessages.appendChild(thinkingBubble);
       chatMessages.scrollTop = chatMessages.scrollHeight;
 
       try {
         const payload = {
           message: text,
-          soil: getSoilForChat(),
-          lastAdvice: getAdviceForChat(),
+          soil: lastData || null,                 // آخر قراءات من العصا
+          lastAdvice: aiAdviceEl.textContent || "" // نص التوصية في نفس الصفحة
         };
 
         const res = await fetch(CHAT_API_URL, {
@@ -896,19 +898,38 @@
           throw new Error("HTTP " + res.status);
         }
 
-        const replyText = await res.text();
+        const data = await res.text();
 
-        loadingDiv.remove();
-        addChatBubble(replyText, true);
+        thinkingBubble.remove();
+        addMessage(data, true);
       } catch (err) {
-        loadingDiv.remove();
-        addChatBubble(
-          "صار خلل بسيط في الاتصال بالخدمة، جرّب بعد شوي أو تأكد من الإنترنت عندك.",
-          true
-        );
         console.error(err);
+        thinkingBubble.remove();
+        addMessage("صار خطأ بسيط في الاتصال، جرّب مرة ثانية بعد شوي.", true);
+      } finally {
+        chatSend.disabled = false;
       }
     }
+
+    // إرسال بالزر
+    chatSend.addEventListener("click", sendChatMessage);
+
+    // إرسال بالإنتر (ضغطة وحدة، بدون شفت)
+    chatInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+      }
+    });
+
+    // رفع الشات فوق الكيبورد وقت الكتابة
+    chatInput.addEventListener("focus", () => {
+      chatPanel.style.bottom = "320px";
+    });
+
+    chatInput.addEventListener("blur", () => {
+      chatPanel.style.bottom = "70px";
+    });
   </script>
 </body>
 </html>
