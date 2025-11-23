@@ -517,7 +517,6 @@
       <div class="subtitle">اتصال مباشر مع عصا نَسغ عبر Bluetooth Low Energy.</div>
 
       <div id="status">الحالة: غير متصل</div>
-
       <button id="connectBtn" class="btn">اتصال بعصا نَسغ</button>
       <button id="disconnectBtn" class="btn secondary" disabled>قطع الاتصال</button>
 
@@ -623,9 +622,14 @@
       <div class="ai-title">توصية نَسغ بالذكاء الاصطناعي</div>
       <div class="ai-status" id="aiStatus">لم يتم طلب التوصية بعد.</div>
       <button id="aiBtn" class="btn ai">تحليل القراءات وإعطاء توصية</button>
+
       <div class="ai-box" id="aiAdvice">
         عند الضغط على الزر سيتم إرسال آخر قراءة متوفرة وتحليلها لإخراج توصية ري وتسميد بالعربية.
       </div>
+
+      <br />
+      <button id="saveBtn" class="btn secondary" disabled>حفظ هذه البيانات في الداشبورد</button>
+      <div id="saveStatus" class="ai-status"></div>
     </div>
   </div>
 
@@ -675,6 +679,9 @@
     const aiAdviceEl = document.getElementById("aiAdvice");
     const aiBtn      = document.getElementById("aiBtn");
 
+    const saveBtn = document.getElementById("saveBtn");
+    const saveStatusEl = document.getElementById("saveStatus");
+
     // عناصر إعداد النبات والجدول
     const plantNameInput = document.getElementById("plantNameInput");
     const plantStageSelect = document.getElementById("plantStageSelect");
@@ -682,11 +689,16 @@
     const targetsStatusEl = document.getElementById("targetsStatus");
     const targetsTableBody = document.getElementById("targetsTableBody");
 
-    // API URLs
-    const CLOUD_API_URL  = "/api/soil-data";
-    const AI_API_URL     = "/api/nasgh-ai";
-    const TARGETS_API_URL= "/api/nasgh-targets";
-    const CHAT_API_URL   = "/api/nasgh-chat";
+    // API لحفظ القراءات في الداتا بيس
+    const CLOUD_API_URL = "/api/soil-data";
+    // API لتوصية الذكاء الاصطناعي
+    const AI_API_URL = "/api/nasgh-ai";
+    // API لقيم المدى المثالي
+    const TARGETS_API_URL = "/api/nasgh-targets";
+    // API لشات بوت نسغ
+    const CHAT_API_URL = "/api/nasgh-chat";
+    // API لحفظ جلسة كاملة (قراءة + جدول + توصية)
+    const SESSION_SAVE_URL = "/api/soil-session";
 
     function setStatus(text, isError = false) {
       statusEl.textContent = "الحالة: " + text;
@@ -701,7 +713,7 @@
       });
     }
 
-    // حفظ القراءة في الداتا بيس (POST)
+    // حفظ القراءة في الداتا بيس (POST بسيط)
     async function saveReadingToCloud(data) {
       try {
         await fetch(CLOUD_API_URL, {
@@ -770,7 +782,7 @@
           Number(data.shs).toFixed(1);
       }
 
-      // حفظ القراءة في الداتا بيس
+      // حفظ القراءة الخام
       saveReadingToCloud(data);
     }
 
@@ -847,24 +859,12 @@
     connectBtn.addEventListener("click", connect);
     disconnectBtn.addEventListener("click", disconnect);
 
-    // ========= متغيرات تربط الجدول مع التوصيات =========
-    const PARAM_CONFIG = [
-      { key: "temp",     field: "t",   label: "درجة الحرارة", unit: "°م" },
-      { key: "moisture", field: "m",   label: "رطوبة التربة", unit: "%" },
-      { key: "ec",       field: "ec",  label: "الملوحة EC",   unit: "µS/cm" },
-      { key: "ph",       field: "ph",  label: "درجة الحموضة pH", unit: "" },
-      { key: "n",        field: "n",   label: "النيتروجين (N)", unit: "mg/kg" },
-      { key: "p",        field: "p",   label: "الفوسفور (P)", unit: "mg/kg" },
-      { key: "k",        field: "k",   label: "البوتاسيوم (K)", unit: "mg/kg" },
-      { key: "shs",      field: "shs", label: "مؤشر صحة التربة SHS", unit: "" },
-      { key: "humic",    field: "hum", label: "مؤشر الهيوميك أسيد", unit: "" }
-    ];
-
-    // هنا نخزن آخر targets من السيرفر + حالة كل عنصر (نقص / مناسب / زيادة)
-    let lastTargets = null;
-    let lastStatusSummary = null;
-
     // ============ AI للتوصية النصية ============
+
+    // ملخص حالة العناصر + آخر أهداف تم حسابها
+    let lastStatusSummary = {};
+    let lastTargetsRaw = null;
+
     async function callAI() {
       if (!lastData) {
         aiStatusEl.textContent = "لا توجد قراءة حديثة لإرسالها. الرجاء تشغيل عصا نَسغ أولاً.";
@@ -874,6 +874,8 @@
       aiBtn.disabled = true;
       aiStatusEl.textContent = "جاري إرسال البيانات وتحليلها...";
       aiAdviceEl.textContent = "جاري التواصل مع نموذج الذكاء الاصطناعي ...";
+      saveBtn.disabled = true;
+      saveStatusEl.textContent = "";
 
       try {
         const payload = {
@@ -890,11 +892,9 @@
             humic: lastData.hum
           },
           language: "ar",
-          // ربط التوصية بالجدول (نوع النبات + المرحلة + المدى المثالي + حالة كل عنصر)
           recommendationContext: {
-            plantName: plantNameInput ? plantNameInput.value.trim() || null : null,
-            stage: plantStageSelect ? plantStageSelect.value || null : null,
-            targets: lastTargets,
+            plantName: plantNameInput.value.trim() || null,
+            stage: plantStageSelect.value || null,
             statusSummary: lastStatusSummary
           }
         };
@@ -914,6 +914,10 @@
         aiStatusEl.textContent = "تم استلام التوصية بنجاح ✅";
         aiAdviceEl.textContent = adviceText;
 
+        // نسمح بالحفظ بعد ظهور التوصية
+        saveBtn.disabled = false;
+        saveStatusEl.textContent = "تقدر الحين تحفظ هذه النتائج في الداشبورد.";
+
       } catch (err) {
         console.error(err);
         aiStatusEl.textContent = "حدث خطأ أثناء طلب التوصية.";
@@ -926,16 +930,27 @@
     aiBtn.addEventListener("click", callAI);
 
     // ============ AI لحساب المدى المثالي + البارات ============
+    const PARAM_CONFIG = [
+      { key: "temp",     field: "t",   label: "درجة الحرارة", unit: "°م" },
+      { key: "moisture", field: "m",   label: "رطوبة التربة", unit: "%" },
+      { key: "ec",       field: "ec",  label: "الملوحة EC",   unit: "µS/cm" },
+      { key: "ph",       field: "ph",  label: "درجة الحموضة pH", unit: "" },
+      { key: "n",        field: "n",   label: "النيتروجين (N)", unit: "mg/kg" },
+      { key: "p",        field: "p",   label: "الفوسفور (P)", unit: "mg/kg" },
+      { key: "k",        field: "k",   label: "البوتاسيوم (K)", unit: "mg/kg" },
+      { key: "shs",      field: "shs", label: "مؤشر صحة التربة SHS", unit: "" },
+      { key: "humic",    field: "hum", label: "مؤشر الهيوميك أسيد", unit: "" }
+    ];
+
     function clearTargetsTable() {
       targetsTableBody.innerHTML = "";
+      lastStatusSummary = {};
+      lastTargetsRaw = null;
     }
 
     function buildTargetsTable(targets) {
       clearTargetsTable();
-
-      // نخزن آخر targets
-      lastTargets = targets || {};
-      lastStatusSummary = {};
+      lastTargetsRaw = targets || {};
 
       if (!lastData) {
         const tr = document.createElement("tr");
@@ -1025,11 +1040,11 @@
         tr.appendChild(statusTd);
         targetsTableBody.appendChild(tr);
 
-        // نخزن الحالة عشان نستخدمها في التوصية
+        // نخزن ملخص الحالة لهذا العنصر
         lastStatusSummary[p.key] = {
-          status: statusText,   // نقص / مناسب / زيادة / غير معروف
-          min,
-          max,
+          status: statusText,
+          min: min,
+          max: max,
           unit: p.unit || "",
           value: isNaN(value) ? null : value
         };
@@ -1084,6 +1099,48 @@
 
     targetsBtn.addEventListener("click", callTargetsAI);
 
+    // ============ حفظ جلسة كاملة في الداشبورد ============
+    async function saveSession() {
+      if (!lastData) {
+        saveStatusEl.textContent = "لا توجد قراءة لحفظها.";
+        return;
+      }
+
+      saveBtn.disabled = true;
+      saveStatusEl.textContent = "جارٍ حفظ البيانات...";
+
+      try {
+        const payload = {
+          soil: lastData,
+          plantName: plantNameInput.value.trim() || null,
+          stage: plantStageSelect.value || null,
+          targets: lastTargetsRaw,
+          statusSummary: lastStatusSummary,
+          advice: aiAdviceEl.textContent || "",
+          createdAt: new Date().toISOString()
+        };
+
+        const res = await fetch(SESSION_SAVE_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          throw new Error("HTTP " + res.status);
+        }
+
+        saveStatusEl.textContent = "تم حفظ البيانات بنجاح ✅. تقدر تشوفها من صفحة لوحة القراءات المحفوظة.";
+      } catch (err) {
+        console.error(err);
+        saveStatusEl.textContent = "صار خطأ أثناء الحفظ، جرّب مرة ثانية.";
+      } finally {
+        saveBtn.disabled = false;
+      }
+    }
+
+    saveBtn.addEventListener("click", saveSession);
+
     // ================== شات بوت نسغ ==================
     const chatFab = document.createElement("button");
     chatFab.className = "chat-fab";
@@ -1114,8 +1171,8 @@
     document.body.appendChild(chatPanel);
 
     const chatMessages = chatPanel.querySelector("#chatMessages");
-    const chatInput    = chatPanel.querySelector("#chatInput");
-    const chatSend     = chatPanel.querySelector("#chatSend");
+    const chatInput = chatPanel.querySelector("#chatInput");
+    const chatSend = chatPanel.querySelector("#chatSend");
     const chatCloseBtn = chatPanel.querySelector(".chat-close");
 
     chatFab.addEventListener("click", () => {
