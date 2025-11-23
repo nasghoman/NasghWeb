@@ -1,5 +1,3 @@
-// api/nasgh-chat.js
-
 export default async function handler(req, res) {
   // ===== CORS =====
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -15,10 +13,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ===== قراءة الـ body يدويًا =====
+    // قراءة البودي يدويًا (متوافق مع Vercel)
     const bodyString = await new Promise((resolve, reject) => {
       let data = "";
-      req.on("data", (chunk) => (data += chunk));
+      req.on("data", c => (data += c));
       req.on("end", () => resolve(data));
       req.on("error", reject);
     });
@@ -30,108 +28,112 @@ export default async function handler(req, res) {
       return res.status(400).send("Invalid JSON body");
     }
 
-    const message = body.message;
-    const history = Array.isArray(body.history) ? body.history : [];
-
-    if (!message) {
-      return res.status(400).send("Missing message");
-    }
+    const userMessage = body.message || "";
+    const soil = body.soil || null;
+    const lastAdvice = body.lastAdvice || "";
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return res.status(500).send("Missing GEMINI_API_KEY env var");
     }
 
-    // ===== تجهيز تاريخ المحادثة =====
-    const historyText = history
-      .map((turn, idx) => {
-        const who = turn.role === "assistant" ? "مساعد نَسغ" : "المزارع";
-        return `${who} ${idx + 1}: ${turn.content}`;
-      })
-      .join("\n");
+    // لو السؤال غير زراعي → رد اعتذار بسيط
+    const guardPrompt = `
+السؤال من المزارع:
+"${userMessage}"
 
-    // ===== نص البرومبت (أسلوب نَسغ + فلتر الزراعة فقط) =====
-    const promptText = `
-أنت مساعد زراعي ذكي اسمه "نَسغ" تابع لمشروع عُماني لمراقبة التربة والري.
-
-أسلوب الرد المطلوب:
-- افتح الرد بجملة ترحيب قصيرة مثل: "حياك أخوي" أو "هلا أخوي"، ثم كمل الجواب.
-- بعد الترحيب، أعطِ الجواب في فقرة واحدة قصيرة من 2 إلى 4 جمل فقط، بدون تعداد نقطي.
-- استخدم عربي بسيط قريب من كلام المزارع، مع لمسة خفيفة من العامية العُمانية (مثل: حياك أخوي، تمام، شوي).
-- لا تستخدم كلمات مبالغة في القرب مثل: حبي، حبيبي، قلبي، حبيبتي، وما شابه.
-- الشرح يكون واضح وسهل، ويركّز على ماذا يفعل المزارع عملياً الآن.
-
-نطاق اختصاصك:
-- ركّز فقط على المواضيع الزراعية المتعلقة بـ:
-  التربة، الري، التسميد، الآفات الزراعية، صحة النبات، قراءات أجهزة نَسغ (رطوبة، حرارة، pH، EC، NPK، SHS)، وإدارة المزرعة بشكل عام.
-- إذا كان سؤال المزارع لا علاقة له بالزراعة أو بالمزرعة أو بالتربة أو الأجهزة الزراعية:
-  *لا تجب عن محتوى السؤال*،
-  واكتب ردّاً قصيراً من جملتين تقريباً مثل:
-  "حياك أخوي، هذا السؤال خارج مجال عمل نَسغ، نحن متخصّصين في الزراعة والتربة والري. لو عندك أي استفسار عن مزرعتك أو تربتك أنا حاضر أساعدك."
-- لا تذكر أبداً أنك نموذج ذكاء اصطناعي أو تابع لـ Google أو Gemini؛ أنت فقط "مساعد نَسغ".
-
-تاريخ المحادثة السابقة (للاطلاع فقط، لا تعِده حرفياً):
-${historyText || "لا يوجد تاريخ سابق."}
-
-سؤال المزارع الآن:
-${message}
+قرّر فقط هل السؤال متعلق بالزراعة والتربة والنباتات والري والتسميد أم لا.
+- اذا كان متعلقًا بالزراعة بأي شكل، أجب بكلمة واحدة: "AGRI"
+- اذا كان لا علاقة له بالزراعة، أجب بكلمة واحدة: "OTHER"
+لا تكتب أي شيء آخر غير هذه الكلمة.
 `;
 
-    const payload = {
-      contents: [
-        {
-          parts: [{ text: promptText }],
-        },
-      ],
-    };
+    async function callGemini(promptText, model) {
+      const payload = {
+        contents: [{ parts: [{ text: promptText }] }],
+      };
+      const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          json.error?.message || `Gemini error: ${response.status}`
+        );
+      }
+      const text = json.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      return text.trim();
+    }
 
-    // ===== قائمة الموديلات =====
+    // 1) فحص هل السؤال زراعي أو لا
+    let classification = "AGRI";
+    try {
+      classification = await callGemini(guardPrompt, "gemini-2.0-flash");
+    } catch (e) {
+      // لو فشل التصنيف، نكمل عادي ونعتبره AGRI
+      classification = "AGRI";
+    }
+
+    if (classification !== "AGRI") {
+      const safeReply =
+        "حياك أخوي، هذا المساعد مخصص لأسئلة الزراعة والتربة والري والتسميد فقط 🌱. إذا عندك سؤال عن مزرعتك أو تربة نبات معيّن، اطرحه وبساعدك إن شاء الله.";
+      return res.status(200).send(safeReply);
+    }
+
+    // 2) بناء برومبت الإجابة الزراعية بأسلوب نسغ
+    const soilText = soil ? JSON.stringify(soil, null, 2) : "لا توجد قراءات حديثة";
+    const adviceText = lastAdvice || "لا توجد توصية مكتوبة حالياً.";
+
+    const mainPrompt = `
+أنت مساعد زراعي لمنتج اسمه "نسغ" في عمان.
+اللغة المطلوبة: عربية بسيطة + لمسة خفيفة من العامية العمانية بدون مبالغة.
+
+المعلومات المتاحة:
+- آخر قراءات من جهاز نسغ إن وجدت:
+${soilText}
+
+- آخر توصية مكتوبة من نسغ إن وجدت:
+${adviceText}
+
+- سؤال المزارع:
+"${userMessage}"
+
+التعليمات:
+- جاوب بصيغة محترمة وقريبة من المزارع، استخدم كلمات مثل "أخوي"، "تقدر"، "حاول"، لكن تجنّب كلمات مثل "حبيبي" أو "قلبي".
+- خلك مختصر وواضح وسهل الفهم (من 3 إلى 6 جمل فقط).
+- أربط إجابتك قدر الإمكان بقراءات التربة أو التوصية السابقة إذا كانت مناسبة للسؤال.
+- لو المزارع يسأل عن معنى مرحلة نمو معينة أو شرح توصية، اشرحها له بلغة بسيطة.
+- لا تذكر أسماء موديلات الذكاء الاصطناعي.
+- لا تذكر إنك نموذج لغوي، ركّز أن الكلام صادر من "مساعد نسغ".
+- لا تُرجع أي JSON أو أكواد؛ أرجع نص عربي طبيعي فقط.
+
+ابدأ الرد مباشرة بدون مقدمة تقنية.
+`;
+
     const MODELS = [
-      "gemini-2.0-pro",
       "gemini-2.0-flash",
+      "gemini-2.0-pro",
       "gemini-2.0-flash-lite",
     ];
 
-    const baseUrl = "https://generativelanguage.googleapis.com/v1/models";
     let lastError = null;
-
     for (const model of MODELS) {
       try {
-        const url = `${baseUrl}/${model}:generateContent?key=${apiKey}`;
-
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        const json = await response.json();
-
-        if (!response.ok) {
-          lastError = json.error || response.statusText;
-          continue;
-        }
-
-        const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        if (text) {
-          return res.status(200).json({
-            reply: text,
-            modelUsed: model,
-          });
-        } else {
-          lastError = "Empty response from " + model;
-        }
+        const reply = await callGemini(mainPrompt, model);
+        // نرجّع النص فقط بدون JSON
+        return res.status(200).send(reply);
       } catch (err) {
         lastError = err.message;
+        continue;
       }
     }
 
     return res
       .status(500)
-      .send(
-        "Gemini failed on all models. Last error: " + JSON.stringify(lastError)
-      );
+      .send("Gemini chat failed. Last error: " + JSON.stringify(lastError));
   } catch (err) {
     return res.status(500).send("Server error: " + err.toString());
   }
