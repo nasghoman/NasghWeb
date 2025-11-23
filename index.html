@@ -31,13 +31,14 @@
       min-height: 100vh;
       background: radial-gradient(circle at top left, #eafff3, #f4fff9 40%, #ffffff 100%);
       margin: 0;
-      padding: 12px;
+      padding: 16px;
       color: #123322;
     }
 
     .page {
       max-width: 980px;
-      margin: 0 auto 80px auto; /* مساحة لزر الشات */
+      margin: 0 auto;
+      padding-bottom: 96px; /* مساحة للشات */
     }
 
     /* الشريط العلوي مع اللوجو */
@@ -50,7 +51,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
+      gap: 12px;
     }
 
     .topbar-left {
@@ -78,14 +80,15 @@
 
     .topbar-right {
       display: flex;
+      gap: 8px;
       flex-wrap: wrap;
-      gap: 6px;
+      justify-content: flex-end;
     }
 
     .topbar-right a {
       text-decoration: none;
       font-size: 13px;
-      padding: 7px 12px;
+      padding: 8px 14px;
       border-radius: 999px;
       border: 1px solid #c8e6c9;
       color: var(--nasgh-dark-green);
@@ -104,30 +107,30 @@
       background: #ffffff;
       border-radius: 18px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-      padding: 14px 16px 18px;
-      margin-bottom: 14px;
+      padding: 16px 20px 20px;
+      margin-bottom: 16px;
       border: 1px solid #e0f2e9;
     }
 
     h1 {
-      font-size: 20px;
+      font-size: 22px;
       margin-top: 0;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       text-align: center;
       color: var(--nasgh-dark-green);
     }
 
     .subtitle {
       text-align: center;
-      font-size: 13px;
+      font-size: 14px;
       color: #4f6f5d;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
 
     #status {
-      font-size: 13px;
-      margin-bottom: 10px;
-      padding: 7px 9px;
+      font-size: 14px;
+      margin-bottom: 12px;
+      padding: 8px 10px;
       border-radius: 10px;
       background: #e8f5e9;
       border: 1px solid #c8e6c9;
@@ -143,10 +146,10 @@
       display: inline-block;
       border: none;
       border-radius: 999px;
-      padding: 8px 14px;
-      font-size: 13px;
+      padding: 9px 16px;
+      font-size: 14px;
       cursor: pointer;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       background: linear-gradient(135deg, var(--nasgh-green), var(--nasgh-yellow));
       color: #ffffff;
       transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.12s;
@@ -180,13 +183,13 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 6px;
-      font-size: 13px;
+      margin-top: 8px;
+      font-size: 14px;
     }
 
     th, td {
       border: 1px solid #e0e0e0;
-      padding: 5px 3px;
+      padding: 6px 4px;
       text-align: center;
     }
 
@@ -200,289 +203,195 @@
     }
 
     .reading-id {
-      font-size: 12px;
+      font-size: 13px;
       color: #607d8b;
-      margin-bottom: 3px;
+      margin-bottom: 4px;
     }
 
     .time {
-      font-size: 11px;
+      font-size: 12px;
       color: #90a4ae;
       text-align: left;
     }
 
     .ai-title {
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 600;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       color: #1b5e20;
     }
 
     .ai-status {
-      font-size: 12px;
-      margin-bottom: 3px;
+      font-size: 13px;
+      margin-bottom: 4px;
       color: #455a64;
     }
 
     .ai-box {
-      margin-top: 6px;
-      padding: 9px 10px;
+      margin-top: 8px;
+      padding: 10px 12px;
       border-radius: 10px;
       border: 1px solid #cfd8dc;
       background: #fafafa;
-      font-size: 13px;
+      font-size: 14px;
       line-height: 1.6;
       white-space: pre-wrap;
     }
 
-    /* ===== نموذج النبات + جدول البارات ===== */
-    .plant-form {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 6px;
-      margin-top: 4px;
-      margin-bottom: 6px;
-    }
-
-    .plant-form label {
-      font-size: 12px;
-      color: #455a64;
-    }
-
-    .plant-form input,
-    .plant-form select {
-      padding: 7px 8px;
-      border-radius: 10px;
-      border: 1px solid #cfd8dc;
-      font-size: 13px;
-      outline: none;
-      background: #f9fffb;
-    }
-
-    .plant-form input:focus,
-    .plant-form select:focus {
-      border-color: var(--nasgh-green);
-      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.18);
-      background: #ffffff;
-    }
-
-    .targets-table {
-      margin-top: 6px;
-    }
-
-    .bar-wrapper {
-      width: 100%;
-      height: 12px;
-      border-radius: 999px;
-      background: #eceff1;
-      overflow: hidden;
-      margin-bottom: 3px;
-    }
-
-    .bar-fill {
-      height: 100%;
-      width: 40%;
-    }
-
-    .bar-low {
-      background: #e53935;   /* أحمر */
-    }
-
-    .bar-ok {
-      background: #43a047;   /* أخضر */
-    }
-
-    .bar-high {
-      background: #8e24aa;   /* بنفسجي */
-    }
-
-    .legend {
-      margin-top: 6px;
-      font-size: 11px;
-      color: #455a64;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .legend-box {
-      width: 14px;
-      height: 8px;
-      border-radius: 999px;
-      display: inline-block;
-      margin-left: 3px;
-    }
-
-    .legend-box.low { background: #e53935; }
-    .legend-box.ok  { background: #43a047; }
-    .legend-box.high{ background: #8e24aa; }
-
     @media (max-width: 600px) {
-      body {
-        padding: 8px;
-      }
       .topbar {
         flex-direction: column;
         align-items: flex-start;
-        gap: 8px;
       }
       .topbar-right {
-        width: 100%;
+        align-self: stretch;
         justify-content: flex-start;
-        flex-wrap: wrap;
-      }
-      .btn {
-        width: auto;
       }
     }
 
-    /* ===== شات بوت نسغ ===== */
-    .chat-fab {
+    /* ===== شات مساعد نسغ ===== */
+    .nasgh-chat-fab {
       position: fixed;
-      left: 18px;
-      bottom: 20px;
-      background: linear-gradient(135deg, var(--nasgh-green), var(--nasgh-yellow));
-      color: #ffffff;
+      bottom: 16px;
+      right: 16px;
+      z-index: 60;
+    }
+
+    .nasgh-chat-fab button {
+      border: none;
       border-radius: 999px;
-      padding: 10px 18px;
+      padding: 10px 16px;
+      font-size: 14px;
+      background: linear-gradient(135deg, var(--nasgh-green), var(--nasgh-yellow));
+      color: #fff;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
       display: flex;
       align-items: center;
       gap: 6px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-      border: none;
-      font-size: 14px;
-      cursor: pointer;
-      z-index: 40;
     }
 
-    .chat-fab span.icon {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #2e7d32;
-      font-size: 14px;
-    }
-
-    .chat-panel {
+    .nasgh-chat-panel {
       position: fixed;
-      left: 8px;
-      right: 8px;
-      bottom: 70px;
-      max-width: 480px;
+      bottom: 0;
+      right: 0;
+      left: 0;
+      max-width: 640px;
       margin: 0 auto;
-      background: #ffffff;
-      border-radius: 18px;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+      z-index: 70;
+      padding: 0 8px 8px;
+      box-sizing: border-box;
+    }
+
+    .nasgh-chat-card {
+      background: #f5fff7;
+      border-radius: 20px 20px 0 0;
       border: 1px solid #c8e6c9;
-      display: none;
+      box-shadow: 0 -6px 20px rgba(0,0,0,0.18);
+      overflow: hidden;
+      display: flex;
       flex-direction: column;
       max-height: 70vh;
-      z-index: 50;
     }
 
-    .chat-header {
-      padding: 10px 12px;
+    .nasgh-chat-header {
+      padding: 10px 14px;
       border-bottom: 1px solid #e0f2e9;
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      background: #f5fff7;
-      border-radius: 18px 18px 0 0;
+      align-items: center;
+      background: #ffffff;
     }
 
-    .chat-header-title {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .chat-header-title .name {
+    .nasgh-chat-header-title {
       font-size: 14px;
       font-weight: 600;
-      color: var(--nasgh-dark-green);
+      color: #135a3b;
     }
 
-    .chat-header-title .hint {
+    .nasgh-chat-header-sub {
       font-size: 11px;
       color: #607d8b;
     }
 
-    .chat-close {
+    .nasgh-chat-header button {
       border: none;
       background: transparent;
-      font-size: 18px;
+      font-size: 16px;
       cursor: pointer;
-      color: #607d8b;
     }
 
-    .chat-messages {
+    .nasgh-chat-messages {
       padding: 10px 12px;
       overflow-y: auto;
       flex: 1;
-      background: #ffffff;
+      background: #f5fff7;
     }
 
-    .chat-bubble {
-      max-width: 90%;
+    .nasgh-chat-bubble {
+      max-width: 88%;
       padding: 8px 10px;
       border-radius: 12px;
       margin-bottom: 6px;
       font-size: 13px;
-      line-height: 1.6;
+      line-height: 1.5;
       white-space: pre-wrap;
     }
 
-    .from-user {
+    .nasgh-chat-bubble.me {
       margin-left: auto;
-      background: #e8f5e9;
-      border-radius: 12px 0 12px 12px;
+      background: #c8e6c9;
+      border-bottom-right-radius: 2px;
     }
 
-    .from-bot {
+    .nasgh-chat-bubble.ai {
       margin-right: auto;
-      background: #f1f8e9;
-      border-radius: 0 12px 12px 12px;
+      background: #ffffff;
+      border-bottom-left-radius: 2px;
+      border: 1px solid #e0f2e9;
     }
 
-    .chat-input-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 10px 10px;
+    .nasgh-chat-input-row {
+      padding: 8px;
       border-top: 1px solid #e0f2e9;
       background: #ffffff;
-      border-radius: 0 0 18px 18px;
+      display: flex;
+      gap: 6px;
     }
 
-    .chat-input-row textarea {
+    .nasgh-chat-input-row input {
       flex: 1;
-      resize: none;
-      border-radius: 12px;
+      padding: 8px 10px;
+      border-radius: 999px;
       border: 1px solid #cfd8dc;
-      padding: 7px 8px;
       font-size: 13px;
-      min-height: 34px;
-      max-height: 80px;
+      outline: none;
     }
 
-    .chat-input-row button {
+    .nasgh-chat-input-row input:focus {
+      border-color: #4caf50;
+      box-shadow: 0 0 0 2px rgba(76,175,80,0.18);
+    }
+
+    .nasgh-chat-input-row button {
       border-radius: 999px;
       border: none;
-      background: var(--nasgh-green);
-      color: white;
-      padding: 7px 12px;
+      padding: 0 14px;
       font-size: 13px;
+      background: #4caf50;
+      color: #fff;
       cursor: pointer;
     }
 
-    .chat-input-row button:disabled {
-      opacity: 0.6;
-      cursor: default;
+    @media (min-width: 768px) {
+      .nasgh-chat-panel {
+        right: 16px;
+        left: auto;
+        width: 360px;
+      }
+      .nasgh-chat-card {
+        border-radius: 18px;
+        max-height: 80vh;
+      }
     }
   </style>
 </head>
@@ -498,15 +407,17 @@
         </div>
       </div>
       <div class="topbar-right">
-        <a href="dashboard.html">لوحة القراءات المحفوظة</a>
+        <a href="dashboard.html">لوحة المتابعة (Dashboard)</a>
         <a href="login.html">تسجيل الدخول / تبديل الحساب</a>
       </div>
     </header>
 
     <!-- بطاقة القراءات -->
     <div class="card">
-      <h1>لوحة قراءات نَسغ</h1>
-      <div class="subtitle">اتصال مباشر مع عصا نَسغ عبر Bluetooth Low Energy.</div>
+      <h1>لوحة قراءات عصا نَسغ</h1>
+      <div class="subtitle">
+        اتصال مباشر مع عصا نَسغ عبر Bluetooth Low Energy، ويتم حفظ القراءات تلقائيًا في قاعدة البيانات.
+      </div>
 
       <div id="status">الحالة: غير متصل</div>
 
@@ -564,52 +475,6 @@
       </table>
     </div>
 
-    <!-- بطاقة إعداد النبات وأفضل القراءات -->
-    <div class="card">
-      <div class="ai-title">إعداد النبات وأفضل القراءات</div>
-      <div class="ai-status">
-        اكتب نوع النبات واختر مرحلة النمو الحالية، ونسغ AI بيحسب لك المدى المثالي لكل عنصر ويقارنه بآخر قراءة من عصا نَسغ.
-      </div>
-
-      <div class="plant-form">
-        <label for="plantNameInput">نوع النبات</label>
-        <input id="plantNameInput" type="text" placeholder="مثال: طماطم، خيار، ليمون..." />
-
-        <label for="plantStageSelect">مرحلة النمو الحالية</label>
-        <select id="plantStageSelect">
-          <option value="">اختر المرحلة الحالية</option>
-          <option value="vegetative">مرحلة النمو الخضري</option>
-          <option value="flowering">مرحلة الإزهار</option>
-          <option value="fruit-setting">مرحلة عقد الثمار</option>
-          <option value="harvest">مرحلة الإثمار / الحصاد</option>
-        </select>
-
-        <button id="targetsBtn" class="btn ai" type="button">حساب أفضل القراءات</button>
-      </div>
-
-      <div id="targetsStatus" class="ai-status"></div>
-
-      <table id="targetsTable" class="targets-table">
-        <thead>
-          <tr>
-            <th>العنصر</th>
-            <th>قراءة عصا نَسغ</th>
-            <th>المدى المثالي</th>
-            <th>الحالة</th>
-          </tr>
-        </thead>
-        <tbody id="targetsTableBody">
-          <!-- يمتلئ ديناميكياً -->
-        </tbody>
-      </table>
-
-      <div class="legend">
-        <span class="legend-box low"></span> نقص
-        <span class="legend-box ok"></span> مناسب
-        <span class="legend-box high"></span> زيادة
-      </div>
-    </div>
-
     <!-- بطاقة توصية الذكاء الاصطناعي -->
     <div class="card">
       <div class="ai-title">توصية نَسغ بالذكاء الاصطناعي</div>
@@ -618,6 +483,43 @@
       <div class="ai-box" id="aiAdvice">
         عند الضغط على الزر سيتم إرسال آخر قراءة متوفرة وتحليلها لإخراج توصية ري وتسميد بالعربية.
       </div>
+    </div>
+  </div>
+
+  <!-- زر وواجهة شات مساعد نسغ -->
+  <div class="nasgh-chat-fab" id="nasghChatFab">
+    <button type="button">
+      AI نسغ
+      <span>💬</span>
+    </button>
+  </div>
+
+  <div class="nasgh-chat-panel" id="nasghChatPanel" style="display:none;">
+    <div class="nasgh-chat-card">
+      <div class="nasgh-chat-header">
+        <div>
+          <div class="nasgh-chat-header-title">مساعد نَسغ</div>
+          <div class="nasgh-chat-header-sub">يشرح لك التوصيات وقراءات التربة</div>
+        </div>
+        <button type="button" id="nasghChatClose">✕</button>
+      </div>
+
+      <div class="nasgh-chat-messages" id="nasghChatMessages">
+        <div class="nasgh-chat-bubble ai">
+          حياك أخوي 🌱، هذا مساعد نسغ. إذا ما كانت التوصية واضحة لك أو حاب تعرف أكثر عن حالة التربة، اسألني و بشرح لك بأسلوب بسيط.
+        </div>
+      </div>
+
+      <form id="nasghChatForm" class="nasgh-chat-input-row">
+        <input
+          id="nasghChatInput"
+          type="text"
+          placeholder="اكتب سؤالك هنا عن التوصية أو التربة..."
+          autocomplete="off"
+          required
+        />
+        <button type="submit" id="nasghChatSend">إرسال</button>
+      </form>
     </div>
   </div>
 
@@ -638,7 +540,6 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // لو المستخدم غير مسجّل دخول → يرجع لصفحة اللوجن
     onAuthStateChanged(auth, (user) => {
       if (!user) {
         window.location.href = "login.html";
@@ -646,7 +547,7 @@
     });
   </script>
 
-  <!-- سكربت البلوتوث + AI + شات بوت -->
+  <!-- سكربت البلوتوث + AI + حفظ القراءات -->
   <script>
     // ================== إعدادات BLE (مطابقة لكود ESP32) ==================
     const SERVICE_UUID        = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
@@ -655,6 +556,10 @@
     let device = null;
     let characteristic = null;
     let lastData = null; // نخزن آخر JSON مستلم من العصا
+
+    // نستخدمها في الشات
+    window.latestSoilReading = null;
+    window.latestAiAdviceText = "";
 
     const statusEl   = document.getElementById("status");
     const connectBtn = document.getElementById("connectBtn");
@@ -666,22 +571,6 @@
     const aiStatusEl = document.getElementById("aiStatus");
     const aiAdviceEl = document.getElementById("aiAdvice");
     const aiBtn      = document.getElementById("aiBtn");
-
-    // عناصر إعداد النبات والجدول
-    const plantNameInput = document.getElementById("plantNameInput");
-    const plantStageSelect = document.getElementById("plantStageSelect");
-    const targetsBtn = document.getElementById("targetsBtn");
-    const targetsStatusEl = document.getElementById("targetsStatus");
-    const targetsTableBody = document.getElementById("targetsTableBody");
-
-    // API لحفظ القراءات في الداتا بيس
-    const CLOUD_API_URL = "/api/soil-data";
-    // API لتوصية الذكاء الاصطناعي
-    const AI_API_URL = "/api/nasgh-ai";
-    // API لقيم المدى المثالي
-    const TARGETS_API_URL = "/api/nasgh-targets";
-    // API لشات بوت نسغ
-    const CHAT_API_URL = "/api/nasgh-chat";
 
     function setStatus(text, isError = false) {
       statusEl.textContent = "الحالة: " + text;
@@ -696,24 +585,22 @@
       });
     }
 
-    // حفظ القراءة في الداتا بيس (POST)
-    async function saveReadingToCloud(data) {
+    // حفظ القراءة في قاعدة البيانات عبر API
+    async function saveReadingToCloud(rawData) {
       try {
-        await fetch(CLOUD_API_URL, {
+        await fetch("/api/soil-data", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            source: "ble-stick",
-            reading: data,
-          }),
+          body: JSON.stringify(rawData)
         });
       } catch (err) {
-        console.warn("Failed to save reading to cloud:", err);
+        console.warn("Failed to save reading:", err.message);
       }
     }
 
     function applyReading(data, sourceLabel = "عصا نَسغ") {
       if (!data) return;
+
       lastData = data;
 
       const now = new Date();
@@ -765,7 +652,21 @@
           Number(data.shs).toFixed(1);
       }
 
-      // حفظ القراءة في الداتا بيس
+      // نخزن نسخة للذكاء الاصطناعي والشات
+      window.latestSoilReading = {
+        id: data.id || "NASGH-1",
+        temp: data.t,
+        moisture: data.m,
+        ec: data.ec,
+        ph: data.ph,
+        n: data.n,
+        p: data.p,
+        k: data.k,
+        shs: data.shs,
+        humic: data.hum
+      };
+
+      // حفظ في الداتا بيس
       saveReadingToCloud(data);
     }
 
@@ -787,7 +688,7 @@
 
         device.addEventListener("gattserverdisconnected", onDisconnected);
 
-        setStatus("جاري الاتصال بالجهاز...");
+        setStatus("جاري الاتصال بالعصا...");
         const server = await device.gatt.connect();
 
         const service = await server.getPrimaryService(SERVICE_UUID);
@@ -842,7 +743,8 @@
     connectBtn.addEventListener("click", connect);
     disconnectBtn.addEventListener("click", disconnect);
 
-    // ============ AI للتوصية النصية ============
+    const AI_API_URL = "/api/nasgh-ai";
+
     async function callAI() {
       if (!lastData) {
         aiStatusEl.textContent = "لا توجد قراءة حديثة لإرسالها. الرجاء تشغيل عصا نَسغ أولاً.";
@@ -854,19 +756,21 @@
       aiAdviceEl.textContent = "جاري التواصل مع نموذج الذكاء الاصطناعي ...";
 
       try {
+        const soilPayload = {
+          id:   lastData.id || "NASGH-1",
+          temp: lastData.t,
+          moisture: lastData.m,
+          ec:   lastData.ec,
+          ph:   lastData.ph,
+          n:    lastData.n,
+          p:    lastData.p,
+          k:    lastData.k,
+          shs:  lastData.shs,
+          humic: lastData.hum
+        };
+
         const payload = {
-          soil: {
-            id:   lastData.id || "NASGH-1",
-            temp: lastData.t,
-            moisture: lastData.m,
-            ec:   lastData.ec,
-            ph:   lastData.ph,
-            n:    lastData.n,
-            p:    lastData.p,
-            k:    lastData.k,
-            shs:  lastData.shs,
-            humic: lastData.hum
-          },
+          soil: soilPayload,
           language: "ar"
         };
 
@@ -887,6 +791,10 @@
         aiStatusEl.textContent = "تم استلام التوصية بنجاح ✅";
         aiAdviceEl.textContent = adviceText;
 
+        // نخزنها للشات
+        window.latestSoilReading = soilPayload;
+        window.latestAiAdviceText = adviceText;
+
       } catch (err) {
         console.error(err);
         aiStatusEl.textContent = "حدث خطأ أثناء طلب التوصية.";
@@ -897,141 +805,88 @@
     }
 
     aiBtn.addEventListener("click", callAI);
+  </script>
 
-    // ============ AI لحساب المدى المثالي + البارات ============
-    const PARAM_CONFIG = [
-      { key: "temp",     field: "t",   label: "درجة الحرارة", unit: "°م" },
-      { key: "moisture", field: "m",   label: "رطوبة التربة", unit: "%" },
-      { key: "ec",       field: "ec",  label: "الملوحة EC",   unit: "µS/cm" },
-      { key: "ph",       field: "ph",  label: "درجة الحموضة pH", unit: "" },
-      { key: "n",        field: "n",   label: "النيتروجين (N)", unit: "mg/kg" },
-      { key: "p",        field: "p",   label: "الفوسفور (P)", unit: "mg/kg" },
-      { key: "k",        field: "k",   label: "البوتاسيوم (K)", unit: "mg/kg" },
-      { key: "shs",      field: "shs", label: "مؤشر صحة التربة SHS", unit: "" },
-      { key: "humic",    field: "hum", label: "مؤشر الهيوميك أسيد", unit: "" }
-    ];
+  <!-- سكربت شات مساعد نسغ (إرسال من أول ضغطة) -->
+  <script>
+    const CHAT_API_URL = "/api/nasgh-chat";
 
-    function clearTargetsTable() {
-      targetsTableBody.innerHTML = "";
+    const chatFab      = document.getElementById("nasghChatFab");
+    const chatPanel    = document.getElementById("nasghChatPanel");
+    const chatCloseBtn = document.getElementById("nasghChatClose");
+    const chatForm     = document.getElementById("nasghChatForm");
+    const chatInput    = document.getElementById("nasghChatInput");
+    const chatMessages = document.getElementById("nasghChatMessages");
+
+    function getSoilForChat() {
+      try {
+        return window.latestSoilReading || null;
+      } catch {
+        return null;
+      }
     }
 
-    function buildTargetsTable(targets) {
-      clearTargetsTable();
-      if (!lastData) {
-        const tr = document.createElement("tr");
-        const td = document.createElement("td");
-        td.colSpan = 4;
-        td.textContent = "لا توجد قراءة من عصا نَسغ حتى الآن.";
-        tr.appendChild(td);
-        targetsTableBody.appendChild(tr);
-        return;
+    function getAdviceForChat() {
+      try {
+        return window.latestAiAdviceText || "";
+      } catch {
+        return "";
       }
-
-      PARAM_CONFIG.forEach((p) => {
-        const cfg = targets && targets[p.key];
-        const valueRaw = lastData[p.field];
-        const value = typeof valueRaw === "number" ? valueRaw : Number(valueRaw);
-
-        const tr = document.createElement("tr");
-
-        const nameTd = document.createElement("td");
-        nameTd.textContent = p.label;
-        tr.appendChild(nameTd);
-
-        const valueTd = document.createElement("td");
-        if (isNaN(value)) {
-          valueTd.textContent = "--";
-        } else {
-          valueTd.textContent = value.toFixed(p.key === "ph" ? 2 : (p.key === "temp" ? 1 : 0)) +
-            (p.unit ? " " + p.unit : "");
-        }
-        tr.appendChild(valueTd);
-
-        const rangeTd = document.createElement("td");
-        let min = null, max = null;
-        if (cfg && typeof cfg.min === "number" && typeof cfg.max === "number") {
-          min = cfg.min;
-          max = cfg.max;
-          rangeTd.textContent =
-            min.toFixed(p.key === "ph" ? 2 : 0) +
-            " - " +
-            max.toFixed(p.key === "ph" ? 2 : 0) +
-            (p.unit ? " " + p.unit : "");
-        } else {
-          rangeTd.textContent = "لا يوجد مدى محدد";
-        }
-        tr.appendChild(rangeTd);
-
-        const statusTd = document.createElement("td");
-
-        const wrapper = document.createElement("div");
-        wrapper.className = "bar-wrapper";
-
-        const bar = document.createElement("div");
-        let statusText = "غير معروف";
-        let statusClass = "";
-        let percent = 40;
-
-        if (!isNaN(value) && min !== null && max !== null && max > min) {
-          if (value < min) {
-            statusText = "نقص";
-            statusClass = "bar-low";
-          } else if (value > max) {
-            statusText = "زيادة";
-            statusClass = "bar-high";
-          } else {
-            statusText = "مناسب";
-            statusClass = "bar-ok";
-          }
-
-          const mid = (min + max) / 2;
-          if (mid > 0) {
-            percent = Math.min(100, Math.max(10, (value / mid) * 50));
-          }
-        }
-
-        bar.className = "bar-fill " + statusClass;
-        bar.style.width = percent + "%";
-
-        wrapper.appendChild(bar);
-        statusTd.appendChild(wrapper);
-
-        const labelDiv = document.createElement("div");
-        labelDiv.style.fontSize = "11px";
-        labelDiv.textContent = statusText;
-        statusTd.appendChild(labelDiv);
-
-        tr.appendChild(statusTd);
-        targetsTableBody.appendChild(tr);
-      });
     }
 
-    async function callTargetsAI() {
-      if (!lastData) {
-        targetsStatusEl.textContent = "لا توجد قراءة حديثة من عصا نَسغ. خذ قراءة أولاً.";
-        return;
-      }
+    function addChatBubble(text, fromAI) {
+      const div = document.createElement("div");
+      div.className = "nasgh-chat-bubble " + (fromAI ? "ai" : "me");
+      div.textContent = text;
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 
-      const plantName = plantNameInput.value.trim();
-      const stage = plantStageSelect.value;
+    function openChat() {
+      chatPanel.style.display = "block";
+      chatFab.style.display = "none";
+      setTimeout(() => chatInput.focus(), 50);
+    }
 
-      if (!plantName || !stage) {
-        targetsStatusEl.textContent = "الرجاء إدخال نوع النبات واختيار مرحلة النمو.";
-        return;
-      }
+    function closeChat() {
+      chatPanel.style.display = "none";
+      chatFab.style.display = "block";
+    }
 
-      targetsBtn.disabled = true;
-      targetsStatusEl.textContent = "جاري حساب أفضل القراءات حسب نوع النبات ومرحلة النمو...";
-      clearTargetsTable();
+    chatFab.addEventListener("click", openChat);
+    chatCloseBtn.addEventListener("click", closeChat);
+
+    // الإرسال عن طريق submit
+    chatForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      await sendNasghChatMessage();
+    });
+
+    async function sendNasghChatMessage() {
+      const text = chatInput.value.trim();
+      if (!text) return;
+
+      addChatBubble(text, false);
+
+      chatInput.value = "";
+      chatInput.blur(); // ينزل الكيبورد بعد الإرسال
+
+      const loadingId = "nasgh-loading-" + Date.now();
+      const loadingDiv = document.createElement("div");
+      loadingDiv.className = "nasgh-chat-bubble ai";
+      loadingDiv.id = loadingId;
+      loadingDiv.textContent = "جاري التفكير في إجابة تناسب قراءات جهاز نسغ...";
+      chatMessages.appendChild(loadingDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
 
       try {
         const payload = {
-          plantName,
-          stage,
-          soil: lastData
+          message: text,
+          soil: getSoilForChat(),
+          lastAdvice: getAdviceForChat(),
         };
 
-        const res = await fetch(TARGETS_API_URL, {
+        const res = await fetch(CHAT_API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -1041,204 +896,19 @@
           throw new Error("HTTP " + res.status);
         }
 
-        const data = await res.json();
-        buildTargetsTable(data.targets || {});
-        targetsStatusEl.textContent = "تم حساب المدى المثالي لكل عنصر ✅";
+        const replyText = await res.text();
+
+        loadingDiv.remove();
+        addChatBubble(replyText, true);
       } catch (err) {
+        loadingDiv.remove();
+        addChatBubble(
+          "صار خلل بسيط في الاتصال بالخدمة، جرّب بعد شوي أو تأكد من الإنترنت عندك.",
+          true
+        );
         console.error(err);
-        targetsStatusEl.textContent = "صار خطأ في الاتصال، جرّب مرة ثانية.";
-      } finally {
-        targetsBtn.disabled = false;
       }
     }
-
-    targetsBtn.addEventListener("click", callTargetsAI);
-
-    <!-- 🟢 صندوق شات "مساعد نسغ" -->
-<style>
-  .nasgh-chat-fab {
-    position: fixed;
-    bottom: 16px;
-    right: 16px;
-    z-index: 60;
-  }
-
-  .nasgh-chat-fab button {
-    border: none;
-    border-radius: 999px;
-    padding: 10px 16px;
-    font-size: 14px;
-    background: linear-gradient(135deg, #4caf50, #f1c232);
-    color: #fff;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .nasgh-chat-panel {
-    position: fixed;
-    bottom: 0;
-    right: 0;
-    left: 0;
-    max-width: 640px;
-    margin: 0 auto;
-    z-index: 70;
-    padding: 0 8px 8px;
-    box-sizing: border-box;
-  }
-
-  .nasgh-chat-card {
-    background: #f5fff7;
-    border-radius: 20px 20px 0 0;
-    border: 1px solid #c8e6c9;
-    box-shadow: 0 -6px 20px rgba(0,0,0,0.18);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    max-height: 70vh;
-  }
-
-  .nasgh-chat-header {
-    padding: 10px 14px;
-    border-bottom: 1px solid #e0f2e9;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #ffffff;
-  }
-
-  .nasgh-chat-header-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #135a3b;
-  }
-
-  .nasgh-chat-header-sub {
-    font-size: 11px;
-    color: #607d8b;
-  }
-
-  .nasgh-chat-header button {
-    border: none;
-    background: transparent;
-    font-size: 16px;
-    cursor: pointer;
-  }
-
-  .nasgh-chat-messages {
-    padding: 10px 12px;
-    overflow-y: auto;
-    flex: 1;
-    background: #f5fff7;
-  }
-
-  .nasgh-chat-bubble {
-    max-width: 88%;
-    padding: 8px 10px;
-    border-radius: 12px;
-    margin-bottom: 6px;
-    font-size: 13px;
-    line-height: 1.5;
-    white-space: pre-wrap;
-  }
-
-  .nasgh-chat-bubble.me {
-    margin-left: auto;
-    background: #c8e6c9;
-    border-bottom-right-radius: 2px;
-  }
-
-  .nasgh-chat-bubble.ai {
-    margin-right: auto;
-    background: #ffffff;
-    border-bottom-left-radius: 2px;
-    border: 1px solid #e0f2e9;
-  }
-
-  .nasgh-chat-input-row {
-    padding: 8px;
-    border-top: 1px solid #e0f2e9;
-    background: #ffffff;
-    display: flex;
-    gap: 6px;
-  }
-
-  .nasgh-chat-input-row input {
-    flex: 1;
-    padding: 8px 10px;
-    border-radius: 999px;
-    border: 1px solid #cfd8dc;
-    font-size: 13px;
-    outline: none;
-  }
-
-  .nasgh-chat-input-row input:focus {
-    border-color: #4caf50;
-    box-shadow: 0 0 0 2px rgba(76,175,80,0.18);
-  }
-
-  .nasgh-chat-input-row button {
-    border-radius: 999px;
-    border: none;
-    padding: 0 14px;
-    font-size: 13px;
-    background: #4caf50;
-    color: #fff;
-    cursor: pointer;
-  }
-
-  @media (min-width: 768px) {
-    .nasgh-chat-panel {
-      right: 16px;
-      left: auto;
-      width: 360px;
-    }
-    .nasgh-chat-card {
-      border-radius: 18px;
-      max-height: 80vh;
-    }
-  }
-</style>
-
-<!-- زر فتح الشات -->
-<div class="nasgh-chat-fab" id="nasghChatFab">
-  <button type="button">
-    AI نسغ
-    <span>💬</span>
-  </button>
-</div>
-
-<!-- لوحة الشات -->
-<div class="nasgh-chat-panel" id="nasghChatPanel" style="display:none;">
-  <div class="nasgh-chat-card">
-    <div class="nasgh-chat-header">
-      <div>
-        <div class="nasgh-chat-header-title">مساعد نَسغ</div>
-        <div class="nasgh-chat-header-sub">يشرح لك التوصيات وقراءات التربة</div>
-      </div>
-      <button type="button" id="nasghChatClose">✕</button>
-    </div>
-
-    <div class="nasgh-chat-messages" id="nasghChatMessages">
-      <div class="nasgh-chat-bubble ai">
-        حياك أخوي 🌱، هذا مساعد نسغ. إذا ما كانت التوصية واضحة لك أو حاب تعرف أكثر عن حالة التربة، اسألني و بشرح لك بأسلوب بسيط.
-      </div>
-    </div>
-
-    <!-- ✅ الفورم هو اللي يمسك الإرسال -->
-    <form id="nasghChatForm" class="nasgh-chat-input-row">
-      <input
-        id="nasghChatInput"
-        type="text"
-        placeholder="اكتب سؤالك هنا عن التوصية أو التربة..."
-        autocomplete="off"
-        required
-      />
-      <button type="submit" id="nasghChatSend">إرسال</button>
-    </form>
-  </div>
-</div>
   </script>
 </body>
 </html>
