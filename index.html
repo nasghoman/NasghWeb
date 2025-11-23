@@ -1054,118 +1054,191 @@
 
     targetsBtn.addEventListener("click", callTargetsAI);
 
-    // ================== شات بوت نسغ ==================
-    const chatFab = document.createElement("button");
-    chatFab.className = "chat-fab";
-    chatFab.innerHTML = '<span class="icon">💬</span><span>نسغ AI</span>';
+    <!-- 🟢 صندوق شات "مساعد نسغ" -->
+<style>
+  .nasgh-chat-fab {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    z-index: 60;
+  }
 
-    const chatPanel = document.createElement("div");
-    chatPanel.className = "chat-panel";
-    chatPanel.innerHTML = `
-      <div class="chat-header">
-        <div class="chat-header-title">
-          <span class="name">مساعد نسغ</span>
-          <span class="hint">اسأل عن التوصية أو حالة التربة</span>
-        </div>
-        <button class="chat-close" aria-label="إغلاق">×</button>
-      </div>
-      <div class="chat-messages" id="chatMessages">
-        <div class="chat-bubble from-bot">
-          حياك أخوي 🌱، هذا مساعد نسغ. إذا ما كانت التوصية واضحة لك أو حاب تعرف أكثر عن حالة التربة، اسألني وبشرح لك بأسلوب بسيط.
-        </div>
-      </div>
-      <div class="chat-input-row">
-        <textarea id="chatInput" placeholder="اكتب سؤالك هنا عن التوصية أو التربة..."></textarea>
-        <button id="chatSend">إرسال</button>
-      </div>
-    `;
+  .nasgh-chat-fab button {
+    border: none;
+    border-radius: 999px;
+    padding: 10px 16px;
+    font-size: 14px;
+    background: linear-gradient(135deg, #4caf50, #f1c232);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
 
-    document.body.appendChild(chatFab);
-    document.body.appendChild(chatPanel);
+  .nasgh-chat-panel {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    max-width: 640px;
+    margin: 0 auto;
+    z-index: 70;
+    padding: 0 8px 8px;
+    box-sizing: border-box;
+  }
 
-    const chatMessages = chatPanel.querySelector("#chatMessages");
-    const chatInput = chatPanel.querySelector("#chatInput");
-    const chatSend = chatPanel.querySelector("#chatSend");
-    const chatCloseBtn = chatPanel.querySelector(".chat-close");
+  .nasgh-chat-card {
+    background: #f5fff7;
+    border-radius: 20px 20px 0 0;
+    border: 1px solid #c8e6c9;
+    box-shadow: 0 -6px 20px rgba(0,0,0,0.18);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 70vh;
+  }
 
-    chatFab.addEventListener("click", () => {
-      chatPanel.style.display = "flex";
-      chatPanel.style.bottom = "70px";
-      chatInput.focus();
-    });
+  .nasgh-chat-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid #e0f2e9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+  }
 
-    chatCloseBtn.addEventListener("click", () => {
-      chatPanel.style.display = "none";
-    });
+  .nasgh-chat-header-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #135a3b;
+  }
 
-    function addMessage(text, fromBot = false) {
-      const div = document.createElement("div");
-      div.className = "chat-bubble " + (fromBot ? "from-bot" : "from-user");
-      div.textContent = text;
-      chatMessages.appendChild(div);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+  .nasgh-chat-header-sub {
+    font-size: 11px;
+    color: #607d8b;
+  }
+
+  .nasgh-chat-header button {
+    border: none;
+    background: transparent;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .nasgh-chat-messages {
+    padding: 10px 12px;
+    overflow-y: auto;
+    flex: 1;
+    background: #f5fff7;
+  }
+
+  .nasgh-chat-bubble {
+    max-width: 88%;
+    padding: 8px 10px;
+    border-radius: 12px;
+    margin-bottom: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+
+  .nasgh-chat-bubble.me {
+    margin-left: auto;
+    background: #c8e6c9;
+    border-bottom-right-radius: 2px;
+  }
+
+  .nasgh-chat-bubble.ai {
+    margin-right: auto;
+    background: #ffffff;
+    border-bottom-left-radius: 2px;
+    border: 1px solid #e0f2e9;
+  }
+
+  .nasgh-chat-input-row {
+    padding: 8px;
+    border-top: 1px solid #e0f2e9;
+    background: #ffffff;
+    display: flex;
+    gap: 6px;
+  }
+
+  .nasgh-chat-input-row input {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: 999px;
+    border: 1px solid #cfd8dc;
+    font-size: 13px;
+    outline: none;
+  }
+
+  .nasgh-chat-input-row input:focus {
+    border-color: #4caf50;
+    box-shadow: 0 0 0 2px rgba(76,175,80,0.18);
+  }
+
+  .nasgh-chat-input-row button {
+    border-radius: 999px;
+    border: none;
+    padding: 0 14px;
+    font-size: 13px;
+    background: #4caf50;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  @media (min-width: 768px) {
+    .nasgh-chat-panel {
+      right: 16px;
+      left: auto;
+      width: 360px;
     }
-
-    async function sendChatMessage() {
-      const text = chatInput.value.trim();
-      if (!text) return;
-
-      addMessage(text, false);
-      chatInput.value = "";
-      chatInput.focus();
-
-      chatSend.disabled = true;
-      addMessage("جاري التفكير في إجابة مناسبة...", true);
-
-      try {
-        const payload = {
-          message: text,
-          soil: lastData || null,
-          lastAdvice: aiAdviceEl.textContent || ""
-        };
-
-        const res = await fetch(CHAT_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) {
-          throw new Error("HTTP " + res.status);
-        }
-
-        const data = await res.text();
-        const thinking = chatMessages.querySelector(".from-bot:last-child");
-        if (thinking) thinking.remove();
-
-        addMessage(data, true);
-      } catch (err) {
-        console.error(err);
-        const thinking = chatMessages.querySelector(".from-bot:last-child");
-        if (thinking) thinking.remove();
-        addMessage("صار خطأ بسيط في الاتصال، جرّب مرة ثانية بعد شوي.", true);
-      } finally {
-        chatSend.disabled = false;
-      }
+    .nasgh-chat-card {
+      border-radius: 18px;
+      max-height: 80vh;
     }
+  }
+</style>
 
-    chatSend.addEventListener("click", sendChatMessage);
+<!-- زر فتح الشات -->
+<div class="nasgh-chat-fab" id="nasghChatFab">
+  <button type="button">
+    AI نسغ
+    <span>💬</span>
+  </button>
+</div>
 
-    chatInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        sendChatMessage();
-      }
-    });
+<!-- لوحة الشات -->
+<div class="nasgh-chat-panel" id="nasghChatPanel" style="display:none;">
+  <div class="nasgh-chat-card">
+    <div class="nasgh-chat-header">
+      <div>
+        <div class="nasgh-chat-header-title">مساعد نَسغ</div>
+        <div class="nasgh-chat-header-sub">يشرح لك التوصيات وقراءات التربة</div>
+      </div>
+      <button type="button" id="nasghChatClose">✕</button>
+    </div>
 
-    // رفع لوحة الشات فوق الكيبورد عند الفوكس
-    chatInput.addEventListener("focus", () => {
-      chatPanel.style.bottom = "340px";
-    });
+    <div class="nasgh-chat-messages" id="nasghChatMessages">
+      <div class="nasgh-chat-bubble ai">
+        حياك أخوي 🌱، هذا مساعد نسغ. إذا ما كانت التوصية واضحة لك أو حاب تعرف أكثر عن حالة التربة، اسألني و بشرح لك بأسلوب بسيط.
+      </div>
+    </div>
 
-    chatInput.addEventListener("blur", () => {
-      chatPanel.style.bottom = "70px";
-    });
+    <!-- ✅ الفورم هو اللي يمسك الإرسال -->
+    <form id="nasghChatForm" class="nasgh-chat-input-row">
+      <input
+        id="nasghChatInput"
+        type="text"
+        placeholder="اكتب سؤالك هنا عن التوصية أو التربة..."
+        autocomplete="off"
+        required
+      />
+      <button type="submit" id="nasghChatSend">إرسال</button>
+    </form>
+  </div>
+</div>
   </script>
 </body>
 </html>
