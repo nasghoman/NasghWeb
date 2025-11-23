@@ -190,16 +190,6 @@
       color: var(--nasgh-green-dark);
     }
 
-    .stat-chip {
-      display: inline-block;
-      font-size: 10px;
-      padding: 2px 7px;
-      border-radius: 999px;
-      background: var(--nasgh-green-soft);
-      color: var(--nasgh-green-dark);
-      margin-top: 4px;
-    }
-
     .plant-stage-title {
       font-size: 13px;
       font-weight: 600;
@@ -482,7 +472,7 @@
       <section class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">آخر ١٠ جلسات محفوظة</div>
+            <div class="card-title">آخر ١٠ قراءات محفوظة</div>
             <div id="historyRange" class="card-sub">جاري تحميل البيانات...</div>
           </div>
           <div id="historyStatus" class="status-badge">جاري الاتصال...</div>
@@ -508,7 +498,7 @@
           </div>
         </div>
 
-        <div class="plant-stage-title">مرحلة نمو النبات (آخر جلسة)</div>
+        <div class="plant-stage-title">مرحلة نمو النبات (آخر قراءة)</div>
         <div id="plantStageLabel" class="card-sub" style="margin-top:2px;">-</div>
         <div id="plantStageChip" class="plant-stage-chip">مرحلة غير محددة بعد</div>
 
@@ -591,9 +581,10 @@
   </section>
 
   <script>
-    // ======== DATA LOADING ========
-    // يستقبل نفس البيانات التي يرسلها index إلى /api/soil-session
-    const HISTORY_API_URL = "/api/soil-session?limit=10";
+    // ======== DATA LOADING FROM FIREBASE ========
+    // نقرأ آخر ١٠ قراءات من المسار soil-history
+    const HISTORY_API_URL =
+      "https://nasgh1-default-rtdb.firebaseio.com/soil-history.json?orderBy=%22timestamp%22&limitToLast=10";
 
     let historyData = [];
     let chartMoistTemp = null;
@@ -641,7 +632,7 @@
       rangeEl.textContent =
         "آخر " +
         historyData.length +
-        " جلسات من " +
+        " قراءات من " +
         formatTime(last.timestamp) +
         " إلى " +
         formatTime(latest.timestamp);
@@ -834,27 +825,22 @@
         if (!res.ok) {
           throw new Error("HTTP " + res.status);
         }
-        const raw = await res.json();
+        const raw = await res.json() || {};
 
-        // نحول الجلسات لشكل مسطّح historyData
-        historyData = (Array.isArray(raw) ? raw : []).map((session) => {
-          const soil = session.soil || {};
+        // raw = {pushId1: reading1, pushId2: reading2, ...}
+        historyData = Object.values(raw).map((r) => {
           return {
-            timestamp:
-              session.timestamp ||
-              soil.timestamp ||
-              null,
-            t:   Number(soil.temp     ?? soil.t  ?? NaN),
-            m:   Number(soil.moisture ?? soil.m  ?? NaN),
-            ec:  Number(soil.ec ?? NaN),
-            ph:  Number(soil.ph ?? NaN),
-            n:   Number(soil.n ?? NaN),
-            p:   Number(soil.p ?? NaN),
-            k:   Number(soil.k ?? NaN),
-            shs: Number(soil.shs ?? NaN),
-            plantName: session.plantName || "",
-            stage:     session.stage || "",
-            advice:    session.advice || ""
+            timestamp: r.timestamp || null,
+            t:   Number(r.t   ?? r.temp     ?? NaN),
+            m:   Number(r.m   ?? r.moisture ?? NaN),
+            ec:  Number(r.ec  ?? NaN),
+            ph:  Number(r.ph  ?? NaN),
+            n:   Number(r.n   ?? NaN),
+            p:   Number(r.p   ?? NaN),
+            k:   Number(r.k   ?? NaN),
+            shs: Number(r.shs ?? NaN),
+            stage:  r.stage  || "",
+            advice: r.advice || ""
           };
         });
 
