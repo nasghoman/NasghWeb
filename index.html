@@ -318,6 +318,18 @@
     .legend-box.ok  { background: #43a047; }
     .legend-box.high{ background: #8e24aa; }
 
+    /* تكبير عرض خانة "الحالة" في جدول أفضل القراءات */
+    #targetsTable th:nth-child(4),
+    #targetsTable td:nth-child(4) {
+      width: 120px !important;
+      min-width: 120px !important;
+    }
+
+    .ai-save-row {
+      margin-top: 10px;
+      text-align: center;
+    }
+
     @media (max-width: 600px) {
       body {
         padding: 8px;
@@ -484,13 +496,6 @@
       opacity: 0.6;
       cursor: default;
     }
-
-    /* تكبير عرض خانة "الحالة" في جدول أفضل القراءات */
-    #targetsTable th:nth-child(4),
-    #targetsTable td:nth-child(4) {
-      width: 120px !important;
-      min-width: 120px !important;
-    }
   </style>
 </head>
 
@@ -517,6 +522,7 @@
       <div class="subtitle">اتصال مباشر مع عصا نَسغ عبر Bluetooth Low Energy.</div>
 
       <div id="status">الحالة: غير متصل</div>
+
       <button id="connectBtn" class="btn">اتصال بعصا نَسغ</button>
       <button id="disconnectBtn" class="btn secondary" disabled>قطع الاتصال</button>
 
@@ -622,14 +628,14 @@
       <div class="ai-title">توصية نَسغ بالذكاء الاصطناعي</div>
       <div class="ai-status" id="aiStatus">لم يتم طلب التوصية بعد.</div>
       <button id="aiBtn" class="btn ai">تحليل القراءات وإعطاء توصية</button>
-
       <div class="ai-box" id="aiAdvice">
         عند الضغط على الزر سيتم إرسال آخر قراءة متوفرة وتحليلها لإخراج توصية ري وتسميد بالعربية.
       </div>
 
-      <br />
-      <button id="saveBtn" class="btn secondary" disabled>حفظ هذه البيانات في الداشبورد</button>
-      <div id="saveStatus" class="ai-status"></div>
+      <div class="ai-save-row">
+        <button id="saveSessionBtn" class="btn secondary">حفظ هذه البيانات في الداشبورد</button>
+        <div id="saveStatus" class="ai-status"></div>
+      </div>
     </div>
   </div>
 
@@ -666,7 +672,7 @@
 
     let device = null;
     let characteristic = null;
-    let lastData = null; // نخزن آخر JSON مستلم من العصا
+    let lastData = null; // آخر JSON مستلم من العصا
 
     const statusEl   = document.getElementById("status");
     const connectBtn = document.getElementById("connectBtn");
@@ -679,9 +685,6 @@
     const aiAdviceEl = document.getElementById("aiAdvice");
     const aiBtn      = document.getElementById("aiBtn");
 
-    const saveBtn = document.getElementById("saveBtn");
-    const saveStatusEl = document.getElementById("saveStatus");
-
     // عناصر إعداد النبات والجدول
     const plantNameInput = document.getElementById("plantNameInput");
     const plantStageSelect = document.getElementById("plantStageSelect");
@@ -689,16 +692,22 @@
     const targetsStatusEl = document.getElementById("targetsStatus");
     const targetsTableBody = document.getElementById("targetsTableBody");
 
-    // API لحفظ القراءات في الداتا بيس
-    const CLOUD_API_URL = "/api/soil-data";
-    // API لتوصية الذكاء الاصطناعي
-    const AI_API_URL = "/api/nasgh-ai";
-    // API لقيم المدى المثالي
+    // زر حفظ الجلسة
+    const saveSessionBtn = document.getElementById("saveSessionBtn");
+    const saveStatusEl = document.getElementById("saveStatus");
+
+    // API
+    const CLOUD_API_URL   = "/api/soil-data";
+    const AI_API_URL      = "/api/nasgh-ai";
     const TARGETS_API_URL = "/api/nasgh-targets";
-    // API لشات بوت نسغ
-    const CHAT_API_URL = "/api/nasgh-chat";
-    // API لحفظ جلسة كاملة (قراءة + جدول + توصية)
-    const SESSION_SAVE_URL = "/api/soil-session";
+    const CHAT_API_URL    = "/api/nasgh-chat";
+    const SESSION_API_URL = "/api/soil-session";
+
+    // متغيرات لحفظ حالة الجدول
+    let currentPlantName = "";
+    let currentStage = "";
+    let lastTargets = null;
+    let statusByParam = {};
 
     function setStatus(text, isError = false) {
       statusEl.textContent = "الحالة: " + text;
@@ -713,16 +722,13 @@
       });
     }
 
-    // حفظ القراءة في الداتا بيس (POST بسيط)
+    // حفظ القراءة في الداتا بيس (POST)
     async function saveReadingToCloud(data) {
       try {
         await fetch(CLOUD_API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            source: "ble-stick",
-            reading: data,
-          }),
+          body: JSON.stringify(data),
         });
       } catch (err) {
         console.warn("Failed to save reading to cloud:", err);
@@ -782,7 +788,7 @@
           Number(data.shs).toFixed(1);
       }
 
-      // حفظ القراءة الخام
+      // حفظ القراءة في الداتا بيس
       saveReadingToCloud(data);
     }
 
@@ -860,11 +866,6 @@
     disconnectBtn.addEventListener("click", disconnect);
 
     // ============ AI للتوصية النصية ============
-
-    // ملخص حالة العناصر + آخر أهداف تم حسابها
-    let lastStatusSummary = {};
-    let lastTargetsRaw = null;
-
     async function callAI() {
       if (!lastData) {
         aiStatusEl.textContent = "لا توجد قراءة حديثة لإرسالها. الرجاء تشغيل عصا نَسغ أولاً.";
@@ -874,8 +875,6 @@
       aiBtn.disabled = true;
       aiStatusEl.textContent = "جاري إرسال البيانات وتحليلها...";
       aiAdviceEl.textContent = "جاري التواصل مع نموذج الذكاء الاصطناعي ...";
-      saveBtn.disabled = true;
-      saveStatusEl.textContent = "";
 
       try {
         const payload = {
@@ -893,9 +892,9 @@
           },
           language: "ar",
           recommendationContext: {
-            plantName: plantNameInput.value.trim() || null,
-            stage: plantStageSelect.value || null,
-            statusSummary: lastStatusSummary
+            plantName: currentPlantName || "",
+            stage: currentStage || "",
+            statusSummary: statusByParam || {}
           }
         };
 
@@ -913,10 +912,6 @@
 
         aiStatusEl.textContent = "تم استلام التوصية بنجاح ✅";
         aiAdviceEl.textContent = adviceText;
-
-        // نسمح بالحفظ بعد ظهور التوصية
-        saveBtn.disabled = false;
-        saveStatusEl.textContent = "تقدر الحين تحفظ هذه النتائج في الداشبورد.";
 
       } catch (err) {
         console.error(err);
@@ -944,13 +939,14 @@
 
     function clearTargetsTable() {
       targetsTableBody.innerHTML = "";
-      lastStatusSummary = {};
-      lastTargetsRaw = null;
+      lastTargets = null;
+      statusByParam = {};
     }
 
     function buildTargetsTable(targets) {
       clearTargetsTable();
-      lastTargetsRaw = targets || {};
+      lastTargets = targets || {};
+      statusByParam = {};
 
       if (!lastData) {
         const tr = document.createElement("tr");
@@ -1040,13 +1036,13 @@
         tr.appendChild(statusTd);
         targetsTableBody.appendChild(tr);
 
-        // نخزن ملخص الحالة لهذا العنصر
-        lastStatusSummary[p.key] = {
+        // حفظ حالة هذا العنصر
+        statusByParam[p.key] = {
+          label: p.label,
           status: statusText,
-          min: min,
-          max: max,
-          unit: p.unit || "",
-          value: isNaN(value) ? null : value
+          value: isNaN(value) ? null : value,
+          min,
+          max
         };
       });
     }
@@ -1064,6 +1060,9 @@
         targetsStatusEl.textContent = "الرجاء إدخال نوع النبات واختيار مرحلة النمو.";
         return;
       }
+
+      currentPlantName = plantName;
+      currentStage = stage;
 
       targetsBtn.disabled = true;
       targetsStatusEl.textContent = "جاري حساب أفضل القراءات حسب نوع النبات ومرحلة النمو...";
@@ -1099,47 +1098,61 @@
 
     targetsBtn.addEventListener("click", callTargetsAI);
 
-    // ============ حفظ جلسة كاملة في الداشبورد ============
+    // ============ حفظ الجلسة في الداشبورد ============
     async function saveSession() {
       if (!lastData) {
-        saveStatusEl.textContent = "لا توجد قراءة لحفظها.";
+        saveStatusEl.textContent = "لا توجد قراءة لحفظها. خذ قراءة أولاً.";
         return;
       }
 
-      saveBtn.disabled = true;
-      saveStatusEl.textContent = "جارٍ حفظ البيانات...";
+      saveSessionBtn.disabled = true;
+      saveStatusEl.textContent = "جاري حفظ البيانات في الداشبورد...";
+
+      const sessionPayload = {
+        createdAt: new Date().toISOString(),
+        soil: {
+          id: lastData.id || "NASGH-1",
+          t: lastData.t,
+          m: lastData.m,
+          ec: lastData.ec,
+          ph: lastData.ph,
+          n: lastData.n,
+          p: lastData.p,
+          k: lastData.k,
+          shs: lastData.shs,
+          hum: lastData.hum,
+        },
+        plantName: currentPlantName || null,
+        stage: currentStage || null,
+        targets: lastTargets || null,
+        statusSummary: statusByParam || null,
+        advice: aiAdviceEl.textContent || ""
+      };
 
       try {
-        const payload = {
-          soil: lastData,
-          plantName: plantNameInput.value.trim() || null,
-          stage: plantStageSelect.value || null,
-          targets: lastTargetsRaw,
-          statusSummary: lastStatusSummary,
-          advice: aiAdviceEl.textContent || "",
-          createdAt: new Date().toISOString()
-        };
-
-        const res = await fetch(SESSION_SAVE_URL, {
+        const res = await fetch(SESSION_API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(sessionPayload),
         });
 
+        const text = await res.text();
+
         if (!res.ok) {
-          throw new Error("HTTP " + res.status);
+          console.error("Save session error:", text);
+          throw new Error(text || ("HTTP " + res.status));
         }
 
-        saveStatusEl.textContent = "تم حفظ البيانات بنجاح ✅. تقدر تشوفها من صفحة لوحة القراءات المحفوظة.";
+        saveStatusEl.textContent = "تم حفظ البيانات بنجاح ✅";
       } catch (err) {
         console.error(err);
         saveStatusEl.textContent = "صار خطأ أثناء الحفظ، جرّب مرة ثانية.";
       } finally {
-        saveBtn.disabled = false;
+        saveSessionBtn.disabled = false;
       }
     }
 
-    saveBtn.addEventListener("click", saveSession);
+    saveSessionBtn.addEventListener("click", saveSession);
 
     // ================== شات بوت نسغ ==================
     const chatFab = document.createElement("button");
@@ -1217,13 +1230,14 @@
           body: JSON.stringify(payload),
         });
 
-        if (!res.ok) {
-          throw new Error("HTTP " + res.status);
-        }
-
         const data = await res.text();
+
         const thinking = chatMessages.querySelector(".from-bot:last-child");
         if (thinking) thinking.remove();
+
+        if (!res.ok) {
+          throw new Error(data || ("HTTP " + res.status));
+        }
 
         addMessage(data, true);
       } catch (err) {
