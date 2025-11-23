@@ -1,5 +1,3 @@
-
-
 export default async function handler(req, res) {
   // ===== CORS =====
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -18,7 +16,7 @@ export default async function handler(req, res) {
     // ===== قراءة الـ body =====
     const bodyString = await new Promise((resolve, reject) => {
       let data = "";
-      req.on("data", c => (data += c));
+      req.on("data", (c) => (data += c));
       req.on("end", () => resolve(data));
       req.on("error", reject);
     });
@@ -31,8 +29,6 @@ export default async function handler(req, res) {
     }
 
     const soil = body.soil;
-    const language = body.language || "ar";
-
     if (!soil) {
       return res.status(400).send("Missing soil readings");
     }
@@ -42,16 +38,32 @@ export default async function handler(req, res) {
       return res.status(500).send("Missing GEMINI_API_KEY env var");
     }
 
-    // ===== prompt =====
+    // ===== PROMPT: جملة قصيرة + منتج عضوي بديل =====
     const promptText = `
-هذه قراءات تربة من جهاز نَسغ:
+أنت مساعد زراعي عربي تابع لنظام "نَسغ" لمراقبة التربة.
+
+الأسلوب المطلوب بالضبط:
+- اكتب جملة أو جملتين فقط، لا أكثر.
+- ابدأ دائمًا الجملة الأولى بالعبارة: "من قراءات جهاز نَسغ أنا أشوف أن".
+- بعدها مباشرة صف أهم شيء واحد أو اثنين في حالة التربة (مثل: الرطوبة منخفضة، الملوحة عالية، البوتاسيوم ناقص، pH حامضي...).
+- إذا كان في نقص في أي عنصر (N أو P أو K أو غيرها)، اذكر:
+  1) نوع السماد الكيميائي المقترح بشكل عام (مثل: سماد عالي البوتاسيوم، سماد NPK متوازن).
+  2) ومعه مباشرة **منتج عضوي بديل** مناسب لنفس العنصر، بصيغة عامة بدون أسماء شركات، مثل:
+     - كمبوست عضوي متحلل
+     - سماد روث أبقار/أغنام متخمر
+     - سماد دجاج بينسوي متخمر
+     - مستخلص طحالب بحرية
+     - سماد عضوي غني بالبوتاسيوم (من قشور، رماد نباتي، أو مخلفات نباتية)
+- استخدم أسلوب مشابه لطول وبساطة هذا المثال:
+  "من قراءات جهاز نَسغ أنا أشوف إن تربتك فيها البوتاسيوم منخفض واجد وضروري تستخدم سماد عالي البوتاسيوم أو منتج عضوي بديل للبوتاسيوم مثل سماد عضوي متحلل غني بالبوتاسيوم أو مستخلص طحالب بحرية."
+- لا تستخدم أي نقاط أو نجوم أو فقرات طويلة أو عناوين أو ترقيم.
+- استخدم عربي بسيط مع لمسة عُمانية خفيفة (كلمات مثل: واجد، شوي، مزرعتك)، لكن خلك محترم ورسمي.
+- ركّز على ما يحتاج المزارع يفعله الآن (نوع السماد وطريقة عامة للاستخدام) بدون شرح علمي طويل.
+
+هذه قراءات التربة من جهاز نَسغ (استخدم الأرقام فقط لتحليل الوضع، لا تعيد طباعتها):
 ${JSON.stringify(soil, null, 2)}
 
-قدم توصية مختصرة باللغة ${language} تشمل:
-- حالة الرطوبة والري المناسب
-- الملوحة و pH
-- تقييم NPK
-- نصائح لتحسين خصوبة التربة
+اكتب الرد الآن وفق القواعد السابقة كجملة أو جملتين فقط.
 `;
 
     const payload = {
@@ -62,13 +74,11 @@ ${JSON.stringify(soil, null, 2)}
       ],
     };
 
-    // ===== أقوى الموديلات الصحيحة اليوم =====
     const MODELS = [
       "gemini-2.0-pro",
       "gemini-2.0-flash",
-      "gemini-2.0-flash-lite"
+      "gemini-2.0-flash-lite",
     ];
-
     const baseUrl = "https://generativelanguage.googleapis.com/v1/models";
 
     let lastError = null;
@@ -93,11 +103,10 @@ ${JSON.stringify(soil, null, 2)}
         const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (text) {
-          return res
-            .status(200)
-            .send(`Model used: ${model}\n\n${text}`);
+          // نرجّع النص فقط بدون أي مقدمة إضافية
+          return res.status(200).send(text.trim());
         } else {
-          lastError = "Empty response " + model;
+          lastError = "Empty response from " + model;
         }
       } catch (err) {
         lastError = err.message;
@@ -106,7 +115,9 @@ ${JSON.stringify(soil, null, 2)}
 
     return res
       .status(500)
-      .send("Gemini failed on all models. Last error: " + JSON.stringify(lastError));
+      .send(
+        "Gemini failed on all models. Last error: " + JSON.stringify(lastError)
+      );
   } catch (err) {
     return res.status(500).send("Server error: " + err.toString());
   }
