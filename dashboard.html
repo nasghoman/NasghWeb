@@ -462,7 +462,9 @@
 
       <div class="topbar-right">
         <a href="index.html" class="pill-btn">لوحة القراءات المباشرة</a>
-        <button id="switchAccountBtn" class="pill-btn">تبديل الحساب</button>
+        <button id="switchAccountBtn" class="pill-btn" onclick="location.href='login.html'">
+          تبديل الحساب
+        </button>
       </div>
     </header>
 
@@ -581,10 +583,11 @@
   </section>
 
   <script>
-    // ======== DATA LOADING FROM FIREBASE ========
-    // نجيب كل soil-history ونقص منها آخر ١٠ قراءات داخل الكود
-    const HISTORY_API_URL =
-      "https://nasgh1-default-rtdb.firebaseio.com/soil-history.json";
+    // ======== DATA LOADING من فايربيس مباشرة ========
+    // القراءات موجودة تحت:
+    // https://nasgh1-default-rtdb.firebaseio.com/soil-history/<sessionId>/{advice,plantName,stage,timestamp,soil:{temp,moisture,ph,ec,n,p,k,shs,humic}}
+    const DB_BASE = "https://nasgh1-default-rtdb.firebaseio.com";
+    const HISTORY_API_URL = DB_BASE + "/soil-history.json?orderBy=\"$key\"&limitToLast=10";
 
     let historyData = [];
     let chartMoistTemp = null;
@@ -601,6 +604,11 @@
         day: "numeric",
         month: "short"
       });
+    }
+
+    function safeNumber(v) {
+      const n = Number(v);
+      return isNaN(n) ? null : n;
     }
 
     function updateSummaryAndTable() {
@@ -623,7 +631,7 @@
         return;
       }
 
-      // ترتيب من الأحدث للأقدم
+      // تأكد الترتيب من الأحدث للأقدم
       historyData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
       const latest = historyData[0];
@@ -642,21 +650,26 @@
 
       // Summary
       statMoisture.textContent =
-        (latest.m != null && !isNaN(latest.m) ? latest.m.toFixed(1) : "--") + " ٪";
+        latest.m != null ? latest.m.toFixed(1) + " ٪" : "-- ٪";
       statTemp.textContent =
-        (latest.t != null && !isNaN(latest.t) ? latest.t.toFixed(1) : "--") + " °م";
+        latest.t != null ? latest.t.toFixed(1) + " °م" : "-- °م";
+
+      const validPh = historyData.map(r => r.ph).filter(v => v != null);
+      const validShs = historyData.map(r => r.shs).filter(v => v != null);
 
       const avgPh =
-        historyData.reduce((sum, r) => sum + (r.ph || 0), 0) /
-        historyData.length;
+        validPh.length
+          ? validPh.reduce((sum, v) => sum + v, 0) / validPh.length
+          : null;
       const avgShs =
-        historyData.reduce((sum, r) => sum + (r.shs || 0), 0) /
-        historyData.length;
+        validShs.length
+          ? validShs.reduce((sum, v) => sum + v, 0) / validShs.length
+          : null;
 
       statPh.textContent =
-        isFinite(avgPh) && avgPh > 0 ? avgPh.toFixed(2) : "--";
+        avgPh != null ? avgPh.toFixed(2) : "--";
       statShs.textContent =
-        isFinite(avgShs) && avgShs > 0 ? avgShs.toFixed(1) : "--";
+        avgShs != null ? avgShs.toFixed(1) : "--";
 
       stageLabel.textContent = latest.stage || "مرحلة غير محددة";
       stageChip.textContent = latest.stage || "مرحلة غير محددة بعد";
@@ -666,14 +679,20 @@
       historyData.forEach((row, idx) => {
         const tr = document.createElement("tr");
 
+        const mTxt = row.m != null ? row.m.toFixed(1) : "--";
+        const tTxt = row.t != null ? row.t.toFixed(1) : "--";
+        const phTxt = row.ph != null ? row.ph.toFixed(2) : "--";
+        const ecTxt = row.ec != null ? row.ec.toFixed(0) : "--";
+        const shsTxt = row.shs != null ? row.shs.toFixed(1) : "--";
+
         tr.innerHTML = `
           <td>${idx + 1}</td>
           <td>${formatTime(row.timestamp)}</td>
-          <td>${row.m != null && !isNaN(row.m) ? row.m.toFixed(1) : "--"}</td>
-          <td>${row.t != null && !isNaN(row.t) ? row.t.toFixed(1) : "--"}</td>
-          <td>${row.ph != null && !isNaN(row.ph) ? row.ph.toFixed(2) : "--"}</td>
-          <td>${row.ec != null && !isNaN(row.ec) ? row.ec.toFixed(0) : "--"}</td>
-          <td>${row.shs != null && !isNaN(row.shs) ? row.shs.toFixed(1) : "--"}</td>
+          <td>${mTxt}</td>
+          <td>${tTxt}</td>
+          <td>${phTxt}</td>
+          <td>${ecTxt}</td>
+          <td>${shsTxt}</td>
           <td class="stage-cell">
             ${
               row.stage
@@ -701,14 +720,14 @@
         })
       );
 
-      const moistArr = sorted.map((r) => (r.m && !isNaN(r.m) ? r.m : 0));
-      const tempArr  = sorted.map((r) => (r.t && !isNaN(r.t) ? r.t : 0));
+      const moistArr = sorted.map((r) => (r.m != null ? r.m : null));
+      const tempArr  = sorted.map((r) => (r.t != null ? r.t : null));
 
-      const nArr = sorted.map((r) => (r.n && !isNaN(r.n) ? r.n : 0));
-      const pArr = sorted.map((r) => (r.p && !isNaN(r.p) ? r.p : 0));
-      const kArr = sorted.map((r) => (r.k && !isNaN(r.k) ? r.k : 0));
+      const nArr = sorted.map((r) => (r.n != null ? r.n : null));
+      const pArr = sorted.map((r) => (r.p != null ? r.p : null));
+      const kArr = sorted.map((r) => (r.k != null ? r.k : null));
 
-      const shsArr = sorted.map((r) => (r.shs && !isNaN(r.shs) ? r.shs : 0));
+      const shsArr = sorted.map((r) => (r.shs != null ? r.shs : null));
 
       // Destroy old charts if they exist
       if (chartMoistTemp) chartMoistTemp.destroy();
@@ -825,26 +844,28 @@
         if (!res.ok) {
           throw new Error("HTTP " + res.status);
         }
-        const raw = (await res.json()) || {};
+        const raw = await res.json();
 
-        // raw = {pushId1: reading1, pushId2: reading2, ...}
-        let allReadings = Object.values(raw).map((r) => ({
-          timestamp: r.timestamp || null,
-          t:   Number(r.t   ?? r.temp     ?? NaN),
-          m:   Number(r.m   ?? r.moisture ?? NaN),
-          ec:  Number(r.ec  ?? NaN),
-          ph:  Number(r.ph  ?? NaN),
-          n:   Number(r.n   ?? NaN),
-          p:   Number(r.p   ?? NaN),
-          k:   Number(r.k   ?? NaN),
-          shs: Number(r.shs ?? NaN),
-          stage:  r.stage  || "",
-          advice: r.advice || ""
-        }));
+        // raw من فايربيس ككائن {id1:{...}, id2:{...}}
+        const sessionsArray = raw ? Object.values(raw) : [];
 
-        // نرتّب الكل حسب الوقت ثم نأخذ آخر ١٠ فقط
-        allReadings.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        historyData = allReadings.slice(-10);
+        historyData = sessionsArray.map((session) => {
+          const soil = session.soil || {};
+          return {
+            timestamp: session.timestamp || null,
+            t:   safeNumber(soil.temp),
+            m:   safeNumber(soil.moisture),
+            ec:  safeNumber(soil.ec),
+            ph:  safeNumber(soil.ph),
+            n:   safeNumber(soil.n),
+            p:   safeNumber(soil.p),
+            k:   safeNumber(soil.k),
+            shs: safeNumber(soil.shs),
+            plantName: session.plantName || "",
+            stage:     session.stage || "",
+            advice:    session.advice || ""
+          };
+        });
 
         updateSummaryAndTable();
         if (historyData.length) updateCharts();
