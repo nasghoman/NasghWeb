@@ -235,6 +235,89 @@
       white-space: pre-wrap;
     }
 
+    /* ===== نموذج النبات + جدول البارات ===== */
+    .plant-form {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+      margin-top: 4px;
+      margin-bottom: 6px;
+    }
+
+    .plant-form label {
+      font-size: 12px;
+      color: #455a64;
+    }
+
+    .plant-form input,
+    .plant-form select {
+      padding: 7px 8px;
+      border-radius: 10px;
+      border: 1px solid #cfd8dc;
+      font-size: 13px;
+      outline: none;
+      background: #f9fffb;
+    }
+
+    .plant-form input:focus,
+    .plant-form select:focus {
+      border-color: var(--nasgh-green);
+      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.18);
+      background: #ffffff;
+    }
+
+    .targets-table {
+      margin-top: 6px;
+    }
+
+    .bar-wrapper {
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      background: #eceff1;
+      overflow: hidden;
+      margin-bottom: 3px;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 40%;
+    }
+
+    .bar-low {
+      background: #e53935;   /* أحمر */
+    }
+
+    .bar-ok {
+      background: #43a047;   /* أخضر */
+    }
+
+    .bar-high {
+      background: #8e24aa;   /* بنفسجي */
+    }
+
+    .legend {
+      margin-top: 6px;
+      font-size: 11px;
+      color: #455a64;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .legend-box {
+      width: 14px;
+      height: 8px;
+      border-radius: 999px;
+      display: inline-block;
+      margin-left: 3px;
+    }
+
+    .legend-box.low { background: #e53935; }
+    .legend-box.ok  { background: #43a047; }
+    .legend-box.high{ background: #8e24aa; }
+
     @media (max-width: 600px) {
       body {
         padding: 8px;
@@ -481,6 +564,52 @@
       </table>
     </div>
 
+    <!-- بطاقة إعداد النبات وأفضل القراءات -->
+    <div class="card">
+      <div class="ai-title">إعداد النبات وأفضل القراءات</div>
+      <div class="ai-status">
+        اكتب نوع النبات واختر مرحلة النمو الحالية، ونسغ AI بيحسب لك المدى المثالي لكل عنصر ويقارنه بآخر قراءة من عصا نَسغ.
+      </div>
+
+      <div class="plant-form">
+        <label for="plantNameInput">نوع النبات</label>
+        <input id="plantNameInput" type="text" placeholder="مثال: طماطم، خيار، ليمون..." />
+
+        <label for="plantStageSelect">مرحلة النمو الحالية</label>
+        <select id="plantStageSelect">
+          <option value="">اختر المرحلة الحالية</option>
+          <option value="vegetative">مرحلة النمو الخضري</option>
+          <option value="flowering">مرحلة الإزهار</option>
+          <option value="fruit-setting">مرحلة عقد الثمار</option>
+          <option value="harvest">مرحلة الإثمار / الحصاد</option>
+        </select>
+
+        <button id="targetsBtn" class="btn ai" type="button">حساب أفضل القراءات</button>
+      </div>
+
+      <div id="targetsStatus" class="ai-status"></div>
+
+      <table id="targetsTable" class="targets-table">
+        <thead>
+          <tr>
+            <th>العنصر</th>
+            <th>قراءة عصا نَسغ</th>
+            <th>المدى المثالي</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody id="targetsTableBody">
+          <!-- يمتلئ ديناميكياً -->
+        </tbody>
+      </table>
+
+      <div class="legend">
+        <span class="legend-box low"></span> نقص
+        <span class="legend-box ok"></span> مناسب
+        <span class="legend-box high"></span> زيادة
+      </div>
+    </div>
+
     <!-- بطاقة توصية الذكاء الاصطناعي -->
     <div class="card">
       <div class="ai-title">توصية نَسغ بالذكاء الاصطناعي</div>
@@ -526,6 +655,7 @@
     let device = null;
     let characteristic = null;
     let lastData = null; // نخزن آخر JSON مستلم من العصا
+
     const statusEl   = document.getElementById("status");
     const connectBtn = document.getElementById("connectBtn");
     const disconnectBtn = document.getElementById("disconnectBtn");
@@ -537,10 +667,19 @@
     const aiAdviceEl = document.getElementById("aiAdvice");
     const aiBtn      = document.getElementById("aiBtn");
 
+    // عناصر إعداد النبات والجدول
+    const plantNameInput = document.getElementById("plantNameInput");
+    const plantStageSelect = document.getElementById("plantStageSelect");
+    const targetsBtn = document.getElementById("targetsBtn");
+    const targetsStatusEl = document.getElementById("targetsStatus");
+    const targetsTableBody = document.getElementById("targetsTableBody");
+
     // API لحفظ القراءات في الداتا بيس
     const CLOUD_API_URL = "/api/soil-data";
     // API لتوصية الذكاء الاصطناعي
     const AI_API_URL = "/api/nasgh-ai";
+    // API لقيم المدى المثالي
+    const TARGETS_API_URL = "/api/nasgh-targets";
     // API لشات بوت نسغ
     const CHAT_API_URL = "/api/nasgh-chat";
 
@@ -703,6 +842,7 @@
     connectBtn.addEventListener("click", connect);
     disconnectBtn.addEventListener("click", disconnect);
 
+    // ============ AI للتوصية النصية ============
     async function callAI() {
       if (!lastData) {
         aiStatusEl.textContent = "لا توجد قراءة حديثة لإرسالها. الرجاء تشغيل عصا نَسغ أولاً.";
@@ -758,8 +898,163 @@
 
     aiBtn.addEventListener("click", callAI);
 
+    // ============ AI لحساب المدى المثالي + البارات ============
+    const PARAM_CONFIG = [
+      { key: "temp",     field: "t",   label: "درجة الحرارة", unit: "°م" },
+      { key: "moisture", field: "m",   label: "رطوبة التربة", unit: "%" },
+      { key: "ec",       field: "ec",  label: "الملوحة EC",   unit: "µS/cm" },
+      { key: "ph",       field: "ph",  label: "درجة الحموضة pH", unit: "" },
+      { key: "n",        field: "n",   label: "النيتروجين (N)", unit: "mg/kg" },
+      { key: "p",        field: "p",   label: "الفوسفور (P)", unit: "mg/kg" },
+      { key: "k",        field: "k",   label: "البوتاسيوم (K)", unit: "mg/kg" },
+      { key: "shs",      field: "shs", label: "مؤشر صحة التربة SHS", unit: "" },
+      { key: "humic",    field: "hum", label: "مؤشر الهيوميك أسيد", unit: "" }
+    ];
+
+    function clearTargetsTable() {
+      targetsTableBody.innerHTML = "";
+    }
+
+    function buildTargetsTable(targets) {
+      clearTargetsTable();
+      if (!lastData) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 4;
+        td.textContent = "لا توجد قراءة من عصا نَسغ حتى الآن.";
+        tr.appendChild(td);
+        targetsTableBody.appendChild(tr);
+        return;
+      }
+
+      PARAM_CONFIG.forEach((p) => {
+        const cfg = targets && targets[p.key];
+        const valueRaw = lastData[p.field];
+        const value = typeof valueRaw === "number" ? valueRaw : Number(valueRaw);
+
+        const tr = document.createElement("tr");
+
+        const nameTd = document.createElement("td");
+        nameTd.textContent = p.label;
+        tr.appendChild(nameTd);
+
+        const valueTd = document.createElement("td");
+        if (isNaN(value)) {
+          valueTd.textContent = "--";
+        } else {
+          valueTd.textContent = value.toFixed(p.key === "ph" ? 2 : (p.key === "temp" ? 1 : 0)) +
+            (p.unit ? " " + p.unit : "");
+        }
+        tr.appendChild(valueTd);
+
+        const rangeTd = document.createElement("td");
+        let min = null, max = null;
+        if (cfg && typeof cfg.min === "number" && typeof cfg.max === "number") {
+          min = cfg.min;
+          max = cfg.max;
+          rangeTd.textContent =
+            min.toFixed(p.key === "ph" ? 2 : 0) +
+            " - " +
+            max.toFixed(p.key === "ph" ? 2 : 0) +
+            (p.unit ? " " + p.unit : "");
+        } else {
+          rangeTd.textContent = "لا يوجد مدى محدد";
+        }
+        tr.appendChild(rangeTd);
+
+        const statusTd = document.createElement("td");
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "bar-wrapper";
+
+        const bar = document.createElement("div");
+        let statusText = "غير معروف";
+        let statusClass = "";
+        let percent = 40;
+
+        if (!isNaN(value) && min !== null && max !== null && max > min) {
+          if (value < min) {
+            statusText = "نقص";
+            statusClass = "bar-low";
+          } else if (value > max) {
+            statusText = "زيادة";
+            statusClass = "bar-high";
+          } else {
+            statusText = "مناسب";
+            statusClass = "bar-ok";
+          }
+
+          const mid = (min + max) / 2;
+          if (mid > 0) {
+            percent = Math.min(100, Math.max(10, (value / mid) * 50));
+          }
+        }
+
+        bar.className = "bar-fill " + statusClass;
+        bar.style.width = percent + "%";
+
+        wrapper.appendChild(bar);
+        statusTd.appendChild(wrapper);
+
+        const labelDiv = document.createElement("div");
+        labelDiv.style.fontSize = "11px";
+        labelDiv.textContent = statusText;
+        statusTd.appendChild(labelDiv);
+
+        tr.appendChild(statusTd);
+        targetsTableBody.appendChild(tr);
+      });
+    }
+
+    async function callTargetsAI() {
+      if (!lastData) {
+        targetsStatusEl.textContent = "لا توجد قراءة حديثة من عصا نَسغ. خذ قراءة أولاً.";
+        return;
+      }
+
+      const plantName = plantNameInput.value.trim();
+      const stage = plantStageSelect.value;
+
+      if (!plantName || !stage) {
+        targetsStatusEl.textContent = "الرجاء إدخال نوع النبات واختيار مرحلة النمو.";
+        return;
+      }
+
+      targetsBtn.disabled = true;
+      targetsStatusEl.textContent = "جاري حساب أفضل القراءات حسب نوع النبات ومرحلة النمو...";
+      clearTargetsTable();
+
+      try {
+        const payload = {
+          plantName,
+          stage,
+          soil: lastData
+        };
+
+        const res = await fetch(TARGETS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          throw new Error("HTTP " + res.status);
+        }
+
+        const data = await res.json();
+        buildTargetsTable(data.targets || {});
+        targetsStatusEl.textContent = "تم حساب المدى المثالي لكل عنصر ✅";
+      } catch (err) {
+        console.error(err);
+        targetsStatusEl.textContent = "صار خطأ في الاتصال، جرّب مرة ثانية.";
+      } finally {
+        targetsBtn.disabled = false;
+      }
+    }
+
+    targetsBtn.addEventListener("click", callTargetsAI);
+
     // ================== شات بوت نسغ ==================
-    // إنشاء عناصر الشات في DOM
     const chatFab = document.createElement("button");
     chatFab.className = "chat-fab";
     chatFab.innerHTML = '<span class="icon">💬</span><span>نسغ AI</span>';
@@ -795,6 +1090,7 @@
 
     chatFab.addEventListener("click", () => {
       chatPanel.style.display = "flex";
+      chatPanel.style.bottom = "70px";
       chatInput.focus();
     });
 
@@ -839,7 +1135,6 @@
         }
 
         const data = await res.text();
-        // شيل رسالة "جاري التفكير..."
         const thinking = chatMessages.querySelector(".from-bot:last-child");
         if (thinking) thinking.remove();
 
