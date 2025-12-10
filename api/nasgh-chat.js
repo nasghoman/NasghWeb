@@ -1,5 +1,7 @@
+// api/nasgh-chat.js
+
 export default async function handler(req, res) {
-  // ===== CORS =====
+  // ===== CORS بسيط لو احتجته مستقبلاً من دومين آخر =====
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -13,133 +15,132 @@ export default async function handler(req, res) {
   }
 
   try {
-    // قراءة البودي يدويًا (متوافق مع Vercel)
+    // ===== قراءة الـ body يدوياً (متوافق مع Vercel Node) =====
     const bodyString = await new Promise((resolve, reject) => {
       let data = "";
-      req.on("data", c => (data += c));
+      req.on("data", (chunk) => (data += chunk));
       req.on("end", () => resolve(data));
-      req.on("error", reject);
+      req.on("error", (err) => reject(err));
     });
 
     let body = {};
     try {
       body = JSON.parse(bodyString || "{}");
-    } catch {
-      return res.status(400).send("Invalid JSON body");
+    } catch (e) {
+      console.error("nasgh-chat: invalid JSON body:", e);
+      return res.status(400).json({ error: "Invalid JSON body" });
     }
 
-    const userMessage = body.message || "";
-    const soil = body.soil || null;
-    const lastAdvice = body.lastAdvice || "";
+    const { message, history } = body || {};
+
+    if (!message || typeof message !== "string") {
+      return res
+        .status(400)
+        .json({ error: "Field 'message' (string) is required" });
+    }
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return res.status(500).send("Missing GEMINI_API_KEY env var");
+      console.error("nasgh-chat: GEMINI_API_KEY is missing");
+      return res
+        .status(500)
+        .json({ error: "Server config error: GEMINI_API_KEY not set" });
     }
 
-    // ===== دالة اتصال عامة مع Gemini =====
-    async function callGemini(promptText, model) {
-      const payload = {
-        contents: [{ parts: [{ text: promptText }] }],
-      };
-      const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const json = await response.json();
-      if (!response.ok) {
-        throw new Error(
-          json.error?.message || `Gemini error: ${response.status}`
-        );
-      }
-      const text = json.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      return text.trim();
-    }
+    // ===== بناء تاريخ المحادثة كنص =====
+    const historyText = Array.isArray(history)
+      ? history
+          .map((turn, i) => {
+            const who = turn.role === "assistant" ? "مساعد نَسغ" : "المزارع";
+            return `${who} (${i + 1}): ${turn.content}`;
+          })
+          .join("\n")
+      : "";
 
-    // ===== 1) فحص إذا السؤال زراعي أو لا =====
-    const guardPrompt = `
-السؤال من المزارع:
-"${userMessage}"
+    // ===== System prompt للمساعد =====
+    const systemPrompt = `
+أنت مساعد ذكي اسمه "نَسغ" تابع لمشروع زراعي عُماني لمراقبة التربة والري.
 
-قرّر فقط هل السؤال متعلق بالزراعة والتربة والنباتات والري والتسميد أم لا.
-- اذا كان متعلقًا بالزراعة بأي شكل، أجب بكلمة واحدة: "AGRI"
-- اذا كان لا علاقة له بالزراعة، أجب بكلمة واحدة: "OTHER"
-لا تكتب أي شيء آخر غير هذه الكلمة.
+قواعد الرد:
+- اللغة: عربي فصيح بسيط مع لمسة خفيفة من اللهجة العُمانية.
+- لا تذكر أنك نموذج ذكاء اصطناعي أو تابع لـ Google أو Gemini.
+- عرّف نفسك دائماً بأنك "مساعد نَسغ".
+- ركّز على: التربة، الري، التسميد، قراءات نَسغ (رطوبة، حرارة، pH، EC، NPK، SHS).
+- اجعل الإجابات مختصرة وواضحة، ويفضّل تقسيمها لجمل قصيرة أو نقاط بدون مبالغة.
+- إذا كرر المستخدم نفس السؤال، غيّر طريقة الشرح والأمثلة لكن حافظ على نفس المعلومة الأساسية.
+- تجنّب العبارات المبالغ فيها (مثل حبيبي، قلبي، ...)، استخدم أسلوب محترم وبسيط.
+
+تاريخ المحادثة السابقة (للسياق فقط):
+${historyText}
+
+رسالة المزارع الآن:
+${message}
 `;
 
-    let classification = "AGRI";
-    try {
-      classification = await callGemini(guardPrompt, "gemini-2.0-flash");
-    } catch (e) {
-      classification = "AGRI"; // لو فشل التصنيف نكمل كأنه زراعي
-    }
-
-    if (classification !== "AGRI") {
-      const safeReply =
-        "حياك أخوي، هذا المساعد مخصص لأسئلة الزراعة والتربة والري والتسميد فقط 🌱. إذا عندك سؤال عن مزرعتك أو تربة نبات معيّن، اطرحه وبساعدك على قد ما أقدر.";
-      return res.status(200).send(safeReply);
-    }
-
-    // ===== 2) برومبت الإجابة بأسلوب نسغ الواثق =====
-    const soilText = soil ? JSON.stringify(soil, null, 2) : "لا توجد قراءات حديثة";
-    const adviceText = lastAdvice || "لا توجد توصية مكتوبة حالياً.";
-
-    const mainPrompt = `
-أنت مساعد زراعي لمنتج اسمه "نسغ" في عمان.
-اللغة المطلوبة: عربية بسيطة + لمسة خفيفة من العامية العمانية بدون مبالغة.
-
-المعلومات المتاحة:
-- آخر قراءات من جهاز نسغ إن وجدت (درجة الحرارة، رطوبة التربة، EC، pH، NPK، SHS ...):
-${soilText}
-
-- آخر توصية مكتوبة من نسغ إن وجدت:
-${adviceText}
-
-- سؤال المزارع:
-"${userMessage}"
-
-التعليمات لأسلوب الرد:
-- خاطب المزارع بكلمة "أخوي" أو "أخي المزارع" في بداية الجواب.
-- جاوب بصيغة واثقة، كأنك خبير نسغ معتمد تعتمد على قراءات الجهاز.
-- لا تطلب من المزارع استشارة مهندس زراعي أو خبير خارجي، ولا تذكر عبارات مثل:
-  (استشر مختص، راجع مهندس زراعي، الأفضل تسأل خبير).
-- اربط إجابتك قدر الإمكان بقراءات التربة: مثلاً إذا K منخفض → ركّز على البوتاسيوم، وهكذا.
-- اعطِ حلول عملية مباشرة: نوع السماد (مثلاً NPK 20-20-20، أو سماد عالي البوتاسيوم)،
-  أو بدائل عضوية (سماد عضوي متحلل، كمبوست، سماد دجاج، رماد خشب، مخلفات نخيل... إلخ) حسب العنصر.
-- خلك مختصر وواضح وسهل الفهم (من 3 إلى 6 جمل فقط).
-- استخدم جمل مثل:
-  "من قراءات جهاز نسغ أنا أشوف أن..."،
-  "أفضل شي تسويه الحين هو..."،
-  "حاول تسوي كذا وكذا خلال الأيام الجاية..."
-- لا تذكر أسماء موديلات الذكاء الاصطناعي ولا تشرح كيف تشتغل.
-- لا تُرجع أي JSON أو تنسيق برمجي؛ أرجع نص عربي طبيعي فقط بدون أي حقول إضافية.
-
-ابدأ الرد مباشرة بجملة عربية للمزارع بدون أي شرح تقني.
-`;
+    // payload لـ Gemini
+    const payload = {
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: systemPrompt }]
+        }
+      ]
+    };
 
     const MODELS = [
-      "gemini-2.0-flash",
       "gemini-2.0-pro",
-      "gemini-2.0-flash-lite",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-lite"
     ];
 
+    const baseUrl =
+      "https://generativelanguage.googleapis.com/v1/models";
+
     let lastError = null;
+
     for (const model of MODELS) {
       try {
-        const reply = await callGemini(mainPrompt, model);
-        return res.status(200).send(reply); // نرجّع النص فقط
+        const url = `${baseUrl}/${model}:generateContent?key=${apiKey}`;
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const json = await response.json();
+
+        if (!response.ok) {
+          console.error("nasgh-chat: Gemini error for model", model, json);
+          lastError = json.error || response.statusText;
+          continue;
+        }
+
+        const text =
+          json.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+        if (text) {
+          // المهم: نرجّع JSON فيه reply
+          return res.status(200).json({ reply: text });
+        } else {
+          console.error("nasgh-chat: empty reply for model", model, json);
+          lastError = "Empty reply from Gemini (" + model + ")";
+        }
       } catch (err) {
-        lastError = err.message;
-        continue;
+        console.error("nasgh-chat: fetch error for model", model, err);
+        lastError = err.message || String(err);
       }
     }
 
+    // لو وصلت هنا يعني كل الموديلات فشلت
+    return res.status(500).json({
+      error: "Gemini API failed",
+      details: lastError || "Unknown error"
+    });
+  } catch (err) {
+    console.error("nasgh-chat: unexpected server error:", err);
     return res
       .status(500)
-      .send("Gemini chat failed. Last error: " + JSON.stringify(lastError));
-  } catch (err) {
-    return res.status(500).send("Server error: " + err.toString());
+      .json({ error: "Server error", details: err.message || String(err) });
   }
 }
