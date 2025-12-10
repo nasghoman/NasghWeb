@@ -1,18 +1,29 @@
 // api/nasgh-chat.js
 
 export default async function handler(req, res) {
+  // CORS بسيط
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  if (req.method === "OPTIONS") return res.status(204).end();
-  if (req.method !== "POST") return res.status(405).send("Only POST allowed");
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Only POST allowed" });
+  }
+
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: "Missing DEEPSEEK_API_KEY env var" });
+  }
 
   try {
-    // قراءة البودي يدويًا
+    // نقرأ البودي يدويًا (نفس ستايل ملفاتك السابقة)
     const bodyString = await new Promise((resolve, reject) => {
       let data = "";
-      req.on("data", (c) => (data += c));
+      req.on("data", (chunk) => (data += chunk));
       req.on("end", () => resolve(data));
       req.on("error", reject);
     });
@@ -25,109 +36,79 @@ export default async function handler(req, res) {
     }
 
     const { message, history } = body || {};
-    if (!message || typeof message !== "string") {
-      return res
-        .status(400)
-        .json({ error: "Field 'message' (string) is required" });
+
+    if (!message) {
+      return res.status(400).json({ error: "message is required" });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      console.error("nasgh-chat: GEMINI_API_KEY missing");
-      return res
-        .status(500)
-        .json({ error: "Server config error: GEMINI_API_KEY not set" });
-    }
-
+    // نبني نص المحادثة السابقة على شكل نص واحد
     const historyText = Array.isArray(history)
       ? history
-          .map((turn, i) => {
-            const who = turn.role === "assistant" ? "مساعد نَسغ" : "المزارع";
-            return `${who} (${i + 1}): ${turn.content}`;
+          .map((turn, idx) => {
+            const who = turn.role === "user" ? "المزارع" : "مساعد نَسغ";
+            return `${who} (${idx + 1}): ${turn.content}`;
           })
           .join("\n")
       : "";
 
     const systemPrompt = `
-أنت مساعد ذكي اسمه "نَسغ" تابع لمشروع زراعي عُماني لمراقبة التربة والري.
+أنت مساعد زراعي ذكي اسمه "مساعد نَسغ" تابع لمشروع نَسغ العُماني لمراقبة التربة والري.
 
-قواعد الرد:
-- عربي فصيح بسيط مع لمسة خفيفة عمانية.
-- لا تذكر أنك نموذج من Google أو Gemini، فقط "مساعد نَسغ".
-- ركز على التربة، الري، التسميد، وقراءات نسغ.
-- اجعل الإجابات قصيرة وواضحة، وغيّر الأسلوب لو تكرر السؤال.
+أسلوبك:
+- اللغة: عربي فصيح مبسط مع لمسة عُمانية خفيفة (بدون مبالغة).
+- لا تذكر أنك نموذج ذكاء اصطناعي أو DeepSeek أو أي شركة، أنت فقط "مساعد نَسغ".
+- ركّز على: التربة، الري، التسميد، قراءات جهاز نَسغ (رطوبة، حرارة، pH، EC، NPK، SHS).
+- اجعل الإجابة قصيرة وواضحة، منسّقة على شكل فقرات أو نقاط بسيطة عند الحاجة.
+- إذا كان السؤال خارج الزراعة، رد بجملة قصيرة: "دوري في نَسغ هو المساعدة في التربة والري والتسميد فقط يا أخوي 🌿".
 
-تاريخ المحادثة:
+تاريخ المحادثة السابقة (للاطلاع فقط):
 ${historyText}
-
-رسالة المزارع الآن:
-${message}
 `;
 
+    // DeepSeek Chat API
+    const url = "https://api.deepseek.com/chat/completions";
+
     const payload = {
-      contents: [{ role: "user", parts: [{ text: systemPrompt }] }],
+      model: "deepseek-chat",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: message },
+      ],
+      temperature: 0.7,
     };
 
-    // نستخدم موديلات 1.5 مع v1beta
-    const MODELS = [
-      "gemini-1.5-flash",
-      "gemini-1.5-flash-8b",
-    ];
+    const dsRes = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
 
-    const baseUrl =
-      "https://generativelanguage.googleapis.com/v1beta/models";
-
-    let lastError = null;
-
-    for (const model of MODELS) {
-      try {
-        const url = `${baseUrl}/${model}:generateContent?key=${apiKey}`;
-
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        const json = await response.json();
-
-        if (!response.ok) {
-          console.error("nasgh-chat: Gemini error for model", model, json);
-
-          // لو المشكلة كوتا، نطلع بسرعة برسالة واضحة للمستخدم
-          if (json.error?.status === "RESOURCE_EXHAUSTED") {
-            return res.status(503).json({
-              error: "quota",
-              reply:
-                "حياك أخوي، خدمة نَسغ AI متوقفة مؤقتًا بسبب حد الاستخدام في المزود الخارجي. تقدر تستخدم لوحة القراءات والدشبورد عادي، وبنرجع نفعل الذكاء الاصطناعي قريبًا إن شاء الله 🌿",
-            });
-          }
-
-          lastError = json.error || response.statusText;
-          continue;
-        }
-
-        const text =
-          json.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        if (text) {
-          return res.status(200).json({ reply: text });
-        } else {
-          lastError = "Empty reply from model " + model;
-        }
-      } catch (err) {
-        console.error("nasgh-chat: fetch error for model", model, err);
-        lastError = err.message || String(err);
-      }
+    if (!dsRes.ok) {
+      const text = await dsRes.text();
+      console.error("DeepSeek error:", text);
+      return res
+        .status(500)
+        .json({ error: "DeepSeek API error", details: text });
     }
 
-    return res.status(500).json({
-      error: "Gemini API failed",
-      details: lastError || "Unknown error",
-    });
+    const data = await dsRes.json();
+    const reply = data.choices?.[0]?.message?.content || "";
+
+    if (!reply) {
+      return res.json({
+        reply:
+          "حياك أخوي، صار تعذّر بسيط في توليد الرد. جرّب تعيد سؤالك أو تغيّر صياغته شوي 🌿",
+      });
+    }
+
+    return res.json({ reply: reply.trim() });
   } catch (err) {
-    console.error("nasgh-chat: unexpected server error:", err);
+    console.error("nasgh-chat server error:", err);
     return res
       .status(500)
-      .json({ error: "Server error", details: err.message || String(err) });
+      .json({ error: "Server error", details: err.message });
   }
 }
