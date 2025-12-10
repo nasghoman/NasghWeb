@@ -1,7 +1,8 @@
-// api/nasgh-chat.js
+// /api/nasgh-chat.js
+// Next.js (Vercel Serverless Function) – DeepSeek backend لمساعد نَسغ
 
 export default async function handler(req, res) {
-  // CORS بسيط
+  // CORS بسيط (ما يضر حتى لو نفس الدومين)
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -16,99 +17,115 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: "Missing DEEPSEEK_API_KEY env var" });
+    return res
+      .status(500)
+      .json({ error: "DEEPSEEK_API_KEY is not set in environment variables." });
   }
 
+  // ===== قراءة الـ body بأمان =====
+  let body = {};
   try {
-    // نقرأ البودي يدويًا (نفس ستايل ملفاتك السابقة)
-    const bodyString = await new Promise((resolve, reject) => {
-      let data = "";
-      req.on("data", (chunk) => (data += chunk));
-      req.on("end", () => resolve(data));
-      req.on("error", reject);
-    });
-
-    let body = {};
-    try {
-      body = JSON.parse(bodyString || "{}");
-    } catch {
-      return res.status(400).json({ error: "Invalid JSON body" });
+    if (typeof req.body === "string") {
+      body = JSON.parse(req.body || "{}");
+    } else {
+      body = req.body || {};
     }
+  } catch (e) {
+    return res.status(400).json({ error: "Invalid JSON body" });
+  }
 
-    const { message, history } = body || {};
+  const { message, history = [] } = body;
 
-    if (!message) {
-      return res.status(400).json({ error: "message is required" });
-    }
+  if (!message || typeof message !== "string") {
+    return res.status(400).json({ error: "message is required (string)" });
+  }
 
-    // نبني نص المحادثة السابقة على شكل نص واحد
-    const historyText = Array.isArray(history)
-      ? history
-          .map((turn, idx) => {
-            const who = turn.role === "user" ? "المزارع" : "مساعد نَسغ";
-            return `${who} (${idx + 1}): ${turn.content}`;
-          })
-          .join("\n")
-      : "";
+  // ===== System Prompt لمساعد نَسغ =====
+  const systemPrompt = `
+أنت "مساعد نَسغ" الزراعي، تابع لمشروع نَسغ لمراقبة التربة والري في عُمان.
 
-    const systemPrompt = `
-أنت مساعد زراعي ذكي اسمه "مساعد نَسغ" تابع لمشروع نَسغ العُماني لمراقبة التربة والري.
+قواعد الرد:
+- اللغة: عربي واضح وبسيط يناسب المزارع العُماني.
+- ابدأ الرد دائمًا بالجملة: "حياك أخوي،" مرة واحدة في أول السطر.
+- لا تستخدم JSON أبدًا، ولا تكتب كلمات مثل "reply" أو أقواس {} أو "\\n".
+- استخدم جمل قصيرة، من 3 إلى 5 جمل، بدون تعداد برمجي مع نجوم أو أرقام.
+- ركّز على:
+  - حالة التربة (الرطوبة، الملوحة EC، درجة الحموضة pH، NPK، SHS) إن ذُكرت في السؤال.
+  - نصائح عملية عن الري والتسميد وتحسين التربة بطرق كيميائية أو عضوية بسيطة.
+- إذا كان السؤال بعيد عن الزراعة أو التربة أو الري أو التسميد أو قراءات جهاز نَسغ،
+  اعتذر بجملة قصيرة وقل إن دورك فقط في المواضيع الزراعية.
 
-أسلوبك:
-- اللغة: عربي فصيح مبسط مع لمسة عُمانية خفيفة (بدون مبالغة).
-- لا تذكر أنك نموذج ذكاء اصطناعي أو DeepSeek أو أي شركة، أنت فقط "مساعد نَسغ".
-- ركّز على: التربة، الري، التسميد، قراءات جهاز نَسغ (رطوبة، حرارة، pH، EC، NPK، SHS).
-- اجعل الإجابة قصيرة وواضحة، منسّقة على شكل فقرات أو نقاط بسيطة عند الحاجة.
-- إذا كان السؤال خارج الزراعة، رد بجملة قصيرة: "دوري في نَسغ هو المساعدة في التربة والري والتسميد فقط يا أخوي 🌿".
-
-تاريخ المحادثة السابقة (للاطلاع فقط):
-${historyText}
+اكتب النص النهائي مباشرة كما لو أنك تراسل مزارع على واتساب.
 `;
 
-    // DeepSeek Chat API
-    const url = "https://api.deepseek.com/chat/completions";
+  // ===== تحويل الـ history إلى messages بأسلوب Chat Completions =====
+  const messages = [
+    { role: "system", content: systemPrompt }
+  ];
 
-    const payload = {
-      model: "deepseek-chat",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: message },
-      ],
-      temperature: 0.7,
-    };
+  if (Array.isArray(history)) {
+    for (const turn of history) {
+      if (!turn || !turn.content) continue;
+      const role =
+        turn.role === "assistant" || turn.role === "system"
+          ? "assistant"
+          : "user";
+      messages.push({
+        role,
+        content: String(turn.content)
+      });
+    }
+  }
 
-    const dsRes = await fetch(url, {
+  // آخر رسالة من المستخدم
+  messages.push({
+    role: "user",
+    content: message
+  });
+
+  // ===== استدعاء DeepSeek =====
+  const payload = {
+    model: "deepseek-chat", // غيّرها لو استخدمت موديل آخر من DeepSeek
+    messages,
+    temperature: 0.6,
+    max_tokens: 500
+  };
+
+  try {
+    const response = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     });
 
-    if (!dsRes.ok) {
-      const text = await dsRes.text();
-      console.error("DeepSeek error:", text);
-      return res
-        .status(500)
-        .json({ error: "DeepSeek API error", details: text });
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("DeepSeek error:", data);
+      const msg =
+        (data && data.error && data.error.message) ||
+        response.statusText ||
+        "Unknown error from DeepSeek";
+      return res.status(500).json({ error: msg });
     }
 
-    const data = await dsRes.json();
-    const reply = data.choices?.[0]?.message?.content || "";
-
-    if (!reply) {
-      return res.json({
-        reply:
-          "حياك أخوي، صار تعذّر بسيط في توليد الرد. جرّب تعيد سؤالك أو تغيّر صياغته شوي 🌿",
-      });
+    const rawText = data.choices?.[0]?.message?.content || "";
+    if (!rawText) {
+      return res.status(500).json({ error: "Empty reply from DeepSeek" });
     }
 
-    return res.json({ reply: reply.trim() });
+    // تنظيف بسيط: تحويل \\n إلى أسطر حقيقية
+    const cleanText = String(rawText).replace(/\\n/g, "\n").trim();
+
+    return res.status(200).json({ reply: cleanText });
   } catch (err) {
     console.error("nasgh-chat server error:", err);
-    return res
-      .status(500)
-      .json({ error: "Server error", details: err.message });
+    return res.status(500).json({
+      error: "Server error while calling DeepSeek",
+      details: String(err.message || err)
+    });
   }
 }
