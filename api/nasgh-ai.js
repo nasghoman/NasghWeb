@@ -14,13 +14,8 @@ export default async function handler(req, res) {
     return res.status(405).send("Only POST allowed");
   }
 
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) {
-    return res.status(500).send("Missing DEEPSEEK_API_KEY env var");
-  }
-
   try {
-    // قراءة البودي
+    // ===== قراءة الـ body =====
     const bodyString = await new Promise((resolve, reject) => {
       let data = "";
       req.on("data", (c) => (data += c));
@@ -35,19 +30,31 @@ export default async function handler(req, res) {
       return res.status(400).send("Invalid JSON body");
     }
 
-    const soil = body.soil;
-    const language = body.language || "ar";
-    const plantName = body.plantName || null;
-    const stage = body.stage || null;
-    const targets = body.targets || null;
+    const soil          = body.soil;
+    const language      = body.language || "ar";
+    const plantName     = body.plantName || null;
+    const stage         = body.stage || null;
+    const targets       = body.targets || null;
+    const statusSummary = body.statusSummary || null; // 👈 جديد
 
     if (!soil) {
       return res.status(400).send("Missing soil readings");
     }
 
-    // نبني نفس comparison اللي كنا نستخدمه عشان يكون مطابق للجدول
-    const comparison = buildComparison(soil, targets);
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).send("Missing GEMINI_API_KEY env var");
+    }
 
+    // ===== مقارنة القراءات مع المدى المثالي (لربطها بالجدول) =====
+    // لو عندنا statusSummary من الواجهة الأمامية، نستخدمه مباشرة
+    // عشان نضمن نفس الحالة 100%، وإلا نستخدم buildComparison كـ backup.
+    const comparison =
+      statusSummary
+        ? buildComparisonFromSummary(statusSummary)
+        : buildComparison(soil, targets);
+
+    // ===== prompt =====
     const promptText = `
 هذه قراءات تربة من جهاز نَسغ (soilReadings):
 ${JSON.stringify(soil, null, 2)}
@@ -57,71 +64,81 @@ ${stage ? `مرحلة النمو الحالية: ${stage}\n` : ""}
 
 ${targets ? `وهذه الحدود المثالية لكل عنصر (idealTargets):\n${JSON.stringify(targets, null, 2)}\n` : ""}
 
-تحليل جاهز بين القراءات والحدود المثالية (نفس الجدول في واجهة نَسغ – لا تعيد حساب الحدود، فقط استخدم هذه الحالات كما هي):
+تحليل جاهز بين القراءات والحدود المثالية (لا تعيد حساب الحدود، استخدم هذه الحالات كما هي):
 ${comparison}
 
-المطلوب منك:
-- اكتب توصية زراعية مختصرة باللغة ${language} موجهة لمزارع عُماني.
-- ابدأ بجملة ترحيب قصيرة بكلمة "حياك أخوي".
-- استخدم من 3 إلى 5 جمل قصيرة وواضحة (ليست نقاط طويلة).
-- ركّز على العناصر التي حالتها "نقص" أو "زيادة" حسب التحليل أعلاه، ولا تناقض حالة الجدول:
+اكتب توصية زراعية مختصرة باللغة ${language} موجهة لمزارع عُماني، بالشروط التالية:
+- ابدأ بـ "حياك أخوي" في أول سطر فقط.
+- استخدم 3 إلى 5 جمل قصيرة وواضحة، بدون نقاط كثيرة.
+- ركّز على العناصر التي حالتها "نقص" أو "زيادة" حسب التحليل أعلاه:
   * الرطوبة والري.
   * الملوحة (EC) و pH.
-  * عناصر NPK والبوتاسيوم.
-- اقترح أسمدة كيميائية أو بدائل عضوية بسيطة (سماد عضوي متحلل، سماد حيواني متخمر، كومبوست، رماد خشب، إلخ) بما يناسب حالة كل عنصر (نقص أو زيادة).
-- لا تذكر DeepSeek أو نماذج لغة أو ذكاء اصطناعي، فقط تحدث كمساعد نَسغ.
-- لا تطلب من المزارع استشارة جهة أخرى؛ اعطِ التوصية بناءً على القراءات والجدول فقط.
-- إذا كانت كل العناصر ضمن المدى المثالي تقريبًا، ركّز على رسالة تطمين، مع نصيحة خفيفة عن الاستمرار على نفس نمط الري والتسميد.
+  * عناصر NPK والبوتاسيوم خصوصًا.
+- اقترح أسمدة كيميائية أو بدائل عضوية بسيطة (سماد عضوي متحلل، سماد حيواني متخمر، كومبوست، رماد خشب، إلخ) حسب حالة العناصر.
+- لا تستخدم كلمات مثل "حبي" أو "عزيزي" أو "قلق عليك"، فقط أسلوب محترم وبسيط مع كلمة "أخوي".
+- لا تذكر أن عليك استشارة مهندس زراعي أو جهة أخرى، اعطِ الإجابة بناءً على قراءات نسغ والجدول فقط.
+- إذا كان الطلب لا يتعلق بالزراعة، اعتذر بجملة قصيرة وقل إن دورك فقط لشرح حالة التربة والري والتسميد.
 
 اكتب النص جاهز للعرض للمزارع بدون أي JSON أو تنسيق برمجي.
 `;
 
-    const url = "https://api.deepseek.com/chat/completions";
-
     const payload = {
-      model: "deepseek-chat",
-      messages: [
-        { role: "system", content: "أنت مساعد نَسغ الزراعي." },
-        { role: "user", content: promptText },
+      contents: [
+        {
+          parts: [{ text: promptText }],
+        },
       ],
-      temperature: 0.6,
     };
 
-    const dsRes = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(payload),
-    });
+    const MODELS = [
+      "gemini-2.0-pro",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-lite",
+    ];
 
-    if (!dsRes.ok) {
-      const text = await dsRes.text();
-      console.error("DeepSeek nasgh-ai error:", text);
-      return res
-        .status(500)
-        .send("DeepSeek API error: " + text.substring(0, 300));
+    const baseUrl = "https://generativelanguage.googleapis.com/v1/models";
+
+    let lastError = null;
+
+    for (const model of MODELS) {
+      try {
+        const url = `${baseUrl}/${model}:generateContent?key=${apiKey}`;
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const json = await response.json();
+
+        if (!response.ok) {
+          lastError = json.error || response.statusText;
+          continue;
+        }
+
+        const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (text) {
+          return res.status(200).send(text.trim());
+        } else {
+          lastError = "Empty response " + model;
+        }
+      } catch (err) {
+        lastError = err.message;
+      }
     }
 
-    const data = await dsRes.json();
-    const text = data.choices?.[0]?.message?.content || "";
-
-    if (!text) {
-      return res
-        .status(500)
-        .send("DeepSeek returned empty response for nasgh-ai.");
-    }
-
-    return res.status(200).send(text.trim());
+    return res
+      .status(500)
+      .send("Gemini failed on all models. Last error: " + JSON.stringify(lastError));
   } catch (err) {
-    console.error("nasgh-ai server error:", err);
     return res.status(500).send("Server error: " + err.toString());
   }
 }
 
 /**
- * نفس منطق الجدول: حالة كل عنصر (نقص / مناسب / زيادة)
+ * نسخة قديمة: يبني النص من soil + targets (لو ما وصلنا statusSummary من الواجهة)
  */
 function buildComparison(soil, targets) {
   if (!targets) return "لا توجد حدود مثالية في الطلب، استخدم القراءات فقط.";
@@ -162,6 +179,54 @@ function buildComparison(soil, targets) {
 
   if (!lines.length) {
     return "لم أستطع مطابقة القراءات مع الحدود المثالية، استخدم القراءات فقط.";
+  }
+
+  return lines.join("\n");
+}
+
+/**
+ * جديد: يبني النص من الـ statusSummary اللي جاي من الواجهة
+ * عشان الحالات تكون ١٠٠٪ نفس الجدول بدون إعادة حساب.
+ *
+ * شكل statusSummary من الواجهة (مثال):
+ * {
+ *   "moisture": {
+ *     "label": "رطوبة التربة",
+ *     "value": 30,
+ *     "unit": "%",
+ *     "min": 25,
+ *     "max": 40,
+ *     "status": "نقص"
+ *   },
+ *   ...
+ * }
+ */
+function buildComparisonFromSummary(statusSummary) {
+  if (!statusSummary || typeof statusSummary !== "object") {
+    return "لا يوجد statusSummary، استخدم القراءات فقط.";
+  }
+
+  const lines = [];
+
+  for (const key of Object.keys(statusSummary)) {
+    const info = statusSummary[key];
+    if (!info) continue;
+
+    const label  = info.label || key;
+    const value  = typeof info.value === "number" ? info.value : Number(info.value);
+    const unit   = info.unit || "";
+    const min    = typeof info.min === "number" ? info.min : Number(info.min);
+    const max    = typeof info.max === "number" ? info.max : Number(info.max);
+    const status = info.status || "غير معروف";
+
+    // ما نعيد حساب شيء، بس نعرض نفس الأرقام والحالة
+    lines.push(
+      `- ${label}: القراءة الحالية ${value} ${unit}، والمدى المثالي من ${min} إلى ${max} ${unit} → الحالة: ${status}.`
+    );
+  }
+
+  if (!lines.length) {
+    return "statusSummary موجود لكن فاضي، استخدم القراءات فقط.";
   }
 
   return lines.join("\n");
