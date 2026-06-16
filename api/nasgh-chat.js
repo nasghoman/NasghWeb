@@ -1,9 +1,4 @@
-هنا التحديثات الضرورية فقط على كود ملف المحادثة (الـ Chat). تم استبدال الموديل القديم `gemini-2.0-flash` المستخدم في فحص الحارس (Guard) والموديلات القديمة في مصفوفة `MODELS` بالجيل الجديد لعام 2026 لتجنب خطأ الـ `404` والـ `500` المرتبط به.
-
-الكود بعد التعديل المباشر:
-
-```javascript
-// api/nasgh-chat.js (أو اسم ملف المحادثة لديك)
+// api/nasgh-chat.js
 
 export default async function handler(req, res) {
   // ===== CORS =====
@@ -48,27 +43,6 @@ export default async function handler(req, res) {
       return res.status(500).send("Missing GEMINI_API_KEY env var");
     }
 
-    // ===== دالة اتصال عامة مع Gemini =====
-    async function callGemini(promptText, model) {
-      const payload = {
-        contents: [{ parts: [{ text: promptText }] }],
-      };
-      const baseUrl = "https://generativelanguage.googleapis.com/v1/models";
-      const url = `${baseUrl}/${model}:generateContent?key=${apiKey}`;
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const json = await response.json();
-      if (!response.ok) {
-        throw new Error(json.error?.message || response.statusText);
-      }
-      return json.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    }
-
     // ===== 1) فحص إذا السؤال زراعي أو لا =====
     const guardPrompt = `
 السؤال من المزارع:
@@ -82,8 +56,8 @@ export default async function handler(req, res) {
 
     let classification = "AGRI";
     try {
-      // 💡 تحديث: استبدال الموديل القديم بموديل سريع مدعوم لعام 2026
-      classification = await callGemini(guardPrompt, "gemini-3.1-flash-lite");
+      // تم تمرير apiKey للدالة بعد نقلها بالأسفل
+      classification = await callGemini(guardPrompt, "gemini-3.1-flash-lite", apiKey);
     } catch (e) {
       classification = "AGRI"; // لو فشل التصنيف نكمل كأنه زراعي
     }
@@ -130,7 +104,6 @@ ${adviceText}
 ابدأ الرد مباشرة بجملة عربية للمزارع بدون أي شرح تقني.
 `;
 
-    // 💡 تحديث: مصفوفة الموديلات الجديدة لعام 2026 لتجنب الـ 404
     const MODELS = [
       "gemini-3.5-flash",
       "gemini-3.1-flash-lite",
@@ -141,8 +114,8 @@ ${adviceText}
 
     for (const model of MODELS) {
       try {
-        const reply = await callGemini(mainPrompt, model);
-        return res.status(200).send(reply.trim()); // نرجّع النص فقط
+        const reply = await callGemini(mainPrompt, model, apiKey);
+        return res.status(200).send(reply.trim());
       } catch (err) {
         lastError = err.message;
         continue;
@@ -157,4 +130,23 @@ ${adviceText}
   }
 }
 
-```
+// 💡 تم نقل الدالة هنا (خارج الـ handler الرئيسي) لمنع انهيار البيئة السحابية
+async function callGemini(promptText, model, apiKey) {
+  const payload = {
+    contents: [{ parts: [{ text: promptText }] }],
+  };
+  const baseUrl = "https://generativelanguage.googleapis.com/v1/models";
+  const url = `${baseUrl}/${model}:generateContent?key=${apiKey}`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const json = await response.json();
+  if (!response.ok) {
+    throw new Error(json.error?.message || response.statusText);
+  }
+  return json.candidates?.[0]?.content?.parts?.[0]?.text || "";
+}
