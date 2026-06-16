@@ -90,10 +90,11 @@ ${comparison}
       ],
     };
 
+    // 💡 تحديث ضروري: استخدام الموديلات المدعومة لعام 2026 لتجنب خطأ 404
     const MODELS = [
-      "gemini-2.0-pro",
-      "gemini-2.0-flash",
-      "gemini-2.0-flash-lite",
+      "gemini-3.5-flash",
+      "gemini-3.1-flash-lite",
+      "gemini-3.1-pro",
     ];
 
     const baseUrl = "https://generativelanguage.googleapis.com/v1/models";
@@ -187,19 +188,6 @@ function buildComparison(soil, targets) {
 /**
  * جديد: يبني النص من الـ statusSummary اللي جاي من الواجهة
  * عشان الحالات تكون ١٠٠٪ نفس الجدول بدون إعادة حساب.
- *
- * شكل statusSummary من الواجهة (مثال):
- * {
- *   "moisture": {
- *     "label": "رطوبة التربة",
- *     "value": 30,
- *     "unit": "%",
- *     "min": 25,
- *     "max": 40,
- *     "status": "نقص"
- *   },
- *   ...
- * }
  */
 function buildComparisonFromSummary(statusSummary) {
   if (!statusSummary || typeof statusSummary !== "object") {
@@ -219,7 +207,6 @@ function buildComparisonFromSummary(statusSummary) {
     const max    = typeof info.max === "number" ? info.max : Number(info.max);
     const status = info.status || "غير معروف";
 
-    // ما نعيد حساب شيء، بس نعرض نفس الأرقام والحالة
     lines.push(
       `- ${label}: القراءة الحالية ${value} ${unit}، والمدى المثالي من ${min} إلى ${max} ${unit} → الحالة: ${status}.`
     );
