@@ -1,94 +1,4 @@
 // api/nasgh-chat.js
-import omanRAGData from "./Oman_RAG.js";
-
-// ==========================================
-// 🧠 Chat RAG Retrieval Engine
-// ==========================================
-function retrieveRelevantChunksForChat(userMessage, soil) {
-  const msg = (userMessage || "").toLowerCase();
-  const matchedTags = new Set();
-
-  // قاموس الكلمات المفتاحية ومقابلة الوسوم المعرفية
-  const keywordMap = {
-    "ملوحة": ["ec", "salinity", "gypsum"],
-    "أملاح": ["ec", "salinity", "gypsum"],
-    "حموضة": ["ph", "alkaline", "caco3"],
-    "قلوية": ["ph", "alkaline", "caco3"],
-    "سماد": ["npk", "fertilizer", "compost", "biochar"],
-    "تسميد": ["npk", "fertilizer", "compost", "biochar"],
-    "نيتروجين": ["nitrogen", "npk"],
-    "فوسفور": ["phosphorus", "npk"],
-    "بوتاسيوم": ["potassium", "npk"],
-    "زنك": ["zinc", "caco3"],
-    "كالسيوم": ["calcium", "caco3"],
-    "أفيولايت": ["ophiolite", "heavy_metals", "geology"],
-    "معادن": ["heavy_metals", "nickel", "chromium"],
-    "نيكل": ["nickel", "heavy_metals"],
-    "كروم": ["chromium", "heavy_metals"],
-    "ساحل": ["coastal", "batinah", "muscat", "sharqiyah"],
-    "الباطنة": ["batinah", "coastal"],
-    "مسقط": ["muscat", "coastal"],
-    "الشرقية": ["sharqiyah", "coastal"],
-    "الجبل": ["mountainous", "rocky"],
-    "صلالة": ["salalah", "dhofar"],
-    "ظفار": ["dhofar", "salalah"],
-    "صحراء": ["desert", "arid"],
-    "نبات": ["flora", "forage"],
-    "رعي": ["forage", "pasture"],
-    "غاف": ["forage", "pasture"],
-    "سلم": ["forage", "pasture"],
-    "سام": ["toxic"],
-    "أشخر": ["toxic"],
-    "حرمل": ["toxic"],
-    "حنظل": ["toxic"],
-    "لبان": ["medicinal"],
-    "صبر": ["medicinal"]
-  };
-
-  // 1. استخراج الوسوم من رسالة المزارع
-  for (const [key, tags] of Object.entries(keywordMap)) {
-    if (msg.includes(key)) {
-      tags.forEach(t => matchedTags.add(t));
-    }
-  }
-
-  // 2. تحليل بيانات الحساس الحية ودعم الوسوم
-  if (soil) {
-    if (soil.ph > 7.3) matchedTags.add("ph");
-    if (soil.ec > 1500) matchedTags.add("ec");
-    if (soil.n < 100 || soil.p < 50 || soil.k < 150) matchedTags.add("npk");
-  }
-
-  // 3. تقييم كل Chunk في قاعدة بيانات Oman RAG (Scoring Algorithm)
-  const scored = omanRAGData.knowledge_base.map(chunk => {
-    let score = 0;
-    
-    // مطابقة الوسوم
-    if (chunk.tags) {
-      chunk.tags.forEach(tag => {
-        if (matchedTags.has(tag)) score += 3;
-      });
-    }
-
-    // مطابقة النص في العنوان أو المحتوى
-    const words = msg.split(/\s+/).filter(w => w.length > 3);
-    words.forEach(w => {
-      if (chunk.title && chunk.title.includes(w)) score += 2;
-      if (chunk.content && chunk.content.includes(w)) score += 1;
-    });
-
-    return { ...chunk, score };
-  });
-
-  // 4. ترتيب تنازلي وترشيح أفضل قطعتين معرفيتين
-  scored.sort((a, b) => b.score - a.score);
-  const topChunks = scored.slice(0, 2);
-
-  // إرجاع الأفضل أو إرجاع افتراضي لقواعد الخصوبة والقلوية العمانية
-  return (topChunks[0] && topChunks[0].score > 0) 
-    ? topChunks 
-    : [omanRAGData.knowledge_base[2], omanRAGData.knowledge_base[3]];
-}
 
 export default async function handler(req, res) {
   // ===== CORS =====
@@ -96,10 +6,16 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  if (req.method === "OPTIONS") return res.status(204).end();
-  if (req.method !== "POST") return res.status(405).send("Only POST allowed");
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+
+  if (req.method !== "POST") {
+    return res.status(405).send("Only POST allowed");
+  }
 
   try {
+    // ===== قراءة الـ body =====
     const bodyString = await new Promise((resolve, reject) => {
       let data = "";
       req.on("data", (c) => (data += c));
@@ -107,7 +23,13 @@ export default async function handler(req, res) {
       req.on("error", reject);
     });
 
-    const body = JSON.parse(bodyString || "{}");
+    let body = {};
+    try {
+      body = JSON.parse(bodyString || "{}");
+    } catch {
+      return res.status(400).send("Invalid JSON body");
+    }
+
     const userMessage = body.message;
     const soil        = body.soil;
     const lastAdvice  = body.lastAdvice;
@@ -121,41 +43,65 @@ export default async function handler(req, res) {
       return res.status(500).send("Missing GEMINI_API_KEY env var");
     }
 
-    // 🔍 1. استرجاع البيانات المعرفية المتطابقة (Chat RAG Pipeline)
-    const retrievedChunks = retrieveRelevantChunksForChat(userMessage, soil);
-    
-    const ragContextText = retrievedChunks.map(c => 
-      `[Chunk ID: ${c.chunk_id} | المصدر: ${c.metadata.source}]\n${c.content}`
-    ).join("\n\n");
+    // ===== 1) فحص إذا السؤال زراعي أو لا =====
+    const guardPrompt = `
+السؤال من المزارع:
+"${userMessage}"
 
-    const chunkIdsString = retrievedChunks.map(c => `[${c.chunk_id}]`).join(" ");
+قرّر فقط هل السؤال متعلق بالزراعة والتربة والنباتات والري والتسميد أم لا.
+- اذا كان متعلقًا بالزراعة بأي شكل، أجب بكلمة واحدة: "AGRI"
+- اذا كان لا علاقة له بالزراعة، أجب بكلمة واحدة: "OTHER"
+لا تكتب أي شيء آخر غير هذه الكلمة.
+`;
 
-    // ===== 2. صياغة البرومبت المدعوم بالـ RAG =====
+    let classification = "AGRI";
+    try {
+      // تم تمرير apiKey للدالة بعد نقلها بالأسفل
+      classification = await callGemini(guardPrompt, "gemini-3.1-flash-lite", apiKey);
+    } catch (e) {
+      classification = "AGRI"; // لو فشل التصنيف نكمل كأنه زراعي
+    }
+
+    if (!classification.includes("AGRI")) {
+      const safeReply =
+        "حياك أخوي، هذا المساعد مخصص لأسئلة الزراعة والتربة والري والتسميد فقط 🌱. إذا عندك سؤال عن مزرعتك أو تربة نبات معيّن، اطرحه وبساعدك على قد ما أقدر.";
+      return res.status(200).send(safeReply);
+    }
+
+    // ===== 2) برومبت الإجابة بأسلوب نسغ الواثق =====
     const soilText = soil ? JSON.stringify(soil, null, 2) : "لا توجد قراءات حديثة";
     const adviceText = lastAdvice || "لا توجد توصية مكتوبة حالياً.";
 
     const mainPrompt = `
-أنت المساعد الذكي لمشروع "نَسغ". تُجيب المزارع العُماني بناءً على قراءات الحساس والمستندات الرسمية للتربة والنباتات في سلطنة عُمان.
-اللغة المطلوبة: عربية بسيطة بأسلوب محترم وعملي مع استخدام كلمة "أخوي".
+أنت خبير زراعي ذكي يمثل نظام "نَسغ" الذكي لـمراقبة التربة والري.
+اللغة المطلوبة: عربية بسيطة + لمسة خفيفة من العامية العمانية بدون مبالغة.
 
-بيانات الحساس المتاحة:
+المعلومات المتاحة:
+- آخر قراءات من جهاز نسغ إن وجدت (درجة الحرارة، رطوبة التربة، EC، pH، NPK، SHS ...):
 ${soilText}
 
-آخر توصية من النظام:
+- آخر توصية مكتوبة من نسغ إن وجدت:
 ${adviceText}
 
-=== السياق المسترجع من قاعدة بيانات RAG العُمانية (Oman RAG Retrieved Context) ===
-${ragContextText}
-
-سؤال المزارع:
+- سؤال المزارع:
 "${userMessage}"
 
-تعليمات الرد والإخراج:
-1. ابدأ بـ "حياك أخوي".
-2. أجِب بشكل مباشر ومختصر (من 3 إلى 5 جمل)، واستند في إجابتك إلى المعلومات المسترجعة أعلاه (مثل طبيعة التربة القلوية، أو الملوحة، أو استخدام مخلبات EDDHA والجبس والكمبوست).
-3. اختم الرد دائماً بسطر يوضح المرجع الاسترجاعي للـ RAG بالشكل التالي نصاً:
-   "🔍 مرجع الاسترجاع المعرفي (Oman_RAG): ${chunkIdsString}"
-4. لا تذكر أي تفاصيل تقنية عن الكود أو أنك نموذج لغوي.
+التعليمات لأسلوب الرد:
+- خاطب المزارع بكلمة "أخوي" أو "أخي المزارع" في بداية الجواب.
+- جاوب بصيغة واثقة، كأنك خبير نسغ معتمد تعتمد على قراءات الجهاز.
+- لا تطلب من المزارع استشارة مهندس زراعي أو خبير خارجي، ولا تذكر عبارات مثل: (استشر مختص، راجع مهندس زراعي، الأفضل تسأل خبير).
+- اعطِ حلول عملية مباشرة: نوع السماد (مثلاً NPK 20-20-20، أو سماد عالي البوتاسيوم)، أو بدائل عضوية (سماد عضوي متحلل، كمبوست، سماد دجاج، رماد خشب، مخلفات نخيل... إلخ) حسب العنصر.
+- خلك مختصر وواضح وسهل الفهم (من 3 إلى 6 جمل فقط).
+- أربط إجابتك قدر الإمكان بقراءات التربة أو التوصية السابقة إذا كانت مناسبة للسؤال.
+- لو المزارع يسأل عن معنى مرحلة نمو معينة أو شرح توصية، اشرحها له بلغة بسيطة.
+- استخدم جمل مثل:
+  "من قراءات جهاز نسغ أنا أشوف أن..."،
+  "أفضل شي تسويه الحين هو..."،
+  "حاول تسوي كذا وكذا خلال الأيام الجاية..."
+- لا تذكر أسماء موديلات الذكاء الاصطناعي ولا تشرح كيف تشتغل ولا تذكر إنك نموذج لغوي، ركّز أن الكلام صادر من "مساعد نسغ".
+- لا تُرجع أي JSON أو تنسيق برمجي؛ أرجع نص عربي طبيعي فقط بدون أي حقول إضافية.
+
+ابدأ الرد مباشرة بجملة عربية للمزارع بدون أي شرح تقني.
 `;
 
     const MODELS = [
@@ -164,24 +110,27 @@ ${ragContextText}
       "gemini-3.1-pro",
     ];
 
+    let lastError = null;
+
     for (const model of MODELS) {
       try {
         const reply = await callGemini(mainPrompt, model, apiKey);
-        if (reply) {
-          return res.status(200).send(reply.trim());
-        }
+        return res.status(200).send(reply.trim());
       } catch (err) {
+        lastError = err.message;
         continue;
       }
     }
 
-    return res.status(500).send("Gemini RAG Chat failed on all models.");
+    return res
+      .status(500)
+      .send("Gemini failed on all models. Last error: " + JSON.stringify(lastError));
   } catch (err) {
     return res.status(500).send("Server error: " + err.toString());
   }
 }
 
-// دالة استدعاء Gemini
+// 💡 تم نقل الدالة هنا (خارج الـ handler الرئيسي) لمنع انهيار البيئة السحابية
 async function callGemini(promptText, model, apiKey) {
   const payload = {
     contents: [{ parts: [{ text: promptText }] }],
