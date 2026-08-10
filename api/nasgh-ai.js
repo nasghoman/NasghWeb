@@ -35,7 +35,8 @@ export default async function handler(req, res) {
     const plantName     = body.plantName || null;
     const stage         = body.stage || null;
     const targets       = body.targets || null;
-    const statusSummary = body.statusSummary || null; // 👈 جديد
+    const statusSummary = body.statusSummary || null; 
+    const weather       = body.weather || null; // 👈 استقبال بيانات الطقس
 
     if (!soil) {
       return res.status(400).send("Missing soil readings");
@@ -46,13 +47,20 @@ export default async function handler(req, res) {
       return res.status(500).send("Missing GEMINI_API_KEY env var");
     }
 
-    // ===== مقارنة القراءات مع المدى المثالي (لربطها بالجدول) =====
-    // لو عندنا statusSummary من الواجهة الأمامية، نستخدمه مباشرة
-    // عشان نضمن نفس الحالة 100%، وإلا نستخدم buildComparison كـ backup.
+    // ===== مقارنة القراءات مع المدى المثالي =====
     const comparison =
       statusSummary
         ? buildComparisonFromSummary(statusSummary)
         : buildComparison(soil, targets);
+
+    // ===== صياغة نص الطقس فقط في حال وجود بيانات حقيقية =====
+    const weatherSection = (weather && typeof weather.airTemp !== "undefined") ? `
+بيانات حالة الطقس الحية بالمزرعة:
+- حرارة الجو: ${weather.airTemp}°م
+- رطوبة الهواء: ${weather.airHumidity}%
+- سرعة الرياح: ${weather.windSpeed} كم/س
+- احتمال الأمطار: ${weather.rainProbability}%
+` : "";
 
     // ===== prompt =====
     const promptText = `
@@ -61,8 +69,7 @@ ${JSON.stringify(soil, null, 2)}
 
 ${plantName ? `نوع النبات: ${plantName}\n` : ""}
 ${stage ? `مرحلة النمو الحالية: ${stage}\n` : ""}
-
-${targets ? `وهذه الحدود المثالية لكل عنصر (idealTargets):\n${JSON.stringify(targets, null, 2)}\n` : ""}
+${weatherSection}
 
 تحليل جاهز بين القراءات والحدود المثالية (لا تعيد حساب الحدود، استخدم هذه الحالات كما هي):
 ${comparison}
@@ -74,7 +81,7 @@ ${comparison}
   * الرطوبة والري.
   * الملوحة (EC) و pH.
   * عناصر NPK والبوتاسيوم خصوصًا.
-- اقترح أسمدة كيميائية أو بدائل عضوية بسيطة (سماد عضوي متحلل، سماد حيواني متخمر، كومبوست، رماد خشب، إلخ) حسب حالة العناصر.
+${weatherSection ? "- اربط حالة الطقس الحالية (الحرارة، الرياح، أو الأمطار) بنصائح الري والتسميد بأسلوب طبيعي.\n" : ""}- اقترح أسمدة كيميائية أو بدائل عضوية بسيطة (سماد عضوي متحلل، سماد حيواني متخمر، كومبوست، رماد خشب، إلخ) حسب حالة العناصر.
 - لا تستخدم كلمات مثل "حبي" أو "عزيزي" أو "قلق عليك"، فقط أسلوب محترم وبسيط مع كلمة "أخوي".
 - لا تذكر أن عليك استشارة مهندس زراعي أو جهة أخرى، اعطِ الإجابة بناءً على قراءات نسغ والجدول فقط.
 - إذا كان الطلب لا يتعلق بالزراعة، اعتذر بجملة قصيرة وقل إن دورك فقط لشرح حالة التربة والري والتسميد.
@@ -90,7 +97,6 @@ ${comparison}
       ],
     };
 
-    // 💡 تحديث ضروري: استخدام الموديلات المدعومة لعام 2026 لتجنب خطأ 404
     const MODELS = [
       "gemini-3.5-flash",
       "gemini-3.1-flash-lite",
@@ -98,7 +104,6 @@ ${comparison}
     ];
 
     const baseUrl = "https://generativelanguage.googleapis.com/v1/models";
-
     let lastError = null;
 
     for (const model of MODELS) {
@@ -138,9 +143,6 @@ ${comparison}
   }
 }
 
-/**
- * نسخة قديمة: يبني النص من soil + targets (لو ما وصلنا statusSummary من الواجهة)
- */
 function buildComparison(soil, targets) {
   if (!targets) return "لا توجد حدود مثالية في الطلب، استخدم القراءات فقط.";
 
@@ -185,10 +187,6 @@ function buildComparison(soil, targets) {
   return lines.join("\n");
 }
 
-/**
- * جديد: يبني النص من الـ statusSummary اللي جاي من الواجهة
- * عشان الحالات تكون ١٠٠٪ نفس الجدول بدون إعادة حساب.
- */
 function buildComparisonFromSummary(statusSummary) {
   if (!statusSummary || typeof statusSummary !== "object") {
     return "لا يوجد statusSummary، استخدم القراءات فقط.";
