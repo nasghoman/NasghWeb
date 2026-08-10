@@ -985,10 +985,8 @@
           throw new Error("HTTP " + res.status);
         }
 
-        const data = await res.json();
-        const reply =
-          data.reply ||
-          "صار عندي تعذّر بسيط في الرد، جرّب تعيد سؤالك أو غيّر صياغته شوي أخوي.";
+        // 🟢 تم التصحيح هنا لاستقبال النص الصريح مباشرة مثل الصفحة الأخرى
+        const reply = await res.text() || "صار عندي تعذّر بسيط في الرد، جرّب تعيد سؤالك أو غيّر صياغته شوي أخوي.";
 
         appendMessage("assistant", reply);
         chatHistory.push({ role: "assistant", content: reply });
