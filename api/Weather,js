@@ -1,0 +1,57 @@
+let currentWeatherCache = null;
+
+// جلب الطقس في الخفاء بدون إظهاره على الشاشة
+async function fetchLiveWeatherSilent() {
+  try {
+    const res = await fetch("/api/weather");
+    const data = await res.json();
+    
+    if (data.ok && data.weather) {
+      currentWeatherCache = data.weather;
+    } else {
+      currentWeatherCache = null; // تعطل الـ API -> صفر بيانات طقس
+    }
+  } catch (err) {
+    currentWeatherCache = null;
+  }
+}
+
+// طلب التوصية وإرسال الطقس إذا وجد فقط
+async function callAI() {
+  if (!lastData) return;
+
+  aiBtn.disabled = true;
+  aiStatusEl.textContent = "جاري تحليل القراءات وإعداد التوصية...";
+
+  try {
+    const payload = {
+      soil: lastData,
+      weather: currentWeatherCache, // كائن الطقس أو null
+      plantName: plantNameInput.value.trim() || null,
+      stage: plantStageSelect.value || null,
+      statusSummary: lastStatusSummary || null
+    };
+
+    const res = await fetch(AI_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) throw new Error("HTTP " + res.status);
+
+    const adviceText = await res.text();
+    aiAdviceEl.textContent = adviceText;
+    aiStatusEl.textContent = "تم استلام التوصية بنجاح ✅";
+  } catch (err) {
+    console.error(err);
+    aiStatusEl.textContent = "حدث خطأ أثناء طلب التوصية.";
+  } finally {
+    aiBtn.disabled = false;
+  }
+}
+
+// جلب الطقس صامتاً عند فتح الصفحة
+document.addEventListener("DOMContentLoaded", () => {
+  fetchLiveWeatherSilent();
+});
