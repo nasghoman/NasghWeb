@@ -1,60 +1,21 @@
 // api/nasgh-ai.js
-import omanRAGData from "./Oman_RAG.js";
-
-// ==========================================
-// 🧠 Local RAG Retrieval Engine (Vector-Lite)
-// ==========================================
-function retrieveRelevantChunks(soil, plantName, statusSummary) {
-  const queryTags = new Set();
-
-  // 1. تحليل قراءات الحساس واستخراج الكلمات المفتاحية
-  if (soil.ph > 7.3) {
-    queryTags.add("ph");
-    queryTags.add("alkaline");
-    queryTags.add("caco3");
-    queryTags.add("edta");
-  }
-  if (soil.ec > 1500) {
-    queryTags.add("ec");
-    queryTags.add("salinity");
-    queryTags.add("gypsum");
-  }
-  if (soil.n < 100 || soil.p < 50 || soil.k < 150) {
-    queryTags.add("nitrogen");
-    queryTags.add("phosphorus");
-    queryTags.add("potassium");
-    queryTags.add("npk");
-    queryTags.add("fertilizer");
-  }
-  
-  // إضافة الكومبوست والـ Biochar دائماً للترب الجافة والقلوية
-  queryTags.add("biochar");
-  queryTags.add("compost");
-  queryTags.add("humic");
-
-  // 2. حساب درجة المطابقة (Scoring Algorithm) لكل Chunk في قاعدة RAG
-  const scoredChunks = omanRAGData.knowledge_base.map(chunk => {
-    let score = 0;
-    chunk.tags.forEach(tag => {
-      if (queryTags.has(tag)) score += 1;
-    });
-    return { ...chunk, relevanceScore: score };
-  });
-
-  // 3. ترتيب القطع المعرفية تنازلياً وأخذ أفضل 2-3 Chunks
-  scoredChunks.sort((a, b) => b.relevanceScore - a.relevanceScore);
-  return scoredChunks.slice(0, 3);
-}
 
 export default async function handler(req, res) {
+  // ===== CORS =====
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  if (req.method === "OPTIONS") return res.status(204).end();
-  if (req.method !== "POST") return res.status(405).send("Only POST allowed");
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+
+  if (req.method !== "POST") {
+    return res.status(405).send("Only POST allowed");
+  }
 
   try {
+    // ===== قراءة الـ body =====
     const bodyString = await new Promise((resolve, reject) => {
       let data = "";
       req.on("data", (c) => (data += c));
@@ -62,70 +23,198 @@ export default async function handler(req, res) {
       req.on("error", reject);
     });
 
-    const body = JSON.parse(bodyString || "{}");
-    const soil = body.soil;
-    const plantName = body.plantName || "غير محدد";
-    const stage = body.stage || "غير محددة";
-    const statusSummary = body.statusSummary || null;
+    let body = {};
+    try {
+      body = JSON.parse(bodyString || "{}");
+    } catch {
+      return res.status(400).send("Invalid JSON body");
+    }
 
-    if (!soil) return res.status(400).send("Missing soil readings");
+    const soil          = body.soil;
+    const language      = body.language || "ar";
+    const plantName     = body.plantName || null;
+    const stage         = body.stage || null;
+    const targets       = body.targets || null;
+    const statusSummary = body.statusSummary || null; // 👈 جديد
+
+    if (!soil) {
+      return res.status(400).send("Missing soil readings");
+    }
 
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return res.status(500).send("Missing GEMINI_API_KEY");
+    if (!apiKey) {
+      return res.status(500).send("Missing GEMINI_API_KEY env var");
+    }
 
-    // 🔍 4. تنفيذ الاسترجاع المعرفي الحقيقي (RAG Retrieval Step)
-    const retrievedChunks = retrieveRelevantChunks(soil, plantName, statusSummary);
+    // ===== مقارنة القراءات مع المدى المثالي (لربطها بالجدول) =====
+    // لو عندنا statusSummary من الواجهة الأمامية، نستخدمه مباشرة
+    // عشان نضمن نفس الحالة 100%، وإلا نستخدم buildComparison كـ backup.
+    const comparison =
+      statusSummary
+        ? buildComparisonFromSummary(statusSummary)
+        : buildComparison(soil, targets);
 
-    // صياغة النص المسترجع كـ Context موجه للموديل
-    const ragContextText = retrievedChunks.map(c => 
-      `[Chunk ID: ${c.chunk_id} | المصدر: ${c.metadata.source}]\n${c.content}`
-    ).join("\n\n");
-
-    const chunkIdsString = retrievedChunks.map(c => `[${c.chunk_id}]`).join(" ");
-
-    // ===== Prompt الموجه لـ Gemini =====
+    // ===== prompt =====
     const promptText = `
-أنت خبير زراعي ذكي ونظام تحليل متقدم باسم "نَسغ AI".
-
-بيانات قراءات الحساس الحالية:
+هذه قراءات تربة من جهاز نَسغ (soilReadings):
 ${JSON.stringify(soil, null, 2)}
-نوع النبات: ${plantName}
-مرحلة النمو: ${stage}
 
-=== السياق المعرفي المباشر والمسترجع من قاعدة بيانات RAG العُمانية (Retrieved Context) ===
-${ragContextText}
+${plantName ? `نوع النبات: ${plantName}\n` : ""}
+${stage ? `مرحلة النمو الحالية: ${stage}\n` : ""}
 
-المطلوب:
-اكتب توصية زراعية موجهة للمزارع العُماني بلغة عربية بسيطة ومباشرة:
-1. ابدأ بـ "حياك أخوي".
-2. قدم تحليلاً مختصراً لحالة التربة وبناءً على البيانات المسترجعة من الـ RAG (اششر إلى القلوية العمانية، استخدام مخلبات EDDHA/EDTA، أو الجبس والكمبوست حسب القراءات).
-3. اختم التوصية بسطر مستقل يوضح المراجع الاسترجاعية التي استخدمتها الخوارزمية كالتالي بالضبط:
-   "📌 مراجع الاسترجاع المعرفي (RAG): ${chunkIdsString}"
+${targets ? `وهذه الحدود المثالية لكل عنصر (idealTargets):\n${JSON.stringify(targets, null, 2)}\n` : ""}
+
+تحليل جاهز بين القراءات والحدود المثالية (لا تعيد حساب الحدود، استخدم هذه الحالات كما هي):
+${comparison}
+
+اكتب توصية زراعية مختصرة باللغة ${language} موجهة لمزارع عُماني، بالشروط التالية:
+- ابدأ بـ "حياك أخوي" في أول سطر فقط.
+- استخدم 3 إلى 5 جمل قصيرة وواضحة، بدون نقاط كثيرة.
+- ركّز على العناصر التي حالتها "نقص" أو "زيادة" حسب التحليل أعلاه:
+  * الرطوبة والري.
+  * الملوحة (EC) و pH.
+  * عناصر NPK والبوتاسيوم خصوصًا.
+- اقترح أسمدة كيميائية أو بدائل عضوية بسيطة (سماد عضوي متحلل، سماد حيواني متخمر، كومبوست، رماد خشب، إلخ) حسب حالة العناصر.
+- لا تستخدم كلمات مثل "حبي" أو "عزيزي" أو "قلق عليك"، فقط أسلوب محترم وبسيط مع كلمة "أخوي".
+- لا تذكر أن عليك استشارة مهندس زراعي أو جهة أخرى، اعطِ الإجابة بناءً على قراءات نسغ والجدول فقط.
+- إذا كان الطلب لا يتعلق بالزراعة، اعتذر بجملة قصيرة وقل إن دورك فقط لشرح حالة التربة والري والتسميد.
+
+اكتب النص جاهز للعرض للمزارع بدون أي JSON أو تنسيق برمجي.
 `;
 
-    const payload = { contents: [{ parts: [{ text: promptText }] }] };
-    const MODELS = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-3.1-pro"];
+    const payload = {
+      contents: [
+        {
+          parts: [{ text: promptText }],
+        },
+      ],
+    };
+
+    // 💡 تحديث ضروري: استخدام الموديلات المدعومة لعام 2026 لتجنب خطأ 404
+    const MODELS = [
+      "gemini-3.5-flash",
+      "gemini-3.1-flash-lite",
+      "gemini-3.1-pro",
+    ];
+
     const baseUrl = "https://generativelanguage.googleapis.com/v1/models";
+
+    let lastError = null;
 
     for (const model of MODELS) {
       try {
-        const response = await fetch(`${baseUrl}/${model}:generateContent?key=${apiKey}`, {
+        const url = `${baseUrl}/${model}:generateContent?key=${apiKey}`;
+
+        const response = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
         });
 
         const json = await response.json();
-        if (response.ok && json.candidates?.[0]?.content?.parts?.[0]?.text) {
-          return res.status(200).send(json.candidates[0].content.parts[0].text.trim());
+
+        if (!response.ok) {
+          lastError = json.error || response.statusText;
+          continue;
+        }
+
+        const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (text) {
+          return res.status(200).send(text.trim());
+        } else {
+          lastError = "Empty response " + model;
         }
       } catch (err) {
-        continue;
+        lastError = err.message;
       }
     }
 
-    return res.status(500).send("Gemini RAG pipeline failed.");
+    return res
+      .status(500)
+      .send("Gemini failed on all models. Last error: " + JSON.stringify(lastError));
   } catch (err) {
     return res.status(500).send("Server error: " + err.toString());
   }
+}
+
+/**
+ * نسخة قديمة: يبني النص من soil + targets (لو ما وصلنا statusSummary من الواجهة)
+ */
+function buildComparison(soil, targets) {
+  if (!targets) return "لا توجد حدود مثالية في الطلب، استخدم القراءات فقط.";
+
+  const params = [
+    { key: "temp", label: "درجة الحرارة", field: "temp", unit: "°م" },
+    { key: "moisture", label: "رطوبة التربة", field: "moisture", unit: "%" },
+    { key: "ec", label: "الملوحة EC", field: "ec", unit: "µS/cm" },
+    { key: "ph", label: "درجة الحموضة pH", field: "ph", unit: "" },
+    { key: "n", label: "النيتروجين (N)", field: "n", unit: "mg/kg" },
+    { key: "p", label: "الفوسفور (P)", field: "p", unit: "mg/kg" },
+    { key: "k", label: "البوتاسيوم (K)", field: "k", unit: "mg/kg" },
+    { key: "shs", label: "مؤشر صحة التربة SHS", field: "shs", unit: "" },
+    { key: "humic", label: "مؤشر الهيوميك أسيد", field: "humic", unit: "" },
+  ];
+
+  let lines = [];
+
+  for (const p of params) {
+    const t = targets[p.key];
+    const value = soil[p.field];
+    if (!t || typeof value === "undefined" || value === null) continue;
+
+    const vNum = Number(value);
+    const min = Number(t.min);
+    const max = Number(t.max);
+
+    if (isNaN(vNum) || isNaN(min) || isNaN(max) || max <= min) continue;
+
+    let status = "مناسب";
+    if (vNum < min) status = "نقص";
+    else if (vNum > max) status = "زيادة";
+
+    lines.push(
+      `- ${p.label}: القراءة الحالية ${vNum} ${p.unit}، والمدى المثالي من ${min} إلى ${max} ${p.unit} → الحالة: ${status}.`
+    );
+  }
+
+  if (!lines.length) {
+    return "لم أستطع مطابقة القراءات مع الحدود المثالية، استخدم القراءات فقط.";
+  }
+
+  return lines.join("\n");
+}
+
+/**
+ * جديد: يبني النص من الـ statusSummary اللي جاي من الواجهة
+ * عشان الحالات تكون ١٠٠٪ نفس الجدول بدون إعادة حساب.
+ */
+function buildComparisonFromSummary(statusSummary) {
+  if (!statusSummary || typeof statusSummary !== "object") {
+    return "لا يوجد statusSummary، استخدم القراءات فقط.";
+  }
+
+  const lines = [];
+
+  for (const key of Object.keys(statusSummary)) {
+    const info = statusSummary[key];
+    if (!info) continue;
+
+    const label  = info.label || key;
+    const value  = typeof info.value === "number" ? info.value : Number(info.value);
+    const unit   = info.unit || "";
+    const min    = typeof info.min === "number" ? info.min : Number(info.min);
+    const max    = typeof info.max === "number" ? info.max : Number(info.max);
+    const status = info.status || "غير معروف";
+
+    lines.push(
+      `- ${label}: القراءة الحالية ${value} ${unit}، والمدى المثالي من ${min} إلى ${max} ${unit} → الحالة: ${status}.`
+    );
+  }
+
+  if (!lines.length) {
+    return "statusSummary موجود لكن فاضي، استخدم القراءات فقط.";
+  }
+
+  return lines.join("\n");
 }
