@@ -2,23 +2,22 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>لوحة نَسغ – آخر القراءات</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>لوحة قراءات نَسغ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- لو فتحته محليًا من ملف، حوّله إجباريًا إلى موقع Vercel -->
+  <script>
+    if (location.protocol === "file:") {
+      window.location.href = "https://nasgh.vercel.app";
+    }
+  </script>
 
   <style>
     :root {
-      --nasgh-green: #2e7d32;
-      --nasgh-green-soft: #e8f5e9;
-      --nasgh-green-dark: #135a3b;
+      --nasgh-green: #4caf50;
+      --nasgh-dark-green: #135a3b;
       --nasgh-yellow: #f1c232;
-      --bg: #f5fff7;
-      --card-bg: #ffffff;
-      --border: #e0f2e9;
-      --text-main: #123322;
-      --text-sub: #607d8b;
+      --bg-light: #f5fff7;
     }
 
     * {
@@ -29,30 +28,29 @@
     }
 
     body {
-      background: radial-gradient(circle at top left, #eafff3, #f4fff9 45%, #ffffff 100%);
-      color: var(--text-main);
       min-height: 100vh;
+      background: radial-gradient(circle at top left, #eafff3, #f4fff9 40%, #ffffff 100%);
+      margin: 0;
+      padding: 12px;
+      color: #123322;
     }
 
-    .layout {
-      max-width: 1080px;
-      margin: 0 auto;
-      padding: 12px 10px 80px;
+    .page {
+      max-width: 980px;
+      margin: 0 auto 80px auto; /* مساحة لزر الشات */
     }
 
-    /* ======= TOP BAR ======= */
+    /* الشريط العلوي مع اللوجو */
     .topbar {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 10px 18px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+      border: 1px solid #e0f2e9;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      padding: 10px 14px;
-      background: var(--card-bg);
-      border-radius: 18px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-      border: 1px solid var(--border);
-      margin-bottom: 12px;
-      flex-wrap: wrap;
+      margin-bottom: 14px;
     }
 
     .topbar-left {
@@ -62,901 +60,1165 @@
     }
 
     .logo-img {
-      width: 40px;
+      width: 42px;
       height: auto;
     }
 
     .logo-text-main {
-      font-weight: 800;
+      font-weight: 700;
       font-size: 18px;
-      color: var(--nasgh-green-dark);
-      letter-spacing: 0.06em;
-    }
-
-    .logo-text-ar {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--nasgh-green-dark);
+      color: var(--nasgh-dark-green);
+      letter-spacing: 0.08em;
     }
 
     .logo-text-sub {
-      font-size: 11px;
-      color: var(--text-sub);
+      font-size: 12px;
+      color: #4a4a4a;
     }
 
     .topbar-right {
       display: flex;
-      gap: 8px;
       flex-wrap: wrap;
+      gap: 6px;
     }
 
-    .pill-btn {
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      padding: 6px 12px;
-      font-size: 12px;
-      background: #f2fff6;
-      color: var(--nasgh-green-dark);
+    .topbar-right a {
       text-decoration: none;
-      cursor: pointer;
-      transition: 0.15s;
+      font-size: 13px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid #c8e6c9;
+      color: var(--nasgh-dark-green);
+      background: #f5fff7;
+      transition: 0.12s;
       white-space: nowrap;
     }
 
-    .pill-btn:hover {
+    .topbar-right a:hover {
       background: linear-gradient(135deg, var(--nasgh-green), var(--nasgh-yellow));
       color: #ffffff;
       border-color: transparent;
     }
 
-    /* ====== CARDS / GRID ====== */
-
-    .grid-main {
-      display: grid;
-      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr);
-      gap: 12px;
-      align-items: flex-start;
-      margin-top: 6px;
+    .card {
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+      padding: 14px 16px 18px;
+      margin-bottom: 14px;
+      border: 1px solid #e0f2e9;
     }
 
-    .card {
-      background: var(--card-bg);
-      border-radius: 18px;
-      border: 1px solid var(--border);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
-      padding: 12px 14px 14px;
+    h1 {
+      font-size: 20px;
+      margin-top: 0;
+      margin-bottom: 6px;
+      text-align: center;
+      color: var(--nasgh-dark-green);
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 13px;
+      color: #4f6f5d;
       margin-bottom: 12px;
     }
 
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 8px;
-      margin-bottom: 6px;
-      flex-wrap: wrap;
-    }
-
-    .card-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--nasgh-green-dark);
-    }
-
-    .card-sub {
-      font-size: 11px;
-      color: var(--text-sub);
-    }
-
-    .status-badge {
-      font-size: 11px;
-      padding: 3px 9px;
-      border-radius: 999px;
-      background: var(--nasgh-green-soft);
-      color: var(--nasgh-green-dark);
-    }
-
-    .status-badge.error {
-      background: #ffebee;
-      color: #b71c1c;
-      border: 1px solid #ffcdd2;
-    }
-
-    /* ====== SUMMARY STATS ====== */
-
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .stat {
-      background: #f7fff9;
-      border-radius: 12px;
-      padding: 8px 8px;
-      border: 1px solid var(--border);
-      font-size: 12px;
-    }
-
-    .stat-label {
-      color: var(--text-sub);
-      margin-bottom: 2px;
-    }
-
-    .stat-value {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--nasgh-green-dark);
-    }
-
-    .plant-stage-title {
+    #status {
       font-size: 13px;
-      font-weight: 600;
-      color: var(--nasgh-green-dark);
-      margin-top: 6px;
+      margin-bottom: 10px;
+      padding: 7px 9px;
+      border-radius: 10px;
+      background: #e8f5e9;
+      border: 1px solid #c8e6c9;
     }
 
-    .plant-stage-chip {
+    .error {
+      background: #ffebee !important;
+      border-color: #ffcdd2 !important;
+      color: #b71c1c;
+    }
+
+    .btn {
       display: inline-block;
-      font-size: 11px;
-      padding: 3px 9px;
+      border: none;
       border-radius: 999px;
-      background: #fff8e1;
-      color: #f57f17;
+      padding: 8px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--nasgh-green), var(--nasgh-yellow));
+      color: #ffffff;
+      transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.12s;
+      box-shadow: 0 6px 16px rgba(19, 90, 59, 0.25);
+    }
+
+    .btn.secondary {
+      background: #00695c;
+      box-shadow: 0 6px 16px rgba(0, 105, 92, 0.25);
+      margin-right: 6px;
+    }
+
+    .btn.ai {
+      background: #1565c0;
+      box-shadow: 0 6px 16px rgba(21, 101, 192, 0.25);
       margin-top: 4px;
     }
 
-    /* ====== TABLE ====== */
+    .btn:active {
+      transform: scale(0.98);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    }
 
-    .table-wrapper {
-      margin-top: 8px;
-      overflow-x: auto;
+    .btn:disabled {
+      background: #a5d6a7;
+      box-shadow: none;
+      cursor: default;
+      transform: none;
     }
 
     table {
       width: 100%;
-      min-width: 650px;
       border-collapse: collapse;
-      font-size: 12px;
+      margin-top: 6px;
+      font-size: 13px;
     }
 
-    th,
-    td {
+    th, td {
       border: 1px solid #e0e0e0;
-      padding: 6px 4px;
+      padding: 5px 3px;
       text-align: center;
-      vertical-align: middle;
     }
 
     th {
       background: #e0f2f1;
       font-weight: 600;
-      font-size: 11px;
     }
 
     tr:nth-child(even) td {
       background: #fafafa;
     }
 
-    .advice-cell {
-      text-align: right;
+    .reading-id {
+      font-size: 12px;
+      color: #607d8b;
+      margin-bottom: 3px;
+    }
+
+    .time {
       font-size: 11px;
-      line-height: 1.5;
+      color: #90a4ae;
+      text-align: left;
     }
 
-    .stage-cell {
-      font-size: 11px;
-    }
-
-    .stage-chip-small {
-      display: inline-block;
-      padding: 2px 6px;
-      border-radius: 999px;
-      background: #fff3e0;
-      color: #ef6c00;
-      font-size: 10px;
-    }
-
-    /* ====== CHARTS ====== */
-
-    .chart-tabs {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-top: 4px;
+    .ai-title {
+      font-size: 15px;
+      font-weight: 600;
       margin-bottom: 4px;
+      color: #1b5e20;
     }
 
-    .chart-tab {
-      font-size: 11px;
-      padding: 4px 9px;
-      border-radius: 999px;
-      border: 1px solid #d0e3ff;
-      background: #e3f2fd;
-      color: #1565c0;
+    .ai-status {
+      font-size: 12px;
+      margin-bottom: 3px;
+      color: #455a64;
     }
 
-    .chart-container {
-      position: relative;
-      height: 210px;
+    /* ===== جدول التوصية الذكية الجديد (بدل النص العشوائي) ===== */
+    .advice-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    .advice-table th {
+      background: #e8f5e9;
+      color: var(--nasgh-dark-green);
+      border: 1px solid #c8e6c9;
+      padding: 6px;
+    }
+
+    .advice-table td {
+      border: 1px solid #c8e6c9;
+      padding: 8px 6px;
+      text-align: right;
+      vertical-align: top;
+      line-height: 1.5;
+      background: #ffffff;
+    }
+
+    /* ===== نموذج النبات + جدول البارات ===== */
+    .plant-form {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+      margin-top: 4px;
+      margin-bottom: 6px;
+    }
+
+    .plant-form label {
+      font-size: 12px;
+      color: #455a64;
+    }
+
+    .plant-form input,
+    .plant-form select {
+      padding: 7px 8px;
+      border-radius: 10px;
+      border: 1px solid #cfd8dc;
+      font-size: 13px;
+      outline: none;
+      background: #f9fffb;
+    }
+
+    .plant-form input:focus,
+    .plant-form select:focus {
+      border-color: var(--nasgh-green);
+      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.18);
+      background: #ffffff;
+    }
+
+    .targets-table {
       margin-top: 6px;
     }
 
-    .chart-title {
-      font-size: 12px;
-      color: var(--text-sub);
-      margin-top: 4px;
+    .bar-wrapper {
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      background: #eceff1;
+      overflow: hidden;
+      margin-bottom: 3px;
     }
 
-    /* ====== CHAT BOT ====== */
+    .bar-fill {
+      height: 100%;
+      width: 40%;
+    }
 
-    .chat-toggle {
-      position: fixed;
-      bottom: 14px;
-      left: 14px;
-      padding: 9px 16px;
+    .bar-low {
+      background: #e53935;   /* أحمر */
+    }
+
+    .bar-ok {
+      background: #43a047;   /* أخضر */
+    }
+
+    .bar-high {
+      background: #8e24aa;   /* بنفسجي */
+    }
+
+    .legend {
+      margin-top: 6px;
+      font-size: 11px;
+      color: #455a64;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .legend-box {
+      width: 14px;
+      height: 8px;
       border-radius: 999px;
-      border: none;
+      display: inline-block;
+      margin-left: 3px;
+    }
+
+    .legend-box.low { background: #e53935; }
+    .legend-box.ok  { background: #43a047; }
+    .legend-box.high{ background: #8e24aa; }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 8px;
+      }
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .topbar-right {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+      .btn {
+        width: auto;
+      }
+    }
+
+    /* ===== شات بوت نسغ ===== */
+    .chat-fab {
+      position: fixed;
+      left: 18px;
+      bottom: 20px;
       background: linear-gradient(135deg, var(--nasgh-green), var(--nasgh-yellow));
       color: #ffffff;
-      font-size: 13px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-      cursor: pointer;
+      border-radius: 999px;
+      padding: 10px 18px;
       display: flex;
       align-items: center;
       gap: 6px;
-      z-index: 1000;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      z-index: 40;
     }
 
-    .chat-toggle span {
-      font-size: 16px;
+    .chat-fab span.icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #2e7d32;
+      font-size: 14px;
     }
 
     .chat-panel {
       position: fixed;
+      left: 8px;
+      right: 8px;
       bottom: 70px;
-      left: 10px;
-      right: 10px;
-      max-width: 380px;
+      max-width: 480px;
       margin: 0 auto;
       background: #ffffff;
       border-radius: 18px;
-      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
-      border: 1px solid var(--border);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+      border: 1px solid #c8e6c9;
       display: none;
       flex-direction: column;
-      overflow: hidden;
       max-height: 70vh;
-      z-index: 1001;
-      transition: bottom 0.25s ease;
+      z-index: 50;
     }
 
     .chat-header {
-      padding: 8px 10px;
+      padding: 10px 12px;
       border-bottom: 1px solid #e0f2e9;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 6px;
       background: #f5fff7;
+      border-radius: 18px 18px 0 0;
     }
 
-    .chat-title {
-      font-size: 13px;
+    .chat-header-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .chat-header-title .name {
+      font-size: 14px;
       font-weight: 600;
-      color: var(--nasgh-green-dark);
+      color: var(--nasgh-dark-green);
     }
 
-    .chat-status {
+    .chat-header-title .hint {
       font-size: 11px;
-      color: var(--text-sub);
+      color: #607d8b;
     }
 
     .chat-close {
       border: none;
       background: transparent;
-      font-size: 16px;
+      font-size: 18px;
       cursor: pointer;
       color: #607d8b;
     }
 
     .chat-messages {
-      padding: 10px;
+      padding: 10px 12px;
       overflow-y: auto;
       flex: 1;
       background: #ffffff;
     }
 
-    .chat-msg {
-      margin-bottom: 8px;
-      font-size: 12px;
+    .chat-bubble {
+      max-width: 90%;
+      padding: 8px 10px;
+      border-radius: 12px;
+      margin-bottom: 6px;
+      font-size: 13px;
       line-height: 1.6;
+      white-space: pre-wrap;
     }
 
-    .chat-msg.user {
-      text-align: left;
-      direction: ltr;
+    .from-user {
+      margin-left: auto;
+      background: #e8f5e9;
+      border-radius: 12px 0 12px 12px;
     }
 
-    .chat-msg.assistant {
-      background: #f5fff7;
-      border-radius: 10px;
-      padding: 6px 8px;
-      border: 1px solid var(--border);
+    .from-bot {
+      margin-right: auto;
+      background: #f1f8e9;
+      border-radius: 0 12px 12px 12px;
     }
 
     .chat-input-row {
-      border-top: 1px solid #e0f2e9;
-      padding: 6px;
       display: flex;
+      align-items: center;
       gap: 6px;
-      background: #fafafa;
+      padding: 8px 10px 10px;
+      border-top: 1px solid #e0f2e9;
+      background: #ffffff;
+      border-radius: 0 0 18px 18px;
     }
 
     .chat-input-row textarea {
       flex: 1;
       resize: none;
-      border-radius: 10px;
+      border-radius: 12px;
       border: 1px solid #cfd8dc;
-      padding: 6px 8px;
-      font-size: 12px;
+      padding: 7px 8px;
+      font-size: 13px;
       min-height: 34px;
-      max-height: 70px;
+      max-height: 80px;
     }
 
     .chat-input-row button {
       border-radius: 999px;
       border: none;
-      padding: 0 12px;
-      font-size: 12px;
       background: var(--nasgh-green);
-      color: #ffffff;
+      color: white;
+      padding: 7px 12px;
+      font-size: 13px;
       cursor: pointer;
-      display: flex;
-      align-items: center;
     }
 
-    /* ====== RESPONSIVE ====== */
-
-    @media (max-width: 860px) {
-      .grid-main {
-        grid-template-columns: minmax(0, 1fr);
-      }
-
-      .stats-row {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .topbar {
-        flex-direction: column;
-        align-items: flex-start;
-      }
+    .chat-input-row button:disabled {
+      opacity: 0.6;
+      cursor: default;
     }
 
-    @media (max-width: 480px) {
-      .layout {
-        padding: 10px 8px 80px;
-      }
-      .card {
-        padding: 10px 10px 12px;
-      }
-      .chart-container {
-        height: 190px;
-      }
+    /* تكبير عرض خانة "الحالة" في جدول أفضل القراءات */
+    #targetsTable th:nth-child(4),
+    #targetsTable td:nth-child(4) {
+      width: 120px !important;
+      min-width: 120px !important;
     }
   </style>
 </head>
+
 <body>
-  <div class="layout">
-    <!-- TOP BAR -->
+  <div class="page">
+    <!-- الشريط العلوي مع اللوجو -->
     <header class="topbar">
       <div class="topbar-left">
-        <img src="images/nasgh-logo.png" alt="NASGH" class="logo-img" />
+        <img src="images/nasgh-logo.png" alt="NASGH logo" class="logo-img" />
         <div>
-          <div class="logo-text-ar">نَسغ</div>
-          <div class="logo-text-main">NASGH</div>
+          <div class="logo-text-main">NASGH نسغ</div>
           <div class="logo-text-sub">قراءة دقيقة… توصية ذكية… محصول أفضل.</div>
         </div>
       </div>
-
       <div class="topbar-right">
-        <a href="index.html" class="pill-btn">لوحة القراءات المباشرة</a>
-        <button id="switchAccountBtn" class="pill-btn">تبديل الحساب</button>
+        <a href="dashboard.html">لوحة القراءات المحفوظة</a>
+        <a href="login.html"> تبديل الحساب</a>
       </div>
     </header>
 
-    <!-- MAIN GRID -->
-    <div class="grid-main">
-      <!-- LEFT: last readings + table -->
-      <section class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">آخر ١٠ قراءات محفوظة</div>
-            <div id="historyRange" class="card-sub">جاري تحميل البيانات...</div>
-          </div>
-          <div id="historyStatus" class="status-badge">جاري الاتصال...</div>
-        </div>
+    <!-- بطاقة القراءات -->
+    <div class="card">
+      <h1>لوحة قراءات نَسغ</h1>
+      <div class="subtitle">اتصال مباشر مع عصا نَسغ  </div>
 
-        <!-- SUMMARY -->
-        <div class="stats-row">
-          <div class="stat">
-            <div class="stat-label">آخر رطوبة</div>
-            <div id="statMoisture" class="stat-value">-- ٪</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">آخر درجة حرارة</div>
-            <div id="statTemp" class="stat-value">-- °م</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">متوسط pH</div>
-            <div id="statPh" class="stat-value">--</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">متوسط SHS</div>
-            <div id="statShs" class="stat-value">--</div>
-          </div>
-        </div>
+      <div id="status">الحالة: غير متصل</div>
 
-        <div class="plant-stage-title">مرحلة نمو النبات (آخر قراءة)</div>
-        <div id="plantStageLabel" class="card-sub" style="margin-top:2px;">-</div>
-        <div id="plantStageChip" class="plant-stage-chip">مرحلة غير محددة بعد</div>
+      <button id="connectBtn" class="btn">اتصال بعصا نَسغ</button>
+      <button id="disconnectBtn" class="btn secondary" disabled>قطع الاتصال</button>
 
-        <!-- TABLE -->
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>الوقت</th>
-                <th>رطوبة %</th>
-                <th>°م</th>
-                <th>pH</th>
-                <th>EC µS/cm</th>
-                <th>SHS</th>
-                <th>مرحلة النمو</th>
-                <th>نصيحة نَسغ AI</th>
-              </tr>
-            </thead>
-            <tbody id="historyBody">
-              <tr>
-                <td colspan="9">لا توجد بيانات بعد</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <div class="reading-id" id="readingMeta">لا توجد قراءات بعد</div>
+      <div class="time" id="timeLabel"></div>
 
-      <!-- RIGHT: charts -->
-      <section class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">رسوم بيانية</div>
-            <div class="card-sub">Moisture &amp; Temp · NPK · SHS</div>
-          </div>
-        </div>
+      <table>
+        <thead>
+          <tr>
+            <th>القياس</th>
+            <th>القيمة</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>درجة الحرارة</td>
+            <td id="tValue">-- °م</td>
+          </tr>
+          <tr>
+            <td>رطوبة التربة</td>
+            <td id="mValue">-- ٪</td>
+          </tr>
+          <tr>
+            <td>الملوحة (EC)</td>
+            <td id="ecValue">-- µS/cm</td>
+          </tr>
+          <tr>
+            <td>درجة الحموضة (pH)</td>
+            <td id="phValue">-- pH</td>
+          </tr>
+          <tr>
+            <td>النيتروجين (N)</td>
+            <td id="nValue">-- mg/kg</td>
+          </tr>
+          <tr>
+            <td>الفوسفور (P)</td>
+            <td id="pValue">-- mg/kg</td>
+          </tr>
+          <tr>
+            <td>البوتاسيوم (K)</td>
+            <td id="kValue">-- mg/kg</td>
+          </tr>
+          <tr>
+            <td>مؤشر الهيوميك أسيد</td>
+            <td id="humValue">--</td>
+          </tr>
+          <tr>
+            <td>مؤشر صحة التربة (SHS)</td>
+            <td id="shsValue">--</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-        <div class="chart-tabs">
-          <span class="chart-tab">Moisture &amp; Temperature</span>
-          <span class="chart-tab">N · P · K</span>
-          <span class="chart-tab">SHS Index</span>
-        </div>
+    <!-- بطاقة إعداد النبات وأفضل القراءات -->
+    <div class="card">
+      <div class="ai-title">إعداد النبات وأفضل القراءات</div>
+      <div class="ai-status">
+        اكتب نوع النبات واختر مرحلة النمو الحالية، ونسغ AI بيحسب لك المدى المثالي لكل عنصر ويقارنه بآخر قراءة من عصا نَسغ.
+      </div>
 
-        <div class="chart-container">
-          <canvas id="chartMoistTemp"></canvas>
-        </div>
-        <div class="chart-title">رطوبة التربة (%) ودرجة الحرارة (°م) عبر الوقت</div>
+      <div class="plant-form">
+        <label for="plantNameInput">نوع النبات</label>
+        <input id="plantNameInput" type="text" placeholder="مثال: طماطم، خيار، ليمون..." />
 
-        <div class="chart-container">
-          <canvas id="chartNpk"></canvas>
-        </div>
-        <div class="chart-title">NPK (mg/kg) عبر الوقت</div>
+        <label for="plantStageSelect">مرحلة النمو الحالية</label>
+        <select id="plantStageSelect">
+          <option value="">اختر المرحلة الحالية</option>
+          <option value="vegetative">مرحلة النمو الخضري</option>
+          <option value="flowering">مرحلة الإزهار</option>
+          <option value="fruit-setting">مرحلة عقد الثمار</option>
+          <option value="harvest">مرحلة الإثمار / الحصاد</option>
+        </select>
 
-        <div class="chart-container">
-          <canvas id="chartShs"></canvas>
-        </div>
-        <div class="chart-title">مؤشر صحة التربة SHS عبر الوقت</div>
-      </section>
+        <button id="targetsBtn" class="btn ai" type="button">حساب أفضل القراءات</button>
+      </div>
+
+      <div id="targetsStatus" class="ai-status"></div>
+
+      <table id="targetsTable" class="targets-table">
+        <thead>
+          <tr>
+            <th>العنصر</th>
+            <th>قراءة عصا نَسغ</th>
+            <th>المدى المثالي</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody id="targetsTableBody">
+          <!-- يمتلئ ديناميكياً -->
+        </tbody>
+      </table>
+
+      <div class="legend">
+        <span class="legend-box low"></span> نقص
+        <span class="legend-box ok"></span> مناسب
+        <span class="legend-box high"></span> زيادة
+      </div>
+    </div>
+
+    <!-- بطاقة توصية الذكاء الاصطناعي (محدثة لتصبح جدولاً) -->
+    <div class="card">
+      <div class="ai-title">توصية نَسغ بالذكاء الاصطناعي</div>
+      <div class="ai-status" id="aiStatus">لم يتم طلب التوصية بعد.</div>
+      <button id="aiBtn" class="btn ai">تحليل القراءات وإعطاء توصية</button>
+      
+      <table class="advice-table">
+        <thead>
+          <tr>
+            <th style="width: 30%;">المشكلة الحالية</th>
+            <th style="width: 40%;">الحل المقترح</th>
+            <th style="width: 30%;">الكمية المناسبة</th>
+          </tr>
+        </thead>
+        <tbody id="adviceTableBody">
+          <tr>
+            <td colspan="3" style="text-align: center; color: #607d8b;">عند الضغط على الزر سيتم إرسال وتحليل البيانات وعرضها في هذا الجدول.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <button id="saveSessionBtn" class="btn" style="margin-top: 12px;">
+        حفظ هذه البيانات في الداشبورد
+      </button>
+      <div class="ai-status" id="saveStatus"></div>
     </div>
   </div>
 
-  <!-- CHAT BOT BUTTON + PANEL -->
-  <button id="chatToggle" class="chat-toggle">
-    <span>💬</span> نسغ AI
-  </button>
+  <!-- 🔒 حماية الصفحة باستخدام Firebase Auth -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
-  <section id="chatPanel" class="chat-panel">
-    <div class="chat-header">
-      <div>
-        <div class="chat-title">مساعد نَسغ</div>
-        <div id="chatStatus" class="chat-status">جاهز لأسئلتك الزراعية 🌿</div>
-      </div>
-      <button class="chat-close" id="chatCloseBtn">&times;</button>
-    </div>
-    <div id="chatMessages" class="chat-messages"></div>
-    <div class="chat-input-row">
-      <textarea id="chatInput" placeholder="اكتب سؤالك عن التربة أو الري أو التسميد..."></textarea>
-      <button id="chatSend">إرسال</button>
-    </div>
-  </section>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCPCDnSjazRrxAZ1uVuwlvK5lBUYfmx4Io",
+      authDomain: "nasgh1.firebaseapp.com",
+      projectId: "nasgh1",
+      storageBucket: "nasgh1.firebasestorage.app",
+      messagingSenderId: "37730120812",
+      appId: "1:37730120812:web:995e4f7d60cced8a709449",
+    };
 
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // لو المستخدم غير مسجّل دخول → يرجع لصفحة اللوجن
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+      }
+    });
+  </script>
+
+  <!-- سكربت البلوتوث + AI + شات بوت -->
   <script>
-    // ======== إعداد Firebase Realtime Database ========
-    const FIREBASE_DB_URL = "https://nasgh1-default-rtdb.firebaseio.com";
+    // ================== إعدادات BLE (مطابقة لكود ESP32) ==================
+    const SERVICE_UUID        = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+    const CHARACTERISTIC_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
-    // ======== DATA LOADING ========
-    let historyData = [];
-    let chartMoistTemp = null;
-    let chartNpk = null;
-    let chartShs = null;
+    let device = null;
+    let characteristic = null;
+    let lastData = null;           // آخر JSON من العصا
+    let lastTargets = null;        // آخر مدى مثالي من /api/nasgh-targets
+    let lastStatusSummary = null; // ملخص حالة العناصر (نقص/مناسب/زيادة)
+    let lastAdviceText = "";       // آخر توصية
 
-    function rand(min, max) {
-      return Math.random() * (max - min) + min;
+    const statusEl   = document.getElementById("status");
+    const connectBtn = document.getElementById("connectBtn");
+    const disconnectBtn = document.getElementById("disconnectBtn");
+
+    const readingMetaEl = document.getElementById("readingMeta");
+    const timeLabelEl   = document.getElementById("timeLabel");
+
+    const aiStatusEl = document.getElementById("aiStatus");
+    const adviceTableBody = document.getElementById("adviceTableBody");
+    const aiBtn      = document.getElementById("aiBtn");
+    const saveSessionBtn = document.getElementById("saveSessionBtn");
+    const saveStatusEl   = document.getElementById("saveStatus");
+
+    // عناصر إعداد النبات والجدول
+    const plantNameInput = document.getElementById("plantNameInput");
+    const plantStageSelect = document.getElementById("plantStageSelect");
+    const targetsBtn = document.getElementById("targetsBtn");
+    const targetsStatusEl = document.getElementById("targetsStatus");
+    const targetsTableBody = document.getElementById("targetsTableBody");
+
+    // API URLs
+    const CLOUD_API_URL   = "/api/soil-data";      // لحفظ آخر قراءة
+    const AI_API_URL      = "/api/nasgh-ai";       // توصية AI
+    const TARGETS_API_URL = "/api/nasgh-targets";  // المدى المثالي
+    const CHAT_API_URL    = "/api/nasgh-chat";     // شات بوت
+    const SESSION_API_URL = "/api/soil-session";   // حفظ الجلسة للداشبورد
+
+    function setStatus(text, isError = false) {
+      statusEl.textContent = "الحالة: " + text;
+      statusEl.classList.toggle("error", isError);
     }
 
-    function formatTime(ts) {
-      if (!ts) return "--";
-      const dt = new Date(ts);
-      return dt.toLocaleString("ar-EG", {
-        weekday: "short",
+    function formatTime(d) {
+      return d.toLocaleTimeString("ar", {
         hour: "2-digit",
         minute: "2-digit",
-        day: "numeric",
-        month: "short"
+        second: "2-digit"
       });
     }
 
-    function updateSummaryAndTable() {
-      const historyBody = document.getElementById("historyBody");
-      const statusEl = document.getElementById("historyStatus");
-      const rangeEl = document.getElementById("historyRange");
-      const statMoisture = document.getElementById("statMoisture");
-      const statTemp = document.getElementById("statTemp");
-      const statPh = document.getElementById("statPh");
-      const statShs = document.getElementById("statShs");
-      const stageLabel = document.getElementById("plantStageLabel");
-      const stageChip = document.getElementById("plantStageChip");
+    // حفظ القراءة في الداتا بيس (POST)
+    async function saveReadingToCloud(data) {
+      try {
+        await fetch(CLOUD_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            source: "ble-stick",
+            reading: data,
+          }),
+        });
+      } catch (err) {
+        console.warn("Failed to save reading to cloud:", err);
+      }
+    }
 
-      if (!historyData.length) {
-        historyBody.innerHTML =
-          '<tr><td colspan="9">لا توجد بيانات محفوظة بعد.</td></tr>';
-        statusEl.textContent = "لا توجد بيانات";
-        statusEl.classList.remove("error");
-        rangeEl.textContent = "لا توجد قراءات بعد.";
+    function applyReading(data, sourceLabel = "عصا نَسغ") {
+      if (!data) return;
+      lastData = data;
+
+      const now = new Date();
+      readingMetaEl.textContent = "آخر قراءة من: " + (data.id || sourceLabel);
+      timeLabelEl.textContent   = "الوقت: " + formatTime(now);
+
+      if (typeof data.t !== "undefined") {
+        document.getElementById("tValue").textContent =
+          Number(data.t).toFixed(1) + " °م";
+      }
+
+      if (typeof data.m !== "undefined") {
+        document.getElementById("mValue").textContent =
+          Number(data.m).toFixed(1) + " ٪";
+      }
+
+      if (typeof data.ec !== "undefined") {
+        document.getElementById("ecValue").textContent =
+          Number(data.ec).toFixed(0) + " µS/cm";
+      }
+
+      if (typeof data.ph !== "undefined") {
+        document.getElementById("phValue").textContent =
+          Number(data.ph).toFixed(2) + " pH";
+      }
+
+      if (typeof data.n !== "undefined") {
+        document.getElementById("nValue").textContent =
+          Number(data.n).toFixed(0) + " mg/kg";
+      }
+
+      if (typeof data.p !== "undefined") {
+        document.getElementById("pValue").textContent =
+          Number(data.p).toFixed(0) + " mg/kg";
+      }
+
+      if (typeof data.k !== "undefined") {
+        document.getElementById("kValue").textContent =
+          Number(data.k).toFixed(0) + " mg/kg";
+      }
+
+      if (typeof data.hum !== "undefined") {
+        document.getElementById("humValue").textContent =
+          Number(data.hum).toFixed(1);
+      }
+
+      if (typeof data.shs !== "undefined") {
+        document.getElementById("shsValue").textContent =
+          Number(data.shs).toFixed(1);
+      }
+
+      // حفظ القراءة في الداتا بيس
+      saveReadingToCloud(data);
+    }
+
+    async function connect() {
+      if (!navigator.bluetooth) {
+        setStatus("المتصفح لا يدعم Web Bluetooth", true);
+        alert("Web Bluetooth غير مدعوم في هذا المتصفح. جرب Google Chrome على أندرويد أو على الحاسوب، أو Bluefy على iOS.");
         return;
       }
 
-      // ترتب من الأحدث للأقدم
-      historyData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      try {
+        setStatus("جاري البحث عن عصا نَسغ...");
+        connectBtn.disabled = true;
 
-      const latest = historyData[0];
-      const last = historyData[historyData.length - 1];
-
-      rangeEl.textContent =
-        "آخر " +
-        historyData.length +
-        " قراءات من " +
-        formatTime(last.timestamp) +
-        " إلى " +
-        formatTime(latest.timestamp);
-
-      statusEl.textContent = "تم التحديث";
-      statusEl.classList.remove("error");
-
-      // Summary
-      statMoisture.textContent =
-        (latest.m != null && !isNaN(latest.m) ? latest.m.toFixed(1) : "--") + " ٪";
-      statTemp.textContent =
-        (latest.t != null && !isNaN(latest.t) ? latest.t.toFixed(1) : "--") + " °م";
-
-      const avgPh =
-        historyData.reduce((sum, r) => sum + (r.ph || 0), 0) /
-        historyData.length;
-      const avgShs =
-        historyData.reduce((sum, r) => sum + (r.shs || 0), 0) /
-        historyData.length;
-
-      statPh.textContent =
-        isFinite(avgPh) && avgPh > 0 ? avgPh.toFixed(2) : "--";
-      statShs.textContent =
-        isFinite(avgShs) && avgShs > 0 ? avgShs.toFixed(1) : "--";
-
-      stageLabel.textContent = latest.stage || "مرحلة غير محددة";
-      stageChip.textContent = latest.stage || "مرحلة غير محددة بعد";
-
-      // Table
-      historyBody.innerHTML = "";
-      historyData.forEach((row, idx) => {
-        const tr = document.createElement("tr");
-
-        tr.innerHTML = `
-          <td>${idx + 1}</td>
-          <td>${formatTime(row.timestamp)}</td>
-          <td>${row.m != null && !isNaN(row.m) ? row.m.toFixed(1) : "--"}</td>
-          <td>${row.t != null && !isNaN(row.t) ? row.t.toFixed(1) : "--"}</td>
-          <td>${row.ph != null && !isNaN(row.ph) ? row.ph.toFixed(2) : "--"}</td>
-          <td>${row.ec != null && !isNaN(row.ec) ? row.ec.toFixed(0) : "--"}</td>
-          <td>${row.shs != null && !isNaN(row.shs) ? row.shs.toFixed(1) : "--"}</td>
-          <td class="stage-cell">
-            ${
-              row.stage
-                ? `<span class="stage-chip-small">${row.stage}</span>`
-                : "--"
-            }
-          </td>
-          <td class="advice-cell">${
-            row.advice ? row.advice : "لا توجد توصية محفوظة."
-          }</td>
-        `;
-        historyBody.appendChild(tr);
-      });
-    }
-
-    function updateCharts() {
-      const sorted = historyData
-        .slice()
-        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-      const labels = sorted.map((r) =>
-        new Date(r.timestamp).toLocaleTimeString("ar-EG", {
-          hour: "2-digit",
-          minute: "2-digit"
-        })
-      );
-
-      const moistArr = sorted.map((r) => (r.m && !isNaN(r.m) ? r.m : 0));
-      const tempArr  = sorted.map((r) => (r.t && !isNaN(r.t) ? r.t : 0));
-
-      const nArr = sorted.map((r) => (r.n && !isNaN(r.n) ? r.n : 0));
-      const pArr = sorted.map((r) => (r.p && !isNaN(r.p) ? r.p : 0));
-      const kArr = sorted.map((r) => (r.k && !isNaN(r.k) ? r.k : 0));
-
-      const shsArr = sorted.map((r) => (r.shs && !isNaN(r.shs) ? r.shs : 0));
-
-      // Destroy old charts if they exist
-      if (chartMoistTemp) chartMoistTemp.destroy();
-      if (chartNpk) chartNpk.destroy();
-      if (chartShs) chartShs.destroy();
-
-      const ctx1 = document.getElementById("chartMoistTemp").getContext("2d");
-      chartMoistTemp = new Chart(ctx1, {
-        type: "line",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "رطوبة التربة ٪",
-              data: moistArr,
-              borderWidth: 2,
-              tension: 0.3
-            },
-            {
-              label: "درجة الحرارة °م",
-              data: tempArr,
-              borderWidth: 2,
-              tension: 0.3
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: "top", labels: { font: { size: 11 } } }
-          },
-          scales: {
-            x: { ticks: { font: { size: 10 } } },
-            y: { ticks: { font: { size: 10 } } }
-          }
-        }
-      });
-
-      const ctx2 = document.getElementById("chartNpk").getContext("2d");
-      chartNpk = new Chart(ctx2, {
-        type: "line",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "N (mg/kg)",
-              data: nArr,
-              borderWidth: 2,
-              tension: 0.3
-            },
-            {
-              label: "P (mg/kg)",
-              data: pArr,
-              borderWidth: 2,
-              tension: 0.3
-            },
-            {
-              label: "K (mg/kg)",
-              data: kArr,
-              borderWidth: 2,
-              tension: 0.3
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: "top", labels: { font: { size: 11 } } }
-          },
-          scales: {
-            x: { ticks: { font: { size: 10 } } },
-            y: { ticks: { font: { size: 10 } } }
-          }
-        }
-      });
-
-      const ctx3 = document.getElementById("chartShs").getContext("2d");
-      chartShs = new Chart(ctx3, {
-        type: "line",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "SHS",
-              data: shsArr,
-              borderWidth: 2,
-              tension: 0.3
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: "top", labels: { font: { size: 11 } } }
-          },
-          scales: {
-            x: { ticks: { font: { size: 10 } } },
-            y: { ticks: { font: { size: 10 } } }
-          }
-        }
-      });
-    }
-
-    // إنشاء 10 قراءات وهمية واقعـية لآخر 10 أيام + حفظها في Firebase
-    async function seedFakeHistoryToFirebase() {
-      const now = new Date();
-      const sessions = [];
-
-      for (let i = 9; i >= 0; i--) {
-        const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-        // خلي الوقت بين ٧:٣٠ و ١١:٣٠ صباحاً عشوائي
-        d.setHours(7 + Math.floor(Math.random() * 4));
-        d.setMinutes(Math.floor(Math.random() * 60));
-        d.setSeconds(0);
-        d.setMilliseconds(0);
-
-        const moisture = rand(40, 65);
-        const temp = rand(22, 30);
-        const ph = rand(6.3, 7.1);
-        const ec = rand(900, 1900);
-        const n = rand(110, 180);
-        const p = rand(80, 130);
-        const k = rand(150, 260);
-        const shs = rand(60, 85);
-        const humic = rand(10, 20);
-
-        let advice;
-        if (moisture < 45) {
-          advice =
-            "حياك أخوي، رطوبة التربة أقل من المطلوب، زد الري شوي مع توزيع الماء على دفعات لتفادي الغسل الزائد للعناصر. راقب التربة بعد الري بيوم.";
-        } else if (ec > 1700) {
-          advice =
-            "حياك أخوي، الملوحة مرتفعة شوي، جرّب زيادة فترات الري بمياه قليلة الملوحة أو عمل غسيل للتربة على دفعات عشان تتخفف الأملاح.";
-        } else if (n < 130 || p < 90 || k < 170) {
-          advice =
-            "حياك أخوي، في نقص بسيط في بعض عناصر NPK، ممكن تضيف سماد مركب متوازن أو سماد عضوي متحلل بكميات معتدلة وتحافظ على رطوبة مستقرة.";
-        } else {
-          advice =
-            "حياك أخوي، قراءات التربة الحالية قريبة من المدى المثالي، استمر على نظام الري والتسميد الحالي مع متابعة القراءات كل كم يوم.";
-        }
-
-        sessions.push({
-          plantName: "طماطم",
-          stage: "مرحلة النمو الخضري",
-          soil: {
-            temp,
-            moisture,
-            ph,
-            ec,
-            n,
-            p,
-            k,
-            shs,
-            humic
-          },
-          advice,
-          timestamp: d.toISOString()
+        device = await navigator.bluetooth.requestDevice({
+          filters: [{ services: [SERVICE_UUID] }],
+          optionalServices: [SERVICE_UUID]
         });
-      }
 
-      // حفظ في Firebase
-      for (const s of sessions) {
-        await fetch(`${FIREBASE_DB_URL}/soil-history.json`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(s)
-        });
+        device.addEventListener("gattserverdisconnected", onDisconnected);
+
+        setStatus("جاري الاتصال بالجهاز...");
+        const server = await device.gatt.connect();
+
+        const service = await server.getPrimaryService(SERVICE_UUID);
+        characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+        await characteristic.startNotifications();
+        characteristic.addEventListener("characteristicvaluechanged", handleNotification);
+
+        setStatus("متصل بعصا نَسغ بنجاح ✅");
+        disconnectBtn.disabled = false;
+
+      } catch (err) {
+        console.error(err);
+        setStatus("فشل في الاتصال: " + err.message, true);
+        connectBtn.disabled = false;
       }
     }
 
-    async function loadHistory(alreadySeeded = false) {
-      const statusEl = document.getElementById("historyStatus");
-      statusEl.textContent = "جاري التحميل...";
-      statusEl.classList.remove("error");
+    function onDisconnected() {
+      setStatus("تم قطع الاتصال بعصا نَسغ");
+      disconnectBtn.disabled = true;
+      connectBtn.disabled = false;
+    }
+
+    async function disconnect() {
+      if (!device) return;
+      try {
+        await device.gatt.disconnect();
+      } catch (e) {
+        console.error(e);
+      } finally {
+        onDisconnected();
+      }
+    }
+
+    function handleNotification(event) {
+      const value = event.target.value;
+      const decoder = new TextDecoder("utf-8");
+      const text = decoder.decode(value);
+
+      console.log("RAW BLE text:", text);
 
       try {
-        const res = await fetch(`${FIREBASE_DB_URL}/soil-history.json`);
+        const data = JSON.parse(text);
+        applyReading(data, "عصا نَسغ (BLE)");
+      } catch (e) {
+        console.error("JSON parse error:", e);
+        setStatus("وُجدت بيانات غير صالحة من البلوتوث", true);
+      }
+    }
+
+    connectBtn.addEventListener("click", connect);
+    disconnectBtn.addEventListener("click", disconnect);
+
+    // ============ AI للتوصية (تم تعديلها لتعبئة الجدول الجديد) ============
+    async function callAI() {
+      if (!lastData) {
+        aiStatusEl.textContent = "لا توجد قراءة حديثة لإرسالها. الرجاء تشغيل عصا نَسغ أولاً.";
+        return;
+      }
+
+      aiBtn.disabled = true;
+      aiStatusEl.textContent = "جاري إرسال البيانات وتحليلها...";
+      adviceTableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #607d8b;">جاري التواصل مع نموذج الذكاء الاصطناعي لتعبئة الجدول...</td></tr>`;
+
+      try {
+        const payload = {
+          soil: {
+            id:   lastData.id || "NASGH-1",
+            temp: lastData.t,
+            moisture: lastData.m,
+            ec:   lastData.ec,
+            ph:   lastData.ph,
+            n:    lastData.n,
+            p:    lastData.p,
+            k:    lastData.k,
+            shs:  lastData.shs,
+            humic: lastData.hum
+          },
+          language: "ar",
+          plantName: plantNameInput.value.trim() || null,
+          stage: plantStageSelect.value || null,
+          targets: lastTargets || null,
+          statusSummary: lastStatusSummary || null
+        };
+
+        const res = await fetch(AI_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
         if (!res.ok) {
           throw new Error("HTTP " + res.status);
         }
-        const raw = await res.json();
 
-        // لو ما فيه أي بيانات → نسوي قراءات وهمية مرة واحدة
-        if ((!raw || Object.keys(raw).length === 0) && !alreadySeeded) {
-          await seedFakeHistoryToFirebase();
-          // بعد ما نزرع البيانات نعيد التحميل مرة ثانية
-          return loadHistory(true);
-        }
+        const adviceText = await res.text();
 
-        // نحول كائن Firebase إلى مصفوفة
-        const arr = [];
-        if (raw) {
-          for (const key in raw) {
-            const session = raw[key] || {};
-            const soil = session.soil || session;
-            arr.push({
-              timestamp: session.timestamp || soil.timestamp || null,
-              t:   Number(soil.temp     ?? soil.t  ?? NaN),
-              m:   Number(soil.moisture ?? soil.m  ?? NaN),
-              ec:  Number(soil.ec ?? NaN),
-              ph:  Number(soil.ph ?? NaN),
-              n:   Number(soil.n ?? NaN),
-              p:   Number(soil.p ?? NaN),
-              k:   Number(soil.k ?? NaN),
-              shs: Number(soil.shs ?? NaN),
-              plantName: session.plantName || "",
-              stage:     session.stage || "",
-              advice:    session.advice || ""
-            });
-          }
-        }
+        aiStatusEl.textContent = "تم استلام التوصية بنجاح ✅";
+        lastAdviceText = adviceText;
 
-        // نخليها أحدث ١٠ فقط
-        arr.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        historyData = arr.slice(0, 10);
+        // عرض النص الناتج داخل خانة الحل في الجدول المنظم
+        adviceTableBody.innerHTML = `
+          <tr>
+            <td>تحليل فوري لحالة التربة والعناصر مقارنة بالحدود المثالية.</td>
+            <td>${adviceText}</td>
+            <td>حسب التوجيه الإرشادي المرفق.</td>
+          </tr>
+        `;
 
-        updateSummaryAndTable();
-        if (historyData.length) updateCharts();
       } catch (err) {
         console.error(err);
-        statusEl.textContent = "خطأ في تحميل البيانات: " + err.message;
-        statusEl.classList.add("error");
+        aiStatusEl.textContent = "حدث خطأ أثناء طلب التوصية.";
+        adviceTableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #b71c1c;">تحقق من اتصال الإنترنت. التفاصيل: ${err.message}</td></tr>`;
+      } finally {
+        aiBtn.disabled = false;
       }
     }
 
-    // ======== CHAT BOT ========
-    const CHAT_API_URL = "/api/nasgh-chat";
-    const chatToggle = document.getElementById("chatToggle");
-    const chatPanel = document.getElementById("chatPanel");
-    const chatCloseBtn = document.getElementById("chatCloseBtn");
-    const chatMessages = document.getElementById("chatMessages");
-    const chatInput = document.getElementById("chatInput");
-    const chatSend = document.getElementById("chatSend");
-    const chatStatus = document.getElementById("chatStatus");
+    aiBtn.addEventListener("click", callAI);
+
+    // ============ AI لحساب المدى المثالي + البارات ============
+    const PARAM_CONFIG = [
+      { key: "temp",     field: "t",   label: "درجة الحرارة", unit: "°م" },
+      { key: "moisture", field: "m",   label: "رطوبة التربة", unit: "%" },
+      { key: "ec",       field: "ec",  label: "الملوحة EC",    unit: "µS/cm" },
+      { key: "ph",       field: "ph",  label: "درجة الحموضة pH", unit: "" },
+      { key: "n",        field: "n",   label: "النيتروجين (N)", unit: "mg/kg" },
+      { key: "p",        field: "p",   label: "الفوسفور (P)", unit: "mg/kg" },
+      { key: "k",        field: "k",   label: "البوتاسيوم (K)", unit: "mg/kg" },
+      { key: "shs",      field: "shs", label: "مؤشر صحة التربة SHS", unit: "" },
+      { key: "humic",    field: "hum", label: "مؤشر الهيوميك أسيد", unit: "" }
+    ];
+
+    function clearTargetsTable() {
+      targetsTableBody.innerHTML = "";
+    }
+
+    function buildTargetsTable(targets) {
+      clearTargetsTable();
+      lastTargets = targets || null;
+      lastStatusSummary = {};
+
+      if (!lastData) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 4;
+        td.textContent = "لا توجد قراءة من عصا نَسغ حتى الآن.";
+        tr.appendChild(td);
+        targetsTableBody.appendChild(tr);
+        return;
+      }
+
+      PARAM_CONFIG.forEach((p) => {
+        const cfg = targets && targets[p.key];
+        const valueRaw = lastData[p.field];
+        const value = typeof valueRaw === "number" ? valueRaw : Number(valueRaw);
+
+        const tr = document.createElement("tr");
+
+        const nameTd = document.createElement("td");
+        nameTd.textContent = p.label;
+        tr.appendChild(nameTd);
+
+        const valueTd = document.createElement("td");
+        if (isNaN(value)) {
+          valueTd.textContent = "--";
+        } else {
+          valueTd.textContent =
+            value.toFixed(p.key === "ph" ? 2 : (p.key === "temp" ? 1 : 0)) +
+            (p.unit ? " " + p.unit : "");
+        }
+        tr.appendChild(valueTd);
+
+        const rangeTd = document.createElement("td");
+        let min = null, max = null;
+        if (cfg && typeof cfg.min === "number" && typeof cfg.max === "number") {
+          min = cfg.min;
+          max = cfg.max;
+          rangeTd.textContent =
+            min.toFixed(p.key === "ph" ? 2 : 0) +
+            " - " +
+            max.toFixed(p.key === "ph" ? 2 : 0) +
+            (p.unit ? " " + p.unit : "");
+        } else {
+          rangeTd.textContent = "لا يوجد مدى محدد";
+        }
+        tr.appendChild(rangeTd);
+
+        const statusTd = document.createElement("td");
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "bar-wrapper";
+
+        const bar = document.createElement("div");
+        let statusText = "غير معروف";
+        let statusClass = "";
+        let percent = 40;
+
+        if (!isNaN(value) && min !== null && max !== null && max > min) {
+          if (value < min) {
+            statusText = "نقص";
+            statusClass = "bar-low";
+          } else if (value > max) {
+            statusText = "زيادة";
+            statusClass = "bar-high";
+          } else {
+            statusText = "مناسب";
+            statusClass = "bar-ok";
+          }
+
+          const mid = (min + max) / 2;
+          if (mid > 0) {
+            percent = Math.min(100, Math.max(10, (value / mid) * 50));
+          }
+        }
+
+        bar.className = "bar-fill " + statusClass;
+        bar.style.width = percent + "%";
+
+        wrapper.appendChild(bar);
+        statusTd.appendChild(wrapper);
+
+        const labelDiv = document.createElement("div");
+        labelDiv.style.fontSize = "11px";
+        labelDiv.textContent = statusText;
+        statusTd.appendChild(labelDiv);
+
+        tr.appendChild(statusTd);
+        targetsTableBody.appendChild(tr);
+
+        // حفظ الملخص عشان AI يستخدم نفس الحالة
+        lastStatusSummary[p.key] = {
+          label: p.label,
+          value: isNaN(value) ? null : value,
+          unit: p.unit,
+          min: min,
+          max: max,
+          status: statusText
+        };
+      });
+    }
+
+    async function callTargetsAI() {
+      if (!lastData) {
+        targetsStatusEl.textContent = "لا توجد قراءة حديثة من عصا نَسغ. خذ قراءة أولاً.";
+        return;
+      }
+
+      const plantName = plantNameInput.value.trim();
+      const stage = plantStageSelect.value;
+
+      if (!plantName || !stage) {
+        targetsStatusEl.textContent = "الرجاء إدخال نوع النبات واختيار مرحلة النمو.";
+        return;
+      }
+
+      targetsBtn.disabled = true;
+      targetsStatusEl.textContent = "جاري حساب أفضل القراءات حسب نوع النبات ومرحلة النمو...";
+      clearTargetsTable();
+
+      try {
+        const payload = {
+          plantName,
+          stage,
+          soil: lastData
+        };
+
+        const res = await fetch(TARGETS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          throw new Error("HTTP " + res.status);
+        }
+
+        const data = await res.json();
+        buildTargetsTable(data.targets || {});
+        targetsStatusEl.textContent = "تم حساب المدى المثالي لكل عنصر ✅";
+      } catch (err) {
+        console.error(err);
+        targetsStatusEl.textContent = "صار خطأ في الاتصال، جرّب مرة ثانية.";
+      } finally {
+        targetsBtn.disabled = false;
+      }
+    }
+
+    targetsBtn.addEventListener("click", callTargetsAI);
+
+    // ============ حفظ الجلسة في الداشبورد ============
+    async function saveSession() {
+      if (!lastData) {
+        saveStatusEl.textContent = "لا توجد قراءة لحفظها.";
+        return;
+      }
+      if (!lastTargets || !lastStatusSummary) {
+        saveStatusEl.textContent = "احسب أولاً المدى المثالي قبل الحفظ.";
+        return;
+      }
+      if (!lastAdviceText) {
+        saveStatusEl.textContent = "اطلب توصية AI أولاً قبل الحفظ.";
+        return;
+      }
+
+      saveSessionBtn.disabled = true;
+      saveStatusEl.textContent = "جاري حفظ البيانات في الداشبورد...";
+
+      try {
+        const payload = {
+          soil: lastData,
+          plantName: plantNameInput.value.trim() || null,
+          stage: plantStageSelect.value || null,
+          targets: lastTargets,
+          statusSummary: lastStatusSummary,
+          advice: lastAdviceText,
+          timestamp: new Date().toISOString()
+        };
+
+        const res = await fetch(SESSION_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          throw new Error("HTTP " + res.status);
+        }
+
+        saveStatusEl.textContent = "تم حفظ الجلسة في الداشبورد بنجاح ✅";
+      } catch (err) {
+        console.error(err);
+        saveStatusEl.textContent = "صار خطأ أثناء الحفظ. جرّب مرة ثانية.";
+      } finally {
+        saveSessionBtn.disabled = false;
+      }
+    }
+
+    saveSessionBtn.addEventListener("click", saveSession);
+
+    // ================== شات بوت نسغ ==================
+    const chatFab = document.createElement("button");
+    chatFab.className = "chat-fab";
+    chatFab.innerHTML = '<span class="icon">💬</span><span>نسغ AI</span>';
+
+    const chatPanel = document.createElement("div");
+    chatPanel.className = "chat-panel";
+    chatPanel.innerHTML = `
+      <div class="chat-header">
+        <div class="chat-header-title">
+          <span class="name">مساعد نسغ</span>
+          <span class="hint">اسأل عن التوصية أو حالة التربة</span>
+        </div>
+        <button class="chat-close" aria-label="إغلاق">×</button>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-bubble from-bot">
+          حياك أخوي 🌱، هذا مساعد نسغ. إذا ما كانت التوصية واضحة لك أو حاب تعرف أكثر عن حالة التربة، اسألني وبشرح لك بأسلوب بسيط.
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <textarea id="chatInput" placeholder="اكتب سؤالك هنا عن التوصية أو التربة..."></textarea>
+        <button id="chatSend">إرسال</button>
+      </div>
+    `;
+
+    document.body.appendChild(chatFab);
+    document.body.appendChild(chatPanel);
+
+    const chatCloseBtn = chatPanel.querySelector(".chat-close");
+    const chatMessages = chatPanel.querySelector("#chatMessages");
+    const chatInput = chatPanel.querySelector("#chatInput");
+    const chatSend = chatPanel.querySelector("#chatSend");
 
     let chatHistory = [];
 
-    function appendMessage(role, text) {
-      const div = document.createElement("div");
-      div.className = "chat-msg " + role;
-      div.textContent = text;
-      chatMessages.appendChild(div);
+    chatFab.addEventListener("click", () => {
+      chatPanel.style.display = chatPanel.style.display === "flex" ? "none" : "flex";
+    });
+
+    chatCloseBtn.addEventListener("click", () => {
+      chatPanel.style.display = "none";
+    });
+
+    function appendMessage(sender, text) {
+      const bubble = document.createElement("div");
+      bubble.className = "chat-bubble " + (sender === "user" ? "from-user" : "from-bot");
+      bubble.textContent = text;
+      chatMessages.appendChild(bubble);
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
@@ -965,14 +1227,18 @@
       if (!text) return;
 
       appendMessage("user", text);
-      chatHistory.push({ role: "user", content: text });
       chatInput.value = "";
-      chatStatus.textContent = "نَسغ يحضّر لك جواب مبسط...";
+      chatSend.disabled = true;
+
+      chatHistory.push({ role: "user", content: text });
 
       try {
         const payload = {
           message: text,
-          history: chatHistory
+          history: chatHistory,
+          soil: lastData || null,
+          targets: lastTargets || null,
+          statusSummary: lastStatusSummary || null
         };
 
         const res = await fetch(CHAT_API_URL, {
@@ -985,61 +1251,24 @@
           throw new Error("HTTP " + res.status);
         }
 
-        // 🟢 تم التصحيح هنا لاستقبال النص الصريح مباشرة مثل الصفحة الأخرى
-        const reply = await res.text() || "صار عندي تعذّر بسيط في الرد، جرّب تعيد سؤالك أو غيّر صياغته شوي أخوي.";
-
-        appendMessage("assistant", reply);
+        const reply = await res.text();
+        appendMessage("bot", reply);
         chatHistory.push({ role: "assistant", content: reply });
-        chatStatus.textContent = "جاهز لسؤال زراعي جديد 🌿";
+
       } catch (err) {
         console.error(err);
-        appendMessage(
-          "assistant",
-          "حياك أخوي، صار خطأ في الاتصال بالخادم. تأكد من الإنترنت وجرب مرة ثانية."
-        );
-        chatStatus.textContent = "تعذّر الاتصال، جرّب بعد قليل.";
+        appendMessage("bot", "عذراً أخوي، حدث خطأ في الاتصال بالمساعد الذكي. جرّب مرة ثانية.");
+      } finally {
+        chatSend.disabled = false;
       }
     }
 
-    chatToggle.addEventListener("click", () => {
-      const isOpen = chatPanel.style.display === "flex";
-      chatPanel.style.display = isOpen ? "none" : "flex";
-    });
-
-    chatCloseBtn.addEventListener("click", () => {
-      chatPanel.style.display = "none";
-    });
-
     chatSend.addEventListener("click", sendChatMessage);
-
     chatInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         sendChatMessage();
       }
-    });
-
-    // رفع لوحة الشات فوق الكيبورد في الموبايل
-    chatInput.addEventListener("focus", () => {
-      chatPanel.style.bottom = "280px";
-    });
-
-    chatInput.addEventListener("blur", () => {
-      chatPanel.style.bottom = "70px";
-    });
-
-    // زر تبديل الحساب
-    document.getElementById("switchAccountBtn").addEventListener("click", () => {
-      window.location.href = "login.html";
-    });
-
-    // ======== INIT ========
-    document.addEventListener("DOMContentLoaded", () => {
-      loadHistory(); // يحمّل من Firebase ولو ما فيه بيانات يولّد ١٠ قراءات وهمية واقعية
-      appendMessage(
-        "assistant",
-        "حياك أخوي، أنا مساعد نَسغ الزراعي. اسألني عن التربة، الري أو التسميد وبجاوبك بأبسط طريقة أقدر عليها 🌿"
-      );
     });
   </script>
 </body>
