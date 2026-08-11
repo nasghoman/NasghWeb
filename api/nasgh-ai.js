@@ -43,14 +43,16 @@ export default async function handler(req, res) {
     }
 
     // ===== 1. البحث أولاً في Firebase Realtime Database =====
-    const FIREBASE_DB_URL = process.env.FIREBASE_DATABASE_URL; // مثال: https://your-app.firebaseio.com
+    const FIREBASE_DB_URL = process.env.FIREBASE_DATABASE_URL;
+    
+    console.log("🔍 [Backend Log] جاري البحث في Firebase...");
+
     if (FIREBASE_DB_URL) {
       try {
         const fbResponse = await fetch(`${FIREBASE_DB_URL}/soil-history.json`);
         if (fbResponse.ok) {
           const historyData = await fbResponse.json();
           if (historyData) {
-            // البحث عن قراءة مطابقة تقريباً لنفس النبات والمرحلة وقيم EC و pH و Moisture
             const records = Object.values(historyData);
             const matchedRecord = records.find((rec) => {
               if (!rec.soil) return false;
@@ -65,17 +67,23 @@ export default async function handler(req, res) {
             });
 
             if (matchedRecord && matchedRecord.advice) {
+              console.log("✅ [Backend Log] تم العثور على إجابة في الفايربيس وتخطي المودل.");
+              
               const htmlResponse = `<tr><td>ملاحظة مسجلة سابقاً</td><td>${matchedRecord.advice}</td><td>متابعة حسب السجل</td></tr>`;
               return res.status(200).send(htmlResponse);
+            } else {
+              console.log("⚠️ [Backend Log] لم يوجد سجل مطابق، سيتم استخدام الذكاء الاصطناعي.");
             }
           }
         }
       } catch (fbErr) {
-        console.error("Firebase lookup error:", fbErr);
+        console.error("❌ [Backend Log Error]:", fbErr.message);
       }
     }
 
     // ===== 2. في حال عدم وجود إجابة في الفايربيس، الانتقال للذكاء الاصطناعي =====
+    console.log("🤖 [Backend Log] جاري التوليد من نموذج Gemini...");
+
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return res.status(500).send("Missing GEMINI_API_KEY env var");
@@ -139,7 +147,6 @@ ${omanSoilReference}
       ],
     };
 
-    // إرجاع النماذج المحددة سابقاً
     const MODELS = [
       "gemini-3.5-flash",
       "gemini-3.1-flash-lite",
@@ -169,6 +176,7 @@ ${omanSoilReference}
         const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (text) {
+          console.log(`✅ [Backend Log] تم التوليد بنجاح عبر نموذج: ${model}`);
           return res.status(200).send(text.trim());
         } else {
           lastError = "Empty response " + model;
@@ -254,7 +262,7 @@ function buildComparisonFromSummary(statusSummary) {
   }
 
   if (!lines.length) {
-    return "statusSummary موجود لكنفاضي، استخدم القراءات فقط.";
+    return "statusSummary موجود لكن فاضي، استخدم القراءات فقط.";
   }
 
   return lines.join("\n");
