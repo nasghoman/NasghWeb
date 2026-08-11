@@ -30,12 +30,14 @@ export default async function handler(req, res) {
       return res.status(400).send("Invalid JSON body");
     }
 
-    const userMessage = body.message;
-    const soil        = body.soil;
-    const lastAdvice  = body.lastAdvice;
+    const userMessage = body.message || "";
+    const image       = body.image || null; // الصورة بتنسيق Base64
+    const soil        = body.soil || body.latestReading || null;
+    const lastAdvice  = body.lastAdvice || body.advice || null;
 
-    if (!userMessage) {
-      return res.status(400).send("Missing user message");
+    // التأكد من وجود نص أو صورة على الأقل
+    if (!userMessage && !image) {
+      return res.status(400).send("Missing user message or image");
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -43,21 +45,21 @@ export default async function handler(req, res) {
       return res.status(500).send("Missing GEMINI_API_KEY env var");
     }
 
-    // ===== 1) فحص إذا السؤال زراعي أو لا =====
+    // ===== 1) فحص إذا السؤال/الطلب زراعي أو لا =====
+    const checkText = userMessage || (image ? "قام المزارع بإرسال صورة للنبات أو التربة للفحص." : "");
     const guardPrompt = `
-السؤال من المزارع:
-"${userMessage}"
+السؤال أو الطلب من المزارع:
+"${checkText}"
 
-قرّر فقط هل السؤال متعلق بالزراعة والتربة والنباتات والري والتسميد أم لا.
-- اذا كان متعلقًا بالزراعة بأي شكل، أجب بكلمة واحدة: "AGRI"
+قرّر فقط هل الطلب متعلق بالزراعة والتربة والنباتات والري والتسميد أم لا.
+- اذا كان متعلقًا بالزراعة بأي شكل (أو يتضمن صورة نبات/تربة)، أجب بكلمة واحدة: "AGRI"
 - اذا كان لا علاقة له بالزراعة، أجب بكلمة واحدة: "OTHER"
 لا تكتب أي شيء آخر غير هذه الكلمة.
 `;
 
     let classification = "AGRI";
     try {
-      // تم تمرير apiKey للدالة بعد نقلها بالأسفل
-      classification = await callGemini(guardPrompt, "gemini-3.1-flash-lite", apiKey);
+      classification = await callGemini(guardPrompt, null, "gemini-3.1-flash-lite", apiKey);
     } catch (e) {
       classification = "AGRI"; // لو فشل التصنيف نكمل كأنه زراعي
     }
@@ -83,21 +85,17 @@ ${soilText}
 - آخر توصية مكتوبة من نسغ إن وجدت:
 ${adviceText}
 
-- سؤال المزارع:
-"${userMessage}"
+- سؤال/طلب المزارع:
+"${userMessage || "يرجى فحص الصورة المرفقة وتحديد مشكلة النبات والحل المناسب."}"
 
 التعليمات لأسلوب الرد:
 - خاطب المزارع بكلمة "أخوي" أو "أخي المزارع" في بداية الجواب.
-- جاوب بصيغة واثقة، كأنك خبير نسغ معتمد تعتمد على قراءات الجهاز.
+- جاوب بصيغة واثقة، كأنك خبير نسغ معتمد تعتمد على قراءات الجهاز والفحص البصري للصورة.
+- إذا كان هناك صورة مرفقة، افحص أوراق النبات أو التربة وحدد أعراض (نقص عناصر، إصابة حشرية، جفاف، فطر...) وأعطه العلاج فوراً.
 - لا تطلب من المزارع استشارة مهندس زراعي أو خبير خارجي، ولا تذكر عبارات مثل: (استشر مختص، راجع مهندس زراعي، الأفضل تسأل خبير).
 - اعطِ حلول عملية مباشرة: نوع السماد (مثلاً NPK 20-20-20، أو سماد عالي البوتاسيوم)، أو بدائل عضوية (سماد عضوي متحلل، كمبوست، سماد دجاج، رماد خشب، مخلفات نخيل... إلخ) حسب العنصر.
 - خلك مختصر وواضح وسهل الفهم (من 3 إلى 6 جمل فقط).
 - أربط إجابتك قدر الإمكان بقراءات التربة أو التوصية السابقة إذا كانت مناسبة للسؤال.
-- لو المزارع يسأل عن معنى مرحلة نمو معينة أو شرح توصية، اشرحها له بلغة بسيطة.
-- استخدم جمل مثل:
-  "من قراءات جهاز نسغ أنا أشوف أن..."،
-  "أفضل شي تسويه الحين هو..."،
-  "حاول تسوي كذا وكذا خلال الأيام الجاية..."
 - لا تذكر أسماء موديلات الذكاء الاصطناعي ولا تشرح كيف تشتغل ولا تذكر إنك نموذج لغوي، ركّز أن الكلام صادر من "مساعد نسغ".
 - لا تُرجع أي JSON أو تنسيق برمجي؛ أرجع نص عربي طبيعي فقط بدون أي حقول إضافية.
 
@@ -114,7 +112,7 @@ ${adviceText}
 
     for (const model of MODELS) {
       try {
-        const reply = await callGemini(mainPrompt, model, apiKey);
+        const reply = await callGemini(mainPrompt, image, model, apiKey);
         return res.status(200).send(reply.trim());
       } catch (err) {
         lastError = err.message;
@@ -130,11 +128,30 @@ ${adviceText}
   }
 }
 
-// 💡 تم نقل الدالة هنا (خارج الـ handler الرئيسي) لمنع انهيار البيئة السحابية
-async function callGemini(promptText, model, apiKey) {
+// 💡 دالة استدعاء Gemini لدعم النصوص والصور (Base64)
+async function callGemini(promptText, imageBase64, model, apiKey) {
+  const parts = [];
+
+  // إذا وجدت صورة Base64 قم بتحليلها وإضافتها للـ parts
+  if (imageBase64 && typeof imageBase64 === "string" && imageBase64.includes("data:image")) {
+    const match = imageBase64.match(/^data:(image\/\w+);base64,(.+)$/);
+    if (match) {
+      parts.push({
+        inlineData: {
+          mimeType: match[1],
+          data: match[2]
+        }
+      });
+    }
+  }
+
+  // إضافة النص
+  parts.push({ text: promptText });
+
   const payload = {
-    contents: [{ parts: [{ text: promptText }] }],
+    contents: [{ parts: parts }],
   };
+
   const baseUrl = "https://generativelanguage.googleapis.com/v1/models";
   const url = `${baseUrl}/${model}:generateContent?key=${apiKey}`;
 
