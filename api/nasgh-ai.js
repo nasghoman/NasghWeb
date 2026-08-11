@@ -69,7 +69,7 @@ export default async function handler(req, res) {
             if (matchedRecord && matchedRecord.advice) {
               console.log("✅ [Backend Log] تم العثور على إجابة في الفايربيس وتخطي المودل.");
               
-              const htmlResponse = `<tr><td>ملاحظة مسجلة</td><td>${matchedRecord.advice}</td><td>متابعة دورية</td></tr>`;
+              const htmlResponse = `<tr><td>ملاحظة مسجلة سابقاً</td><td>${matchedRecord.advice}</td><td>متابعة حسب السجل</td></tr>`;
               return res.status(200).send(htmlResponse);
             } else {
               console.log("⚠️ [Backend Log] لم يوجد سجل مطابق، سيتم استخدام الذكاء الاصطناعي.");
@@ -95,32 +95,47 @@ export default async function handler(req, res) {
         : buildComparison(soil, targets);
 
     const weatherSection = (weather && typeof weather.airTemp !== "undefined") ? `
-بيانات حالة الطقس:
+بيانات حالة الطقس الحية بالمزرعة:
 - حرارة الجو: ${weather.airTemp}°م
 - رطوبة الهواء: ${weather.airHumidity}%
+- سرعة الرياح: ${weather.windSpeed} كم/س
+- احتمال الأمطار: ${weather.rainProbability}%
 ` : "";
 
+    const omanSoilReference = `
+المرجعية الفنية العامة للتربة في سلطنة عُمان:
+- تفاعل التربة pH: قلوية غالباً (7.5 - 8.5)
+- النيتروجين الكلي (N): منخفض غالباً (200 - 800 mg/kg)
+- الفوسفور الجاهز (P-Olsen): منخفض إلى متوسط (3 - 15 mg/kg)
+- البوتاسيوم المتاح (K): متوسط غالباً (80 - 300 mg/kg)
+- الكالسيوم المتبادل (Ca): مرتفع (2000 - 8000 mg/kg)
+- المادة العضوية: منخفضة (0.2 - 1.5%)
+- ملوحة التربة (EC): تتراوح بين 0.5 إلى أكثر من 8 dS/m حسب الموقع
+`;
+
     const promptText = `
-قراءات التربة من جهاز نَسغ:
+هذه قراءات تربة من جهاز نَسغ (soilReadings):
 ${JSON.stringify(soil, null, 2)}
 
 ${plantName ? `نوع النبات: ${plantName}\n` : ""}
-${stage ? `مرحلة النمو: ${stage}\n` : ""}
+${stage ? `مرحلة النمو الحالية: ${stage}\n` : ""}
 ${weatherSection}
 
-تحليل القراءات بالنسبة للمدى المثالي:
+تحليل جاهز بين القراءات والحدود المثالية:
 ${comparison}
 
-المطلوب:
-اكتب توصية زراعية مختصرة جداً ومباشرة باللغة ${language} موجهة لمزارع عُماني، في شكل أسطر جدول HTML فقط <tr><td>...</td></tr> تتكون من 3 أعمدة لكل مشكلة:
-1. المشكلة الحالية (كلمتين إلى 3 كلمات فقط، مثل: نقص نيتروجين، جفاف تربة...).
-2. الحل المقترح (جملة قصيرة ومختصرة جداً تبدأ بكلمة "أخوي" وبدون أي إسهاب أو شرح مطول، المفيد فقط).
-3. الكمية المناسبة (مختصرة جداً بوحدات عملية مثل: 15 جم/م²، لتر/م²، ري 20 دقيقة...).
+${omanSoilReference}
 
-⚠️ شروط هامة للتنسيق والشكل:
-- اختصر الجمل إلى أقصى حد ممكن لكي لا تتشوه الداشبورد ولا تنكمش النصوص عمودياً.
-- اكتب مباشرة أسطر <tr><td>...</td></tr> بدون <table> وبدون أي مقدمات أو علامات markdown مثل \`\`\`html.
-- ممنوع الاستفاضة أو ذكر التفاصيل النظرية الكثيرة.
+المطلوب:
+اكتب توصية زراعية **مختصرة جداً ومباشرة (المفيد فقط)** باللغة ${language} موجهة لمزارع عُماني، في شكل أسطر جدول HTML فقط <tr><td>...</td></tr> تتكون من ثلاثة أعمدة لكل مشكلة رصدتها:
+1. المشكلة الحالية (كلمات معدودة جداً، مثل: نقص نيتروجين، جفاف تربة...).
+2. الحل المقترح (جملة قصيرة ومختصرة تبدأ بكلمة "أخوي" وبدون أي شرح مطول لتبدو مرتبة في اللوحة).
+3. الكمية المناسبة (استخدم وحدات قياس صغيرة وعملية فقط مثل: جرام/متر مربع، كجم/شجرة، لتر/متر مربع، أو دقائق الري. ممنوع استخدام الفدان أو الهكتار).
+
+الشروط العامة والتنسيق:
+- ممنوع منعاً باتاً كتابة أي مقدمة أو خاتمة نصية.
+- اكتب مباشرة صفوف <tr> للجدول.
+- أعد النتائج داخل <tr><td>...</td></tr> فقط دون <table> ودون أي علامات markdown مثل \`\`\`html.
 `;
 
     const payload = {
@@ -132,12 +147,12 @@ ${comparison}
     };
 
     const MODELS = [
-      "gemini-2.5-flash",
-      "gemini-1.5-flash",
-      "gemini-2.0-flash"
+      "gemini-3.5-flash",
+      "gemini-3.1-flash-lite",
+      "gemini-3.1-pro",
     ];
 
-    const baseUrl = "https://generativelanguage.googleapis.com/v1beta/models";
+    const baseUrl = "https://generativelanguage.googleapis.com/v1/models";
     let lastError = null;
 
     for (const model of MODELS) {
@@ -161,7 +176,6 @@ ${comparison}
 
         if (text) {
           text = text.trim();
-          // تنظيف أي وسوم markdown إن وجدت
           text = text.replace(/```html/gi, "").replace(/```/g, "").trim();
           console.log(`✅ [Backend Log] تم التوليد بنجاح عبر نموذج: ${model}`);
           return res.status(200).send(text);
@@ -182,7 +196,7 @@ ${comparison}
 }
 
 function buildComparison(soil, targets) {
-  if (!targets) return "استخدم القراءات فقط.";
+  if (!targets) return "لا توجد حدود مثالية في الطلب، استخدم القراءات فقط.";
 
   const params = [
     { key: "temp", label: "درجة الحرارة", field: "temp", unit: "°م" },
@@ -191,7 +205,9 @@ function buildComparison(soil, targets) {
     { key: "ph", label: "درجة الحموضة pH", field: "ph", unit: "" },
     { key: "n", label: "النيتروجين (N)", field: "n", unit: "mg/kg" },
     { key: "p", label: "الفوسفور (P)", field: "p", unit: "mg/kg" },
-    { key: "k", label: "البوتاسيوم (K)", field: "k", unit: "mg/kg" }
+    { key: "k", label: "البوتاسيوم (K)", field: "k", unit: "mg/kg" },
+    { key: "shs", label: "مؤشر صحة التربة SHS", field: "shs", unit: "" },
+    { key: "humic", label: "مؤشر الهيوميك أسيد", field: "humic", unit: "" },
   ];
 
   let lines = [];
@@ -212,16 +228,20 @@ function buildComparison(soil, targets) {
     else if (vNum > max) status = "زيادة";
 
     lines.push(
-      `- ${p.label}: القراءة ${vNum} ${p.unit}، المثالي (${min}-${max}) → ${status}.`
+      `- ${p.label}: القراءة الحالية ${vNum} ${p.unit}، والمدى المثالي من ${min} إلى ${max} ${p.unit} → الحالة: ${status}.`
     );
   }
 
-  return lines.join("\n") || "استخدم القراءات فقط.";
+  if (!lines.length) {
+    return "لم أستطع مطابقة القراءات مع الحدود المثالية، استخدم القراءات فقط.";
+  }
+
+  return lines.join("\n");
 }
 
 function buildComparisonFromSummary(statusSummary) {
   if (!statusSummary || typeof statusSummary !== "object") {
-    return "استخدم القراءات فقط.";
+    return "لا يوجد statusSummary، استخدم القراءات فقط.";
   }
 
   const lines = [];
@@ -238,9 +258,13 @@ function buildComparisonFromSummary(statusSummary) {
     const status = info.status || "غير معروف";
 
     lines.push(
-      `- ${label}: القراءة ${value} ${unit}، المثالي (${min}-${max}) → ${status}.`
+      `- ${label}: القراءة الحالية ${value} ${unit}، والمدى المثالي من ${min} إلى ${max} ${unit} → الحالة: ${status}.`
     );
   }
 
-  return lines.join("\n") || "استخدم القراءات فقط.";
+  if (!lines.length) {
+    return "statusSummary موجود لكن فاضي، استخدم القراءات فقط.";
+  }
+
+  return lines.join("\n");
 }
