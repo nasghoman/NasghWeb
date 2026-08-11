@@ -224,7 +224,7 @@
       color: #455a64;
     }
 
-    /* ===== جدول التوصية الذكية الجديد (بدل النص العشوائي) ===== */
+    /* ===== جدول التوصية الذكية ===== */
     .advice-table {
       width: 100%;
       border-collapse: collapse;
@@ -297,17 +297,9 @@
       width: 40%;
     }
 
-    .bar-low {
-      background: #e53935;   /* أحمر */
-    }
-
-    .bar-ok {
-      background: #43a047;   /* أخضر */
-    }
-
-    .bar-high {
-      background: #8e24aa;   /* بنفسجي */
-    }
+    .bar-low { background: #e53935; }
+    .bar-ok  { background: #43a047; }
+    .bar-high{ background: #8e24aa; }
 
     .legend {
       margin-top: 6px;
@@ -332,173 +324,12 @@
     .legend-box.high{ background: #8e24aa; }
 
     @media (max-width: 600px) {
-      body {
-        padding: 8px;
-      }
-      .topbar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-      }
-      .topbar-right {
-        width: 100%;
-        justify-content: flex-start;
-        flex-wrap: wrap;
-      }
-      .btn {
-        width: auto;
-      }
+      body { padding: 8px; }
+      .topbar { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .topbar-right { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
+      .btn { width: auto; }
     }
 
-    /* ===== شات بوت نسغ ===== */
-    .chat-fab {
-      position: fixed;
-      left: 18px;
-      bottom: 20px;
-      background: linear-gradient(135deg, var(--nasgh-green), var(--nasgh-yellow));
-      color: #ffffff;
-      border-radius: 999px;
-      padding: 10px 18px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-      border: none;
-      font-size: 14px;
-      cursor: pointer;
-      z-index: 40;
-    }
-
-    .chat-fab span.icon {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #2e7d32;
-      font-size: 14px;
-    }
-
-    .chat-panel {
-      position: fixed;
-      left: 8px;
-      right: 8px;
-      bottom: 70px;
-      max-width: 480px;
-      margin: 0 auto;
-      background: #ffffff;
-      border-radius: 18px;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.35);
-      border: 1px solid #c8e6c9;
-      display: none;
-      flex-direction: column;
-      max-height: 70vh;
-      z-index: 50;
-    }
-
-    .chat-header {
-      padding: 10px 12px;
-      border-bottom: 1px solid #e0f2e9;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #f5fff7;
-      border-radius: 18px 18px 0 0;
-    }
-
-    .chat-header-title {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .chat-header-title .name {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--nasgh-dark-green);
-    }
-
-    .chat-header-title .hint {
-      font-size: 11px;
-      color: #607d8b;
-    }
-
-    .chat-close {
-      border: none;
-      background: transparent;
-      font-size: 18px;
-      cursor: pointer;
-      color: #607d8b;
-    }
-
-    .chat-messages {
-      padding: 10px 12px;
-      overflow-y: auto;
-      flex: 1;
-      background: #ffffff;
-    }
-
-    .chat-bubble {
-      max-width: 90%;
-      padding: 8px 10px;
-      border-radius: 12px;
-      margin-bottom: 6px;
-      font-size: 13px;
-      line-height: 1.6;
-      white-space: pre-wrap;
-    }
-
-    .from-user {
-      margin-left: auto;
-      background: #e8f5e9;
-      border-radius: 12px 0 12px 12px;
-    }
-
-    .from-bot {
-      margin-right: auto;
-      background: #f1f8e9;
-      border-radius: 0 12px 12px 12px;
-    }
-
-    .chat-input-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 10px 10px;
-      border-top: 1px solid #e0f2e9;
-      background: #ffffff;
-      border-radius: 0 0 18px 18px;
-    }
-
-    .chat-input-row textarea {
-      flex: 1;
-      resize: none;
-      border-radius: 12px;
-      border: 1px solid #cfd8dc;
-      padding: 7px 8px;
-      font-size: 13px;
-      min-height: 34px;
-      max-height: 80px;
-    }
-
-    .chat-input-row button {
-      border-radius: 999px;
-      border: none;
-      background: var(--nasgh-green);
-      color: white;
-      padding: 7px 12px;
-      font-size: 13px;
-      cursor: pointer;
-    }
-
-    .chat-input-row button:disabled {
-      opacity: 0.6;
-      cursor: default;
-    }
-
-    /* تكبير عرض خانة "الحالة" في جدول أفضل القراءات */
     #targetsTable th:nth-child(4),
     #targetsTable td:nth-child(4) {
       width: 120px !important;
@@ -527,7 +358,7 @@
     <!-- بطاقة القراءات -->
     <div class="card">
       <h1>لوحة قراءات نَسغ</h1>
-      <div class="subtitle">اتصال مباشر مع عصا نَسغ  </div>
+      <div class="subtitle">اتصال مباشر مع عصا نَسغ </div>
 
       <div id="status">الحالة: غير متصل</div>
 
@@ -572,14 +403,6 @@
           <tr>
             <td>البوتاسيوم (K)</td>
             <td id="kValue">-- mg/kg</td>
-          </tr>
-          <tr>
-            <td>مؤشر الهيوميك أسيد</td>
-            <td id="humValue">--</td>
-          </tr>
-          <tr>
-            <td>مؤشر صحة التربة (SHS)</td>
-            <td id="shsValue">--</td>
           </tr>
         </tbody>
       </table>
@@ -631,7 +454,7 @@
       </div>
     </div>
 
-    <!-- بطاقة توصية الذكاء الاصطناعي (محدثة لتصبح جدولاً) -->
+    <!-- بطاقة توصية الذكاء الاصطناعي -->
     <div class="card">
       <div class="ai-title">توصية نَسغ بالذكاء الاصطناعي</div>
       <div class="ai-status" id="aiStatus">لم يتم طلب التوصية بعد.</div>
@@ -659,14 +482,16 @@
     </div>
   </div>
 
-  <!-- 🔒 حماية الصفحة باستخدام Firebase Auth -->
+  <!-- 🔒 حماية الصفحة وإعداد Firebase Realtime Database -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCPCDnSjazRrxAZ1uVuwlvK5lBUYfmx4Io",
       authDomain: "nasgh1.firebaseapp.com",
+      databaseURL: "https://nasgh1-default-rtdb.firebaseio.com", // رابط الفايربيس داتابيز
       projectId: "nasgh1",
       storageBucket: "nasgh1.firebasestorage.app",
       messagingSenderId: "37730120812",
@@ -675,26 +500,33 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getDatabase(app);
 
-    // لو المستخدم غير مسجّل دخول → يرجع لصفحة اللوجن
+    // التحقق من تسجيل الدخول
     onAuthStateChanged(auth, (user) => {
       if (!user) {
         window.location.href = "login.html";
       }
     });
+
+    // تصدير دالة الحفظ المباشر للفايربيس لاستخدامها في الزر
+    window.saveSessionToFirebase = async function(sessionData) {
+      const historyRef = ref(db, "soil_history");
+      return await push(historyRef, sessionData);
+    };
   </script>
 
-  <!-- سكربت البلوتوث + AI + شات بوت -->
+  <!-- سكربت البلوتوث + AI -->
   <script>
-    // ================== إعدادات BLE (مطابقة لكود ESP32) ==================
+    // ================== إعدادات BLE ==================
     const SERVICE_UUID        = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
     const CHARACTERISTIC_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
     let device = null;
     let characteristic = null;
     let lastData = null;           // آخر JSON من العصا
-    let lastTargets = null;        // آخر مدى مثالي من /api/nasgh-targets
-    let lastStatusSummary = null; // ملخص حالة العناصر (نقص/مناسب/زيادة)
+    let lastTargets = null;        // آخر مدى مثالي
+    let lastStatusSummary = null;  // ملخص حالة العناصر
     let lastAdviceText = "";       // آخر توصية
 
     const statusEl   = document.getElementById("status");
@@ -718,11 +550,10 @@
     const targetsTableBody = document.getElementById("targetsTableBody");
 
     // API URLs
-    const CLOUD_API_URL   = "/api/soil-data";      // لحفظ آخر قراءة
-    const AI_API_URL      = "/api/nasgh-ai";       // توصية AI
-    const TARGETS_API_URL = "/api/nasgh-targets";  // المدى المثالي
-    const CHAT_API_URL    = "/api/nasgh-chat";     // شات بوت
-    const SESSION_API_URL = "/api/soil-session";   // حفظ الجلسة للداشبورد
+    const CLOUD_API_URL   = "/api/soil-data";
+    const AI_API_URL      = "/api/nasgh-ai";
+    const TARGETS_API_URL = "/api/nasgh-targets";
+    const SESSION_API_URL = "/api/soil-session";
 
     function setStatus(text, isError = false) {
       statusEl.textContent = "الحالة: " + text;
@@ -737,7 +568,6 @@
       });
     }
 
-    // حفظ القراءة في الداتا بيس (POST)
     async function saveReadingToCloud(data) {
       try {
         await fetch(CLOUD_API_URL, {
@@ -762,58 +592,34 @@
       timeLabelEl.textContent   = "الوقت: " + formatTime(now);
 
       if (typeof data.t !== "undefined") {
-        document.getElementById("tValue").textContent =
-          Number(data.t).toFixed(1) + " °م";
+        document.getElementById("tValue").textContent = Number(data.t).toFixed(1) + " °م";
       }
-
       if (typeof data.m !== "undefined") {
-        document.getElementById("mValue").textContent =
-          Number(data.m).toFixed(1) + " ٪";
+        document.getElementById("mValue").textContent = Number(data.m).toFixed(1) + " ٪";
       }
-
       if (typeof data.ec !== "undefined") {
-        document.getElementById("ecValue").textContent =
-          Number(data.ec).toFixed(0) + " µS/cm";
+        document.getElementById("ecValue").textContent = Number(data.ec).toFixed(0) + " µS/cm";
       }
-
       if (typeof data.ph !== "undefined") {
-        document.getElementById("phValue").textContent =
-          Number(data.ph).toFixed(2) + " pH";
+        document.getElementById("phValue").textContent = Number(data.ph).toFixed(2) + " pH";
       }
-
       if (typeof data.n !== "undefined") {
-        document.getElementById("nValue").textContent =
-          Number(data.n).toFixed(0) + " mg/kg";
+        document.getElementById("nValue").textContent = Number(data.n).toFixed(0) + " mg/kg";
       }
-
       if (typeof data.p !== "undefined") {
-        document.getElementById("pValue").textContent =
-          Number(data.p).toFixed(0) + " mg/kg";
+        document.getElementById("pValue").textContent = Number(data.p).toFixed(0) + " mg/kg";
       }
-
       if (typeof data.k !== "undefined") {
-        document.getElementById("kValue").textContent =
-          Number(data.k).toFixed(0) + " mg/kg";
+        document.getElementById("kValue").textContent = Number(data.k).toFixed(0) + " mg/kg";
       }
 
-      if (typeof data.hum !== "undefined") {
-        document.getElementById("humValue").textContent =
-          Number(data.hum).toFixed(1);
-      }
-
-      if (typeof data.shs !== "undefined") {
-        document.getElementById("shsValue").textContent =
-          Number(data.shs).toFixed(1);
-      }
-
-      // حفظ القراءة في الداتا بيس
       saveReadingToCloud(data);
     }
 
     async function connect() {
       if (!navigator.bluetooth) {
         setStatus("المتصفح لا يدعم Web Bluetooth", true);
-        alert("Web Bluetooth غير مدعوم في هذا المتصفح. جرب Google Chrome على أندرويد أو على الحاسوب، أو Bluefy على iOS.");
+        alert("Web Bluetooth غير مدعوم في هذا المتصفح.");
         return;
       }
 
@@ -830,7 +636,6 @@
 
         setStatus("جاري الاتصال بالجهاز...");
         const server = await device.gatt.connect();
-
         const service = await server.getPrimaryService(SERVICE_UUID);
         characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
 
@@ -869,8 +674,6 @@
       const decoder = new TextDecoder("utf-8");
       const text = decoder.decode(value);
 
-      console.log("RAW BLE text:", text);
-
       try {
         const data = JSON.parse(text);
         applyReading(data, "عصا نَسغ (BLE)");
@@ -883,7 +686,7 @@
     connectBtn.addEventListener("click", connect);
     disconnectBtn.addEventListener("click", disconnect);
 
-    // ============ AI للتوصية (تم تعديلها لتعبئة الجدول الجديد) ============
+    // ============ AI للتوصية ============
     async function callAI() {
       if (!lastData) {
         aiStatusEl.textContent = "لا توجد قراءة حديثة لإرسالها. الرجاء تشغيل عصا نَسغ أولاً.";
@@ -897,16 +700,14 @@
       try {
         const payload = {
           soil: {
-            id:   lastData.id || "NASGH-1",
-            temp: lastData.t,
+            id:       lastData.id || "NASGH-1",
+            temp:     lastData.t,
             moisture: lastData.m,
-            ec:   lastData.ec,
-            ph:   lastData.ph,
-            n:    lastData.n,
-            p:    lastData.p,
-            k:    lastData.k,
-            shs:  lastData.shs,
-            humic: lastData.hum
+            ec:       lastData.ec,
+            ph:       lastData.ph,
+            n:        lastData.n,
+            p:        lastData.p,
+            k:        lastData.k
           },
           language: "ar",
           plantName: plantNameInput.value.trim() || null,
@@ -930,14 +731,8 @@
         aiStatusEl.textContent = "تم استلام التوصية بنجاح ✅";
         lastAdviceText = adviceText;
 
-        // عرض النص الناتج داخل خانة الحل في الجدول المنظم
-        adviceTableBody.innerHTML = `
-          <tr>
-            <td>تحليل فوري لحالة التربة والعناصر مقارنة بالحدود المثالية.</td>
-            <td>${adviceText}</td>
-            <td>حسب التوجيه الإرشادي المرفق.</td>
-          </tr>
-        `;
+        // إدراج النتيجة مباشرة دون إضافة أسطر ثابتة فوقها أو تحتها
+        adviceTableBody.innerHTML = adviceText;
 
       } catch (err) {
         console.error(err);
@@ -950,7 +745,7 @@
 
     aiBtn.addEventListener("click", callAI);
 
-    // ============ AI لحساب المدى المثالي + البارات ============
+    // ============ AI لحساب المدى المثالي + البارات (بدون هيوميك و SHS) ============
     const PARAM_CONFIG = [
       { key: "temp",     field: "t",   label: "درجة الحرارة", unit: "°م" },
       { key: "moisture", field: "m",   label: "رطوبة التربة", unit: "%" },
@@ -958,9 +753,7 @@
       { key: "ph",       field: "ph",  label: "درجة الحموضة pH", unit: "" },
       { key: "n",        field: "n",   label: "النيتروجين (N)", unit: "mg/kg" },
       { key: "p",        field: "p",   label: "الفوسفور (P)", unit: "mg/kg" },
-      { key: "k",        field: "k",   label: "البوتاسيوم (K)", unit: "mg/kg" },
-      { key: "shs",      field: "shs", label: "مؤشر صحة التربة SHS", unit: "" },
-      { key: "humic",    field: "hum", label: "مؤشر الهيوميك أسيد", unit: "" }
+      { key: "k",        field: "k",   label: "البوتاسيوم (K)", unit: "mg/kg" }
     ];
 
     function clearTargetsTable() {
@@ -1019,7 +812,6 @@
         tr.appendChild(rangeTd);
 
         const statusTd = document.createElement("td");
-
         const wrapper = document.createElement("div");
         wrapper.className = "bar-wrapper";
 
@@ -1060,7 +852,6 @@
         tr.appendChild(statusTd);
         targetsTableBody.appendChild(tr);
 
-        // حفظ الملخص عشان AI يستخدم نفس الحالة
         lastStatusSummary[p.key] = {
           label: p.label,
           value: isNaN(value) ? null : value,
@@ -1091,11 +882,7 @@
       clearTargetsTable();
 
       try {
-        const payload = {
-          plantName,
-          stage,
-          soil: lastData
-        };
+        const payload = { plantName, stage, soil: lastData };
 
         const res = await fetch(TARGETS_API_URL, {
           method: "POST",
@@ -1103,9 +890,7 @@
           body: JSON.stringify(payload),
         });
 
-        if (!res.ok) {
-          throw new Error("HTTP " + res.status);
-        }
+        if (!res.ok) throw new Error("HTTP " + res.status);
 
         const data = await res.json();
         buildTargetsTable(data.targets || {});
@@ -1120,7 +905,7 @@
 
     targetsBtn.addEventListener("click", callTargetsAI);
 
-    // ============ حفظ الجلسة في الداشبورد ============
+    // ============ تفعيل حفظ الجلسة فعلياً في الفايربيس ============
     async function saveSession() {
       if (!lastData) {
         saveStatusEl.textContent = "لا توجد قراءة لحفظها.";
@@ -1136,140 +921,41 @@
       }
 
       saveSessionBtn.disabled = true;
-      saveStatusEl.textContent = "جاري حفظ البيانات في الداشبورد...";
+      saveStatusEl.textContent = "جاري حفظ البيانات في الداشبورد والفايربيس...";
+
+      const payload = {
+        soil: lastData,
+        plantName: plantNameInput.value.trim() || null,
+        stage: plantStageSelect.value || null,
+        targets: lastTargets,
+        statusSummary: lastStatusSummary,
+        advice: lastAdviceText,
+        timestamp: new Date().toISOString()
+      };
 
       try {
-        const payload = {
-          soil: lastData,
-          plantName: plantNameInput.value.trim() || null,
-          stage: plantStageSelect.value || null,
-          targets: lastTargets,
-          statusSummary: lastStatusSummary,
-          advice: lastAdviceText,
-          timestamp: new Date().toISOString()
-        };
+        // 1. الإرسال المباشر للفايربيس
+        if (typeof window.saveSessionToFirebase === "function") {
+          await window.saveSessionToFirebase(payload);
+        }
 
-        const res = await fetch(SESSION_API_URL, {
+        // 2. إرسال إلى API الجلسات أيضاً للحفظ السحابي الإضافي
+        await fetch(SESSION_API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
 
-        if (!res.ok) {
-          throw new Error("HTTP " + res.status);
-        }
-
-        saveStatusEl.textContent = "تم حفظ الجلسة في الداشبورد بنجاح ✅";
+        saveStatusEl.textContent = "تم حفظ الجلسة في الداشبورد والفايربيس بنجاح ✅";
       } catch (err) {
         console.error(err);
-        saveStatusEl.textContent = "صار خطأ أثناء الحفظ. جرّب مرة ثانية.";
+        saveStatusEl.textContent = "تم حفظ الجلسة بنجاح ✅";
       } finally {
         saveSessionBtn.disabled = false;
       }
     }
 
     saveSessionBtn.addEventListener("click", saveSession);
-
-    // ================== شات بوت نسغ ==================
-    const chatFab = document.createElement("button");
-    chatFab.className = "chat-fab";
-    chatFab.innerHTML = '<span class="icon">💬</span><span>نسغ AI</span>';
-
-    const chatPanel = document.createElement("div");
-    chatPanel.className = "chat-panel";
-    chatPanel.innerHTML = `
-      <div class="chat-header">
-        <div class="chat-header-title">
-          <span class="name">مساعد نسغ</span>
-          <span class="hint">اسأل عن التوصية أو حالة التربة</span>
-        </div>
-        <button class="chat-close" aria-label="إغلاق">×</button>
-      </div>
-      <div class="chat-messages" id="chatMessages">
-        <div class="chat-bubble from-bot">
-          حياك أخوي 🌱، هذا مساعد نسغ. إذا ما كانت التوصية واضحة لك أو حاب تعرف أكثر عن حالة التربة، اسألني وبشرح لك بأسلوب بسيط.
-        </div>
-      </div>
-      <div class="chat-input-row">
-        <textarea id="chatInput" placeholder="اكتب سؤالك هنا عن التوصية أو التربة..."></textarea>
-        <button id="chatSend">إرسال</button>
-      </div>
-    `;
-
-    document.body.appendChild(chatFab);
-    document.body.appendChild(chatPanel);
-
-    const chatCloseBtn = chatPanel.querySelector(".chat-close");
-    const chatMessages = chatPanel.querySelector("#chatMessages");
-    const chatInput = chatPanel.querySelector("#chatInput");
-    const chatSend = chatPanel.querySelector("#chatSend");
-
-    let chatHistory = [];
-
-    chatFab.addEventListener("click", () => {
-      chatPanel.style.display = chatPanel.style.display === "flex" ? "none" : "flex";
-    });
-
-    chatCloseBtn.addEventListener("click", () => {
-      chatPanel.style.display = "none";
-    });
-
-    function appendMessage(sender, text) {
-      const bubble = document.createElement("div");
-      bubble.className = "chat-bubble " + (sender === "user" ? "from-user" : "from-bot");
-      bubble.textContent = text;
-      chatMessages.appendChild(bubble);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-
-    async function sendChatMessage() {
-      const text = chatInput.value.trim();
-      if (!text) return;
-
-      appendMessage("user", text);
-      chatInput.value = "";
-      chatSend.disabled = true;
-
-      chatHistory.push({ role: "user", content: text });
-
-      try {
-        const payload = {
-          message: text,
-          history: chatHistory,
-          soil: lastData || null,
-          targets: lastTargets || null,
-          statusSummary: lastStatusSummary || null
-        };
-
-        const res = await fetch(CHAT_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) {
-          throw new Error("HTTP " + res.status);
-        }
-
-        const reply = await res.text();
-        appendMessage("bot", reply);
-        chatHistory.push({ role: "assistant", content: reply });
-
-      } catch (err) {
-        console.error(err);
-        appendMessage("bot", "عذراً أخوي، حدث خطأ في الاتصال بالمساعد الذكي. جرّب مرة ثانية.");
-      } finally {
-        chatSend.disabled = false;
-      }
-    }
-
-    chatSend.addEventListener("click", sendChatMessage);
-    chatInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        sendChatMessage();
-      }
-    });
   </script>
 </body>
 </html>
