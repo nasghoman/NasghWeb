@@ -779,7 +779,7 @@
       }
     }
 
-    // ============ توليد وتعديل بقية القراءات بتنوع واقِعي قريب من الحدود ============
+    // ============ توليد وتعديل بقية القراءات (±5% للبقية، و أقل من ±2% للـ pH) ============
     function generateSimulatedSoilData(rawSensorData) {
       const now = Date.now();
 
@@ -791,17 +791,17 @@
         realTemp = Number(realTemp);
       }
 
-      // 🎯 قيم مرجعية متوازنة (بعضها داخل المدى وبعضها خارجه قليلاً بشكل متناسق ومستوحى من جدولك)
+      // 🎯 قيم مرجعية متوازنة مستوحاة من جدولك
       const BASELINES = {
-        m: 48.0,    // رطوبة التربة % (نقص بسيط عن المدى 55 - 75%)
-        ec: 2400,   // الملوحة µS/cm (زيادة بسيطة عن المدى 1200 - 2200)
-        ph: 7.10,   // درجة الحموضة pH (زيادة خفيفة عن المدى 6.00 - 6.80)
-        n: 120,     // النيتروجين mg/kg (مناسب تماماً ضمن 100 - 150)
-        p: 62,      // الفوسفور mg/kg (نقص خفيف عن المدى 70 - 110)
-        k: 210      // البوتاسيوم mg/kg (مناسب تماماً ضمن 180 - 260)
+        m: 48.0,    // رطوبة التربة %
+        ec: 2400,   // الملوحة µS/cm
+        ph: 7.10,   // درجة الحموضة pH
+        n: 120,     // النيتروجين mg/kg
+        p: 62,      // الفوسفور mg/kg
+        k: 210      // البوتاسيوم mg/kg
       };
 
-      // إذا مرت أكثر من 10 دقائق بدون قراءة جديدة، نعيد ضبط الجلسة لنفس القيم المرجعية
+      // إذا مرت أكثر من 10 دقائق بدون قراءة جديدة، نعيد ضبط الجلسة للقيم الأساسية
       if (!lastData || (lastReadingTimestamp && (now - lastReadingTimestamp > TEN_MINUTES_MS))) {
         lastReadingTimestamp = now;
         return {
@@ -818,9 +818,9 @@
 
       lastReadingTimestamp = now;
 
-      // دالة التغير المتذبذب بين (-5% إلى +5%)
-      function applyMax5PercentVariation(prevValue, minBound, maxBound, decimals = 0) {
-        const factor = 1 + (Math.random() * 0.1 - 0.05); // التغير التدريجي
+      // دالة تغير عامة (بين -5% إلى +5%)
+      function applyVariation(prevValue, minBound, maxBound, decimals = 0, percentLimit = 0.05) {
+        const factor = 1 + (Math.random() * (percentLimit * 2) - percentLimit);
         let newVal = prevValue * factor;
         if (minBound !== undefined) newVal = Math.max(minBound, newVal);
         if (maxBound !== undefined) newVal = Math.min(maxBound, newVal);
@@ -829,13 +829,13 @@
 
       return {
         id: rawSensorData.id || lastData.id || "NASGH-1",
-        t: realTemp, // درجة الحرارة حقيقية
-        m: applyMax5PercentVariation(lastData.m || BASELINES.m, 5, 95, 1),
-        ec: applyMax5PercentVariation(lastData.ec || BASELINES.ec, 100, 4000, 0),
-        ph: applyMax5PercentVariation(lastData.ph || BASELINES.ph, 5.5, 8.8, 2),
-        n: applyMax5PercentVariation(lastData.n || BASELINES.n, 10, 800, 0),
-        p: applyMax5PercentVariation(lastData.p || BASELINES.p, 2, 300, 0),
-        k: applyMax5PercentVariation(lastData.k || BASELINES.k, 10, 600, 0)
+        t: realTemp, // درجة الحرارة حقيقية من الحساس
+        m: applyVariation(lastData.m || BASELINES.m, 5, 95, 1, 0.05),   // تذبذب 5%
+        ec: applyVariation(lastData.ec || BASELINES.ec, 100, 4000, 0, 0.05), // تذبذب 5%
+        ph: applyVariation(lastData.ph || BASELINES.ph, 5.5, 8.8, 2, 0.018), // 🛡️ تذبذب أقل من 2% (حوالي 1.8%) للـ pH فقط
+        n: applyVariation(lastData.n || BASELINES.n, 10, 800, 0, 0.05),  // تذبذب 5%
+        p: applyVariation(lastData.p || BASELINES.p, 2, 300, 0, 0.05),   // تذبذب 5%
+        k: applyVariation(lastData.k || BASELINES.k, 10, 600, 0, 0.05)   // تذبذب 5%
       };
     }
 
@@ -1353,7 +1353,7 @@
     document.addEventListener("DOMContentLoaded", () => {
       appendMessage(
         "assistant",
-        "حياك أخوي، أنا مساعد نَسغ الزراعي. اسألني عن التربة، الري أو التسميد، أو صور لي النبات 📷! 🌿"
+        "حياك أخوي، أنا مساعد نَسغ الزراعي. اسألني عن التربة، الري أو التسميد، أو صور لي النبات 📷 وجمعتهم لك هنا! 🌿"
       );
     });
   </script>
