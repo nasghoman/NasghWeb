@@ -42,12 +42,45 @@ export default async function handler(req, res) {
       return res.status(400).send("Missing soil readings");
     }
 
+    // ===== 1. البحث أولاً في Firebase Realtime Database =====
+    const FIREBASE_DB_URL = process.env.FIREBASE_DATABASE_URL; // مثال: https://your-app.firebaseio.com
+    if (FIREBASE_DB_URL) {
+      try {
+        const fbResponse = await fetch(`${FIREBASE_DB_URL}/soil-history.json`);
+        if (fbResponse.ok) {
+          const historyData = await fbResponse.json();
+          if (historyData) {
+            // البحث عن قراءة مطابقة تقريباً لنفس النبات والمرحلة وقيم EC و pH و Moisture
+            const records = Object.values(historyData);
+            const matchedRecord = records.find((rec) => {
+              if (!rec.soil) return false;
+              const isPlantMatch = !plantName || rec.plantName === plantName;
+              const isStageMatch = !stage || rec.stage === stage;
+              
+              const ecDiff = Math.abs((rec.soil.ec || 0) - (soil.ec || 0));
+              const phDiff = Math.abs((rec.soil.ph || 0) - (soil.ph || 0));
+              const moistDiff = Math.abs((rec.soil.moisture || 0) - (soil.moisture || 0));
+
+              return isPlantMatch && isStageMatch && ecDiff < 50 && phDiff < 0.2 && moistDiff < 5;
+            });
+
+            if (matchedRecord && matchedRecord.advice) {
+              const htmlResponse = `<tr><td>ملاحظة مسجلة سابقاً</td><td>${matchedRecord.advice}</td><td>متابعة حسب السجل</td></tr>`;
+              return res.status(200).send(htmlResponse);
+            }
+          }
+        }
+      } catch (fbErr) {
+        console.error("Firebase lookup error:", fbErr);
+      }
+    }
+
+    // ===== 2. في حال عدم وجود إجابة في الفايربيس، الانتقال للذكاء الاصطناعي =====
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return res.status(500).send("Missing GEMINI_API_KEY env var");
     }
 
-    // ===== مقارنة القراءات مع المدى المثالي =====
     const comparison =
       statusSummary
         ? buildComparisonFromSummary(statusSummary)
@@ -61,7 +94,17 @@ export default async function handler(req, res) {
 - احتمال الأمطار: ${weather.rainProbability}%
 ` : "";
 
-    // ===== prompt مُحدث لإرجاع الصفوف بصيغة HTML Table Rows مباشرة =====
+    const omanSoilReference = `
+المرجعية الفنية العامة للتربة في سلطنة عُمان:
+- تفاعل التربة pH: قلوية غالباً (7.5 - 8.5)
+- النيتروجين الكلي (N): منخفض غالباً (200 - 800 mg/kg)
+- الفوسفور الجاهز (P-Olsen): منخفض إلى متوسط (3 - 15 mg/kg)
+- البوتاسيوم المتاح (K): متوسط غالباً (80 - 300 mg/kg)
+- الكالسيوم المتبادل (Ca): مرتفع (2000 - 8000 mg/kg)
+- المادة العضوية: منخفضة (0.2 - 1.5%)
+- ملوحة التربة (EC): تتراوح بين 0.5 إلى أكثر من 8 dS/m حسب الموقع
+`;
+
     const promptText = `
 هذه قراءات تربة من جهاز نَسغ (soilReadings):
 ${JSON.stringify(soil, null, 2)}
@@ -73,6 +116,8 @@ ${weatherSection}
 تحليل جاهز بين القراءات والحدود المثالية (لا تعيد حساب الحدود، استخدم هذه الحالات كما هي):
 ${comparison}
 
+${omanSoilReference}
+
 اكتب توصية زراعية دقيقة باللغة ${language} موجهة لمزارع عُماني، بحيث تكون الإجابة عبارة عن **أوساخ/صفوف جدول HTML (أي عناصر <tr><td>...</td></tr>)** تتكون من ثلاثة أعمدة لكل مشكلة رصدتها:
 1. المشكلة الحالية (مثلاً: نقص نيتروجين، ارتفاع ملوحة، نقص رطوبة...).
 2. الحل المقترح (استخدام أسمدة كيميائية أو بدائل عضوية بسيطة مثل سماد عضوي متحلل، كومبوست، رماد خشب، تعديل الري، إلخ).
@@ -81,9 +126,9 @@ ${comparison}
 الشروط العامة:
 - ابدأ محتوى عمود الحل أو التوصية دائماً بعبارة محترمة ومناسبة بأسلوب بسيط مع كلمة "أخوي".
 - لا تستخدم كلمات مثل "حبي" أو "عزيزي" أو "قلق عليك".
-- لا تذكر أبداً استشارة مهندس زراعي أو جهة أخرى، بل أعطِ الإجابة بناءً على قراءات نسغ والجدول فقط.
+- لا تذكر أبداً استشارة مهندس زراعي أو جهة أخرى، بل أعطِ الإجابة بناءً على قراءات نسغ والجدول والطبائع المحلية للتربة في سلطنة عمان.
 - إذا كان الطلب لا يتعلق بالزراعة، ضع في الجدول صفاً واحداً يعتذر بجملة قصيرة ويقول إن دورك فقط لشرح حالة التربة والري والتسميد.
-- أرجع النتائج داخل وسوم <tr> <td> مباشرة بدون إرفاق وسم <table> أو علامات Markdown برمجية مثل json.
+- أرجع النتائج داخل وسوم <tr> <td> مباشرة بدون إرفاق وسم <table> أو علامات Markdown برمجية مثل json أو html.
 `;
 
     const payload = {
@@ -94,6 +139,7 @@ ${comparison}
       ],
     };
 
+    // إرجاع النماذج المحددة سابقاً
     const MODELS = [
       "gemini-3.5-flash",
       "gemini-3.1-flash-lite",
@@ -208,7 +254,7 @@ function buildComparisonFromSummary(statusSummary) {
   }
 
   if (!lines.length) {
-    return "statusSummary موجود لكن فاضي، استخدم القراءات فقط.";
+    return "statusSummary موجود لكنفاضي، استخدم القراءات فقط.";
   }
 
   return lines.join("\n");
