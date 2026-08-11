@@ -165,12 +165,6 @@
       margin-top: 4px;
     }
 
-    .btn.camera {
-      background: #00796b;
-      box-shadow: 0 6px 16px rgba(0, 121, 107, 0.25);
-      margin-left: 6px;
-    }
-
     .btn:active {
       transform: scale(0.98);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
@@ -181,25 +175,6 @@
       box-shadow: none;
       cursor: default;
       transform: none;
-    }
-
-    /* تنسيق المعاينة للكاميرا */
-    .image-preview-container {
-      display: none;
-      margin: 10px 0;
-      text-align: center;
-      background: #f0fdf4;
-      border: 1px dashed #a7f3d0;
-      padding: 10px;
-      border-radius: 12px;
-    }
-
-    .image-preview-container img {
-      max-width: 100%;
-      max-height: 180px;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      margin-bottom: 8px;
     }
 
     table {
@@ -348,6 +323,179 @@
     .legend-box.ok  { background: #43a047; }
     .legend-box.high{ background: #8e24aa; }
 
+    /* ====== CHAT BOT ====== */
+    .chat-toggle {
+      position: fixed;
+      bottom: 14px;
+      left: 14px;
+      padding: 9px 16px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, var(--nasgh-green), var(--nasgh-yellow));
+      color: #ffffff;
+      font-size: 13px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 1000;
+    }
+
+    .chat-panel {
+      position: fixed;
+      bottom: 70px;
+      left: 10px;
+      right: 10px;
+      max-width: 380px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+      border: 1px solid #e0f2e9;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      max-height: 70vh;
+      z-index: 1001;
+      transition: bottom 0.25s ease;
+    }
+
+    .chat-header {
+      padding: 8px 10px;
+      border-bottom: 1px solid #e0f2e9;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      background: #f5fff7;
+    }
+
+    .chat-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--nasgh-dark-green);
+    }
+
+    .chat-status {
+      font-size: 11px;
+      color: #607d8b;
+    }
+
+    .chat-close {
+      border: none;
+      background: transparent;
+      font-size: 16px;
+      cursor: pointer;
+      color: #607d8b;
+    }
+
+    .chat-messages {
+      padding: 10px;
+      overflow-y: auto;
+      flex: 1;
+      background: #ffffff;
+    }
+
+    .chat-msg {
+      margin-bottom: 8px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .chat-msg.user {
+      text-align: left;
+      direction: ltr;
+    }
+
+    .chat-msg.assistant {
+      background: #f5fff7;
+      border-radius: 10px;
+      padding: 6px 8px;
+      border: 1px solid #e0f2e9;
+    }
+
+    /* معاينة الصورة المرفقة داخل الشات */
+    .chat-image-preview {
+      display: none;
+      padding: 6px 10px;
+      background: #f0fdf4;
+      border-top: 1px solid #e0f2e9;
+      position: relative;
+    }
+
+    .chat-image-preview img {
+      max-height: 70px;
+      border-radius: 8px;
+      border: 1px solid #a7f3d0;
+    }
+
+    .chat-image-preview .remove-img-btn {
+      position: absolute;
+      top: 4px;
+      right: 12px;
+      background: #e53935;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .chat-input-row {
+      border-top: 1px solid #e0f2e9;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #fafafa;
+    }
+
+    .chat-input-row textarea {
+      flex: 1;
+      resize: none;
+      border-radius: 10px;
+      border: 1px solid #cfd8dc;
+      padding: 6px 8px;
+      font-size: 12px;
+      min-height: 34px;
+      max-height: 70px;
+    }
+
+    .chat-btn-icon {
+      border-radius: 50%;
+      border: none;
+      width: 34px;
+      height: 34px;
+      font-size: 14px;
+      background: #e0f2f1;
+      color: #00796b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+    }
+
+    .chat-btn-icon:hover {
+      background: #b2dfdb;
+    }
+
+    .chat-input-row button#chatSend {
+      border-radius: 999px;
+      border: none;
+      padding: 0 12px;
+      height: 34px;
+      font-size: 12px;
+      background: var(--nasgh-green);
+      color: #ffffff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
     @media (max-width: 600px) {
       body { padding: 8px; }
       .topbar { flex-direction: column; align-items: flex-start; gap: 8px; }
@@ -482,22 +630,8 @@
     <!-- بطاقة توصية الذكاء الاصطناعي -->
     <div class="card">
       <div class="ai-title">توصية نَسغ بالذكاء الاصطناعي</div>
-      <div class="ai-status" id="aiStatus">لم يتم طلب التوصية بعد. يمكنك كذلك التقاط صورة للنبات أو التربة للفحص.</div>
-      
-      <!-- عناصر الكاميرا والمعاينة -->
-      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" />
-      
-      <div id="imagePreviewContainer" class="image-preview-container">
-        <img id="imagePreview" src="" alt="صورة النبات/التربة" />
-        <div>
-          <button id="removeImageBtn" class="btn secondary" style="background: #e53935; padding: 4px 10px; font-size: 11px;">إلغاء الصورة 🗑️</button>
-        </div>
-      </div>
-
-      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <button id="cameraBtn" class="btn camera" type="button">📷 تصوير / رفع صورة</button>
-        <button id="aiBtn" class="btn ai">تحليل القراءات وإعطاء توصية</button>
-      </div>
+      <div class="ai-status" id="aiStatus">لم يتم طلب التوصية بعد.</div>
+      <button id="aiBtn" class="btn ai">تحليل القراءات وإعطاء توصية</button>
       
       <table class="advice-table">
         <thead>
@@ -520,6 +654,38 @@
       <div class="ai-status" id="saveStatus"></div>
     </div>
   </div>
+
+  <!-- CHAT BOT BUTTON + PANEL -->
+  <button id="chatToggle" class="chat-toggle">
+    <span>💬</span> نسغ AI
+  </button>
+
+  <section id="chatPanel" class="chat-panel">
+    <div class="chat-header">
+      <div>
+        <div class="chat-title">مساعد نَسغ</div>
+        <div id="chatStatus" class="chat-status">جاهز لأسئلتك الزراعية 🌿</div>
+      </div>
+      <button class="chat-close" id="chatCloseBtn">&times;</button>
+    </div>
+    
+    <div id="chatMessages" class="chat-messages"></div>
+
+    <!-- معاينة الصورة المرفقة داخل الشات -->
+    <div id="chatImagePreviewArea" class="chat-image-preview">
+      <img id="chatImagePreview" src="" alt="المعاينة" />
+      <button id="chatRemoveImageBtn" class="remove-img-btn" type="button">&times;</button>
+    </div>
+
+    <div class="chat-input-row">
+      <!-- زر الكاميرا داخل الشات -->
+      <input type="file" id="chatCameraInput" accept="image/*" capture="environment" style="display: none;" />
+      <button id="chatCameraBtn" class="chat-btn-icon" type="button" title="التقاط/ارفاق صورة">📷</button>
+      
+      <textarea id="chatInput" placeholder="اكتب سؤالك أو ارفق صورة للنبات..."></textarea>
+      <button id="chatSend">إرسال</button>
+    </div>
+  </section>
 
   <!-- 🔒 حماية الصفحة باستخدام Firebase Auth -->
   <script type="module">
@@ -546,7 +712,7 @@
     });
   </script>
 
-  <!-- سكربت البلوتوث + AI + الحفظ المباشر -->
+  <!-- سكربت البلوتوث + AI + الحفظ المباشر + الشات بوت والكاميرا -->
   <script>
     // ================== إعدادات BLE ==================
     const SERVICE_UUID        = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
@@ -558,7 +724,6 @@
     let lastTargets = null;        // آخر مدى مثالي
     let lastStatusSummary = null;  // ملخص حالة العناصر
     let lastAdviceText = "";       // آخر توصية
-    let selectedImageBase64 = null; // الصورة المحولة إلى Base64
 
     const statusEl   = document.getElementById("status");
     const connectBtn = document.getElementById("connectBtn");
@@ -573,13 +738,6 @@
     const saveSessionBtn = document.getElementById("saveSessionBtn");
     const saveStatusEl   = document.getElementById("saveStatus");
 
-    // عناصر الكاميرا والمعاينة
-    const cameraBtn = document.getElementById("cameraBtn");
-    const cameraInput = document.getElementById("cameraInput");
-    const imagePreviewContainer = document.getElementById("imagePreviewContainer");
-    const imagePreview = document.getElementById("imagePreview");
-    const removeImageBtn = document.getElementById("removeImageBtn");
-
     // عناصر إعداد النبات والجدول
     const plantNameInput = document.getElementById("plantNameInput");
     const plantStageSelect = document.getElementById("plantStageSelect");
@@ -591,33 +749,7 @@
     const CLOUD_API_URL   = "/api/soil-data";
     const AI_API_URL      = "/api/nasgh-ai";
     const TARGETS_API_URL = "/api/nasgh-targets";
-
-    // ============ إدارة التقاط المعاينة وتحويل الصورة ============
-    cameraBtn.addEventListener("click", () => {
-      cameraInput.click();
-    });
-
-    cameraInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        selectedImageBase64 = event.target.result;
-        imagePreview.src = selectedImageBase64;
-        imagePreviewContainer.style.display = "block";
-        aiStatusEl.textContent = "تم إرفاق الصورة جاهزة للتحليل 📸";
-      };
-      reader.readAsDataURL(file);
-    });
-
-    removeImageBtn.addEventListener("click", () => {
-      selectedImageBase64 = null;
-      cameraInput.value = "";
-      imagePreview.src = "";
-      imagePreviewContainer.style.display = "none";
-      aiStatusEl.textContent = "تم إلغاء الصورة المرفقة.";
-    });
+    const CHAT_API_URL    = "/api/nasgh-chat";
 
     function setStatus(text, isError = false) {
       statusEl.textContent = "الحالة: " + text;
@@ -758,10 +890,7 @@
       }
 
       aiBtn.disabled = true;
-      aiStatusEl.textContent = selectedImageBase64 
-        ? "جاري إرسال البيانات والصورة وتحليلهما عبر الذكاء الاصطناعي..." 
-        : "جاري إرسال البيانات وتحليلها...";
-        
+      aiStatusEl.textContent = "جاري إرسال البيانات وتحليلها...";
       adviceTableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #607d8b;">جاري التواصل مع نموذج الذكاء الاصطناعي لتعبئة الجدول...</td></tr>`;
 
       try {
@@ -776,7 +905,6 @@
             p:        lastData.p,
             k:        lastData.k
           },
-          image: selectedImageBase64 || null, // إرسال الصورة إذا توفرت
           language: "ar",
           plantName: plantNameInput.value.trim() || null,
           stage: plantStageSelect.value || null,
@@ -940,7 +1068,7 @@
       const stage = plantStageSelect.value;
 
       if (!plantName || !stage) {
-        targetsStatusEl.textContent = "الرجاء إدخال نوع النبات وااختيار مرحلة النمو.";
+        targetsStatusEl.textContent = "الرجاء إدخال نوع النبات واختيار مرحلة النمو.";
         return;
       }
 
@@ -1029,6 +1157,161 @@
     }
 
     saveSessionBtn.addEventListener("click", saveSession);
+
+    // ======== CHAT BOT + CAMERA LOGIC ========
+    const chatToggle = document.getElementById("chatToggle");
+    const chatPanel = document.getElementById("chatPanel");
+    const chatCloseBtn = document.getElementById("chatCloseBtn");
+    const chatMessages = document.getElementById("chatMessages");
+    const chatInput = document.getElementById("chatInput");
+    const chatSend = document.getElementById("chatSend");
+    const chatStatus = document.getElementById("chatStatus");
+
+    // الكاميرا داخل الشات
+    const chatCameraBtn = document.getElementById("chatCameraBtn");
+    const chatCameraInput = document.getElementById("chatCameraInput");
+    const chatImagePreviewArea = document.getElementById("chatImagePreviewArea");
+    const chatImagePreview = document.getElementById("chatImagePreview");
+    const chatRemoveImageBtn = document.getElementById("chatRemoveImageBtn");
+
+    let chatHistory = [];
+    let chatSelectedImageBase64 = null;
+
+    // فتح الكاميرا/الاستوديو عند الضغط على أزرار الكاميرا في الشات
+    chatCameraBtn.addEventListener("click", () => {
+      chatCameraInput.click();
+    });
+
+    chatCameraInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        chatSelectedImageBase64 = evt.target.result;
+        chatImagePreview.src = chatSelectedImageBase64;
+        chatImagePreviewArea.style.display = "block";
+      };
+      reader.readAsDataURL(file);
+    });
+
+    chatRemoveImageBtn.addEventListener("click", () => {
+      chatSelectedImageBase64 = null;
+      chatCameraInput.value = "";
+      chatImagePreview.src = "";
+      chatImagePreviewArea.style.display = "none";
+    });
+
+    function appendMessage(role, text, imageBase64 = null) {
+      const div = document.createElement("div");
+      div.className = "chat-msg " + role;
+      
+      if (imageBase64) {
+        const img = document.createElement("img");
+        img.src = imageBase64;
+        img.style.maxWidth = "100%";
+        img.style.borderRadius = "8px";
+        img.style.marginBottom = "4px";
+        img.style.display = "block";
+        div.appendChild(img);
+      }
+
+      if (text) {
+        const textSpan = document.createElement("span");
+        textSpan.textContent = text;
+        div.appendChild(textSpan);
+      }
+
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    async function sendChatMessage() {
+      const text = chatInput.value.trim();
+      const imageToSend = chatSelectedImageBase64;
+
+      if (!text && !imageToSend) return;
+
+      // إظهار الرسالة والصورة في الواجهة
+      appendMessage("user", text, imageToSend);
+      chatHistory.push({ role: "user", content: text || "قام المستخدم بإرسال صورة للنبات/التربة." });
+
+      // إعادة ضبط الحقول
+      chatInput.value = "";
+      chatSelectedImageBase64 = null;
+      chatCameraInput.value = "";
+      chatImagePreviewArea.style.display = "none";
+
+      chatStatus.textContent = imageToSend 
+        ? "جاري فحص الصورة والتحليل..." 
+        : "نَسغ يحضّر لك جواب مبسط...";
+
+      try {
+        const payload = {
+          message: text,
+          image: imageToSend || null,
+          history: chatHistory,
+          soil: lastData || null
+        };
+
+        const res = await fetch(CHAT_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          throw new Error("HTTP " + res.status);
+        }
+
+        const reply = await res.text() || "صار عندي تعذّر بسيط في الرد، جرّب تعيد سؤالك أو غيّر صياغته شوي أخوي.";
+
+        appendMessage("assistant", reply);
+        chatHistory.push({ role: "assistant", content: reply });
+        chatStatus.textContent = "جاهز لسؤال زراعي جديد 🌿";
+      } catch (err) {
+        console.error(err);
+        appendMessage(
+          "assistant",
+          "حياك أخوي، صار خطأ في الاتصال بالخادم. تأكد من الإنترنت وجرب مرة ثانية."
+        );
+        chatStatus.textContent = "تعذّر الاتصال، جرّب بعد قليل.";
+      }
+    }
+
+    chatToggle.addEventListener("click", () => {
+      const isOpen = chatPanel.style.display === "flex";
+      chatPanel.style.display = isOpen ? "none" : "flex";
+    });
+
+    chatCloseBtn.addEventListener("click", () => {
+      chatPanel.style.display = "none";
+    });
+
+    chatSend.addEventListener("click", sendChatMessage);
+
+    chatInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+      }
+    });
+
+    chatInput.addEventListener("focus", () => {
+      chatPanel.style.bottom = "280px";
+    });
+
+    chatInput.addEventListener("blur", () => {
+      chatPanel.style.bottom = "70px";
+    });
+
+    // رسالة الترحيب الابتدائية للمساعد
+    document.addEventListener("DOMContentLoaded", () => {
+      appendMessage(
+        "assistant",
+        "حياك أخوي، أنا مساعد نَسغ الزراعي. اسألني عن التربة، الري أو التسميد، أو صور لي النبات 📷 وجمعتهم لك هنا! 🌿"
+      );
+    });
   </script>
 </body>
 </html>
