@@ -452,7 +452,7 @@
           <div id="historyStatus" class="status-badge">جاري الاتصال...</div>
         </div>
 
-        <!-- SUMMARY STATS (بدون SHS) -->
+        <!-- SUMMARY STATS -->
         <div class="stats-row">
           <div class="stat">
             <div class="stat-label">آخر رطوبة</div>
@@ -476,7 +476,7 @@
         <div id="plantStageLabel" class="card-sub" style="margin-top:2px;">-</div>
         <div id="plantStageChip" class="plant-stage-chip">مرحلة غير محددة بعد</div>
 
-        <!-- TABLE (بدون SHS) -->
+        <!-- TABLE -->
         <div class="table-wrapper">
           <table>
             <thead>
@@ -500,7 +500,7 @@
         </div>
       </section>
 
-      <!-- RIGHT: charts (بدون SHS) -->
+      <!-- RIGHT: charts -->
       <section class="card">
         <div class="card-header">
           <div>
@@ -748,7 +748,7 @@
       });
     }
 
-    // توليد قراءات وهمية واقعية لبيئة عمان (بدون SHS و humic)
+    // توليد قراءات وهمية واقعية لبيئة عمان
     async function seedFakeHistoryToFirebase() {
       const now = new Date();
       const sessions = [];
@@ -794,7 +794,8 @@
       statusEl.classList.remove("error");
 
       try {
-        const res = await fetch(`${FIREBASE_DB_URL}/soil-history.json`);
+        // تم تعديل المسار هنا إلى soil_history.json
+        const res = await fetch(`${FIREBASE_DB_URL}/soil_history.json`);
         if (!res.ok) {
           throw new Error("HTTP " + res.status);
         }
@@ -812,8 +813,8 @@
             const soil = session.soil || session;
             arr.push({
               timestamp: session.timestamp || soil.timestamp || null,
-              t:    Number(soil.temp     ?? soil.t  ?? NaN),
-              m:    Number(soil.moisture ?? soil.m  ?? NaN),
+              t:    Number(soil.temp     ?? soil.t   ?? NaN),
+              m:    Number(soil.moisture ?? soil.m   ?? NaN),
               ec:   Number(soil.ec ?? NaN),
               ph:   Number(soil.ph ?? NaN),
               n:    Number(soil.n ?? NaN),
