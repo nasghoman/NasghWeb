@@ -49,7 +49,7 @@ export default async function handler(req, res) {
 
     if (FIREBASE_DB_URL) {
       try {
-        const fbResponse = await fetch(`${FIREBASE_DB_URL}/soil-history.json`);
+        const fbResponse = await fetch(`${FIREBASE_DB_URL}/soil_history.json`);
         if (fbResponse.ok) {
           const historyData = await fbResponse.json();
           if (historyData) {
