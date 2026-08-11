@@ -37,7 +37,7 @@
 
     .page {
       max-width: 980px;
-      margin: 0 auto 80px auto; /* مساحة لزر الشات */
+      margin: 0 auto 80px auto;
     }
 
     /* الشريط العلوي مع اللوجو */
@@ -482,16 +482,15 @@
     </div>
   </div>
 
-  <!-- 🔒 حماية الصفحة وإعداد Firebase Realtime Database -->
+  <!-- 🔒 حماية الصفحة باستخدام Firebase Auth -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCPCDnSjazRrxAZ1uVuwlvK5lBUYfmx4Io",
       authDomain: "nasgh1.firebaseapp.com",
-      databaseURL: "https://nasgh1-default-rtdb.firebaseio.com", // رابط الفايربيس داتابيز
+      databaseURL: "https://nasgh1-default-rtdb.firebaseio.com",
       projectId: "nasgh1",
       storageBucket: "nasgh1.firebasestorage.app",
       messagingSenderId: "37730120812",
@@ -500,23 +499,15 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getDatabase(app);
 
-    // التحقق من تسجيل الدخول
     onAuthStateChanged(auth, (user) => {
       if (!user) {
         window.location.href = "login.html";
       }
     });
-
-    // تصدير دالة الحفظ المباشر للفايربيس لاستخدامها في الزر
-    window.saveSessionToFirebase = async function(sessionData) {
-      const historyRef = ref(db, "soil_history");
-      return await push(historyRef, sessionData);
-    };
   </script>
 
-  <!-- سكربت البلوتوث + AI -->
+  <!-- سكربت البلوتوث + AI + الحفظ المباشر -->
   <script>
     // ================== إعدادات BLE ==================
     const SERVICE_UUID        = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
@@ -553,7 +544,6 @@
     const CLOUD_API_URL   = "/api/soil-data";
     const AI_API_URL      = "/api/nasgh-ai";
     const TARGETS_API_URL = "/api/nasgh-targets";
-    const SESSION_API_URL = "/api/soil-session";
 
     function setStatus(text, isError = false) {
       statusEl.textContent = "الحالة: " + text;
@@ -731,7 +721,6 @@
         aiStatusEl.textContent = "تم استلام التوصية بنجاح ✅";
         lastAdviceText = adviceText;
 
-        // إدراج النتيجة مباشرة دون إضافة أسطر ثابتة فوقها أو تحتها
         adviceTableBody.innerHTML = adviceText;
 
       } catch (err) {
@@ -745,7 +734,7 @@
 
     aiBtn.addEventListener("click", callAI);
 
-    // ============ AI لحساب المدى المثالي + البارات (بدون هيوميك و SHS) ============
+    // ============ AI لحساب المدى المثالي + البارات ============
     const PARAM_CONFIG = [
       { key: "temp",     field: "t",   label: "درجة الحرارة", unit: "°م" },
       { key: "moisture", field: "m",   label: "رطوبة التربة", unit: "%" },
@@ -905,7 +894,7 @@
 
     targetsBtn.addEventListener("click", callTargetsAI);
 
-    // ============ تفعيل حفظ الجلسة فعلياً في الفايربيس ============
+    // ============ تفعيل حفظ الجلسة المباشر إلى Firebase ============
     async function saveSession() {
       if (!lastData) {
         saveStatusEl.textContent = "لا توجد قراءة لحفظها.";
@@ -921,10 +910,18 @@
       }
 
       saveSessionBtn.disabled = true;
-      saveStatusEl.textContent = "جاري حفظ البيانات في الداشبورد والفايربيس...";
+      saveStatusEl.textContent = "جاري حفظ البيانات في الفايربيس...";
 
       const payload = {
-        soil: lastData,
+        soil: {
+          temp: lastData.t,
+          moisture: lastData.m,
+          ec: lastData.ec,
+          ph: lastData.ph,
+          n: lastData.n,
+          p: lastData.p,
+          k: lastData.k
+        },
         plantName: plantNameInput.value.trim() || null,
         stage: plantStageSelect.value || null,
         targets: lastTargets,
@@ -934,22 +931,20 @@
       };
 
       try {
-        // 1. الإرسال المباشر للفايربيس
-        if (typeof window.saveSessionToFirebase === "function") {
-          await window.saveSessionToFirebase(payload);
-        }
-
-        // 2. إرسال إلى API الجلسات أيضاً للحفظ السحابي الإضافي
-        await fetch(SESSION_API_URL, {
+        const res = await fetch("https://nasgh1-default-rtdb.firebaseio.com/soil_history.json", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
 
-        saveStatusEl.textContent = "تم حفظ الجلسة في الداشبورد والفايربيس بنجاح ✅";
+        if (!res.ok) {
+          throw new Error("HTTP Error " + res.status);
+        }
+
+        saveStatusEl.textContent = "تم حفظ الجلسة في الفايربيس والداشبورد بنجاح ✅";
       } catch (err) {
-        console.error(err);
-        saveStatusEl.textContent = "تم حفظ الجلسة بنجاح ✅";
+        console.error("Save session error:", err);
+        saveStatusEl.textContent = "صار خطأ أثناء الحفظ: " + err.message;
       } finally {
         saveSessionBtn.disabled = false;
       }
