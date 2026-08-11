@@ -780,7 +780,7 @@
       }
 
       for (const s of sessions) {
-        await fetch(`${FIREBASE_DB_URL}/soil-history.json`, {
+        await fetch(`${FIREBASE_DB_URL}/soil_history.json`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(s)
