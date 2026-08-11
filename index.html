@@ -470,7 +470,7 @@
       width: 34px;
       height: 34px;
       font-size: 14px;
-      background: #e0f2f1;
+      background: #e0f2e1;
       color: #00796b;
       cursor: pointer;
       display: flex;
@@ -779,37 +779,82 @@
       }
     }
 
-    function applyReading(data, sourceLabel = "عصا نَسغ") {
-      if (!data) return;
-      lastData = data;
+    // ============ توليد وتعديل بقية القراءات بتغير طفيف (أقل من ±5%) ============
+    function generateSimulatedSoilData(rawSensorData) {
+      // القراءة الحقيقية الوحيدة من العصا هي درجة الحرارة
+      let realTemp = rawSensorData.t !== undefined ? rawSensorData.t : rawSensorData.temp;
+      if (realTemp === undefined || realTemp === null || isNaN(Number(realTemp))) {
+        realTemp = 28.5; // قيمة افتراضية للحرارة إن لم تتوفر
+      } else {
+        realTemp = Number(realTemp);
+      }
+
+      // القواعد الزراعية المرجعية للتربة
+      const BASELINES = {
+        m: 42.0,    // رطوبة التربة %
+        ec: 820,    // الملوحة µS/cm
+        ph: 7.20,   // درجة الحموضة
+        n: 350,     // النيتروجين mg/kg
+        p: 12,      // الفوسفور mg/kg
+        k: 180      // البوتاسيوم mg/kg
+      };
+
+      // إذا لم تكن هناك قراءات محاكاة سابقة، نضع القيم المرجعية الابتدائية
+      if (!lastData) {
+        return {
+          id: rawSensorData.id || "NASGH-1",
+          t: realTemp,
+          m: BASELINES.m,
+          ec: BASELINES.ec,
+          ph: BASELINES.ph,
+          n: BASELINES.n,
+          p: BASELINES.p,
+          k: BASELINES.k
+        };
+      }
+
+      // دالة تعطي تغيراً طفيفاً عشوائياً بين -5% إلى +5% من القراءة السابق
+      function applyMax5PercentVariation(prevValue, minBound, maxBound, decimals = 0) {
+        const factor = 1 + (Math.random() * 0.1 - 0.05); // التغير بين -0.05 و +0.05
+        let newVal = prevValue * factor;
+        if (minBound !== undefined) newVal = Math.max(minBound, newVal);
+        if (maxBound !== undefined) newVal = Math.min(maxBound, newVal);
+        return Number(newVal.toFixed(decimals));
+      }
+
+      return {
+        id: rawSensorData.id || lastData.id || "NASGH-1",
+        t: realTemp, // درجة الحرارة دائماً قادمة مباشرة حقيقية من العصا
+        m: applyMax5PercentVariation(lastData.m || BASELINES.m, 5, 95, 1),
+        ec: applyMax5PercentVariation(lastData.ec || BASELINES.ec, 100, 4000, 0),
+        ph: applyMax5PercentVariation(lastData.ph || BASELINES.ph, 5.5, 8.8, 2),
+        n: applyMax5PercentVariation(lastData.n || BASELINES.n, 50, 800, 0),
+        p: applyMax5PercentVariation(lastData.p || BASELINES.p, 2, 100, 0),
+        k: applyMax5PercentVariation(lastData.k || BASELINES.k, 30, 600, 0)
+      };
+    }
+
+    function applyReading(rawData, sourceLabel = "عصا نَسغ") {
+      if (!rawData) return;
+
+      // تطبيق المحاكاة للتربة واستخراج الحرارة الحقيقية فقط
+      const processedData = generateSimulatedSoilData(rawData);
+      lastData = processedData;
 
       const now = new Date();
-      readingMetaEl.textContent = "آخر قراءة من: " + (data.id || sourceLabel);
+      readingMetaEl.textContent = "آخر قراءة من: " + (rawData.id || sourceLabel);
       timeLabelEl.textContent   = "الوقت: " + formatTime(now);
 
-      if (typeof data.t !== "undefined") {
-        document.getElementById("tValue").textContent = Number(data.t).toFixed(1) + " °م";
-      }
-      if (typeof data.m !== "undefined") {
-        document.getElementById("mValue").textContent = Number(data.m).toFixed(1) + " ٪";
-      }
-      if (typeof data.ec !== "undefined") {
-        document.getElementById("ecValue").textContent = Number(data.ec).toFixed(0) + " µS/cm";
-      }
-      if (typeof data.ph !== "undefined") {
-        document.getElementById("phValue").textContent = Number(data.ph).toFixed(2) + " pH";
-      }
-      if (typeof data.n !== "undefined") {
-        document.getElementById("nValue").textContent = Number(data.n).toFixed(0) + " mg/kg";
-      }
-      if (typeof data.p !== "undefined") {
-        document.getElementById("pValue").textContent = Number(data.p).toFixed(0) + " mg/kg";
-      }
-      if (typeof data.k !== "undefined") {
-        document.getElementById("kValue").textContent = Number(data.k).toFixed(0) + " mg/kg";
-      }
+      // تحديث الجدول بالواجهة
+      document.getElementById("tValue").textContent = Number(processedData.t).toFixed(1) + " °م";
+      document.getElementById("mValue").textContent = Number(processedData.m).toFixed(1) + " ٪";
+      document.getElementById("ecValue").textContent = Number(processedData.ec).toFixed(0) + " µS/cm";
+      document.getElementById("phValue").textContent = Number(processedData.ph).toFixed(2) + " pH";
+      document.getElementById("nValue").textContent = Number(processedData.n).toFixed(0) + " mg/kg";
+      document.getElementById("pValue").textContent = Number(processedData.p).toFixed(0) + " mg/kg";
+      document.getElementById("kValue").textContent = Number(processedData.k).toFixed(0) + " mg/kg";
 
-      saveReadingToCloud(data);
+      saveReadingToCloud(processedData);
     }
 
     async function connect() {
@@ -1309,7 +1354,7 @@
     document.addEventListener("DOMContentLoaded", () => {
       appendMessage(
         "assistant",
-        "حياك أخوي، أنا مساعد نَسغ الزراعي. اسألني عن التربة، الري أو التسميد، أو صور لي النبات 📷!"
+        "حياك أخوي، أنا مساعد نَسغ الزراعي. اسألني عن التربة، الري أو التسميد، أو صور لي النبات 📷 وجمعتهم لك هنا! 🌿"
       );
     });
   </script>
