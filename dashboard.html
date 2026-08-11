@@ -35,7 +35,7 @@
     }
 
     .layout {
-      max-width: 1080px;
+      max-width: 1200px;
       margin: 0 auto;
       padding: 12px 10px 80px;
     }
@@ -112,8 +112,8 @@
     /* ====== CARDS / GRID ====== */
     .grid-main {
       display: grid;
-      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr);
-      gap: 12px;
+      grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+      gap: 14px;
       align-items: flex-start;
       margin-top: 6px;
     }
@@ -123,7 +123,7 @@
       border-radius: 18px;
       border: 1px solid var(--border);
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
-      padding: 12px 14px 14px;
+      padding: 14px 16px;
       margin-bottom: 12px;
     }
 
@@ -132,12 +132,12 @@
       justify-content: space-between;
       align-items: baseline;
       gap: 8px;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       flex-wrap: wrap;
     }
 
     .card-title {
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 700;
       color: var(--nasgh-green-dark);
     }
@@ -167,19 +167,22 @@
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 8px;
       margin-top: 8px;
+      margin-bottom: 12px;
     }
 
     .stat {
       background: #f7fff9;
       border-radius: 12px;
-      padding: 8px 8px;
+      padding: 8px 10px;
       border: 1px solid var(--border);
       font-size: 12px;
+      text-align: center;
     }
 
     .stat-label {
       color: var(--text-sub);
-      margin-bottom: 2px;
+      margin-bottom: 3px;
+      font-size: 11px;
     }
 
     .stat-value {
@@ -198,37 +201,42 @@
     .plant-stage-chip {
       display: inline-block;
       font-size: 11px;
-      padding: 3px 9px;
+      padding: 3px 10px;
       border-radius: 999px;
       background: #fff8e1;
       color: #f57f17;
       margin-top: 4px;
+      margin-bottom: 8px;
     }
 
     /* ====== TABLE ====== */
     .table-wrapper {
       margin-top: 8px;
       overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid #e0e0e0;
     }
 
     table {
       width: 100%;
-      min-width: 600px;
+      min-width: 700px;
       border-collapse: collapse;
       font-size: 12px;
     }
 
     th, td {
-      border: 1px solid #e0e0e0;
-      padding: 6px 4px;
+      border: 1px solid #e8e8e8;
+      padding: 8px 6px;
       text-align: center;
       vertical-align: middle;
     }
 
     th {
       background: #e0f2f1;
-      font-weight: 600;
-      font-size: 11px;
+      font-weight: 700;
+      font-size: 12px;
+      color: var(--nasgh-green-dark);
+      white-space: nowrap;
     }
 
     tr:nth-child(even) td {
@@ -238,16 +246,36 @@
     .advice-cell {
       text-align: right;
       font-size: 11px;
-      line-height: 1.5;
+      line-height: 1.6;
+      min-width: 240px;
+      max-width: 380px;
+      word-wrap: break-word;
+      white-space: normal !important;
+    }
+
+    /* تحسين تنسيق الجدول الداخلي داخل خانة التوصية */
+    .advice-cell table {
+      width: 100% !important;
+      min-width: unset !important;
+      margin: 0;
+      border: none;
+    }
+
+    .advice-cell td, .advice-cell th {
+      padding: 4px;
+      font-size: 10px;
+      line-height: 1.4;
+      text-align: right;
     }
 
     .stage-cell {
       font-size: 11px;
+      white-space: nowrap;
     }
 
     .stage-chip-small {
       display: inline-block;
-      padding: 2px 6px;
+      padding: 3px 8px;
       border-radius: 999px;
       background: #fff3e0;
       color: #ef6c00;
@@ -274,15 +302,16 @@
 
     .chart-container {
       position: relative;
-      height: 210px;
+      height: 200px;
       margin-top: 6px;
     }
 
     .chart-title {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text-sub);
       margin-top: 4px;
       margin-bottom: 12px;
+      text-align: center;
     }
 
     /* ====== CHAT BOT ====== */
@@ -408,7 +437,7 @@
       align-items: center;
     }
 
-    @media (max-width: 860px) {
+    @media (max-width: 900px) {
       .grid-main { grid-template-columns: minmax(0, 1fr); }
       .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .topbar { flex-direction: column; align-items: flex-start; }
@@ -417,7 +446,7 @@
     @media (max-width: 480px) {
       .layout { padding: 10px 8px 80px; }
       .card { padding: 10px 10px 12px; }
-      .chart-container { height: 190px; }
+      .chart-container { height: 180px; }
     }
   </style>
 </head>
@@ -446,7 +475,7 @@
       <section class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">آخر ١٠ قراءات محفوظة</div>
+            <div class="card-title">آخر القراءات المحفوظة</div>
             <div id="historyRange" class="card-sub">جاري تحميل البيانات...</div>
           </div>
           <div id="historyStatus" class="status-badge">جاري الاتصال...</div>
@@ -473,7 +502,6 @@
         </div>
 
         <div class="plant-stage-title">مرحلة نمو النبات (آخر قراءة)</div>
-        <div id="plantStageLabel" class="card-sub" style="margin-top:2px;">-</div>
         <div id="plantStageChip" class="plant-stage-chip">مرحلة غير محددة بعد</div>
 
         <!-- TABLE -->
@@ -488,12 +516,12 @@
                 <th>pH</th>
                 <th>EC µS/cm</th>
                 <th>مرحلة النمو</th>
-                <th>توصية نَسغ AI</th>
+                <th style="min-width: 250px;">توصية نَسغ AI</th>
               </tr>
             </thead>
             <tbody id="historyBody">
               <tr>
-                <td colspan="8">لا توجد بيانات بعد</td>
+                <td colspan="8">جاري التحميل...</td>
               </tr>
             </tbody>
           </table>
@@ -556,10 +584,6 @@
     let chartMoistTemp = null;
     let chartNpk = null;
 
-    function rand(min, max) {
-      return Math.random() * (max - min) + min;
-    }
-
     function formatTime(ts) {
       if (!ts) return "--";
       const dt = new Date(ts);
@@ -580,15 +604,14 @@
       const statTemp = document.getElementById("statTemp");
       const statPh = document.getElementById("statPh");
       const statEc = document.getElementById("statEc");
-      const stageLabel = document.getElementById("plantStageLabel");
       const stageChip = document.getElementById("plantStageChip");
 
       if (!historyData.length) {
         historyBody.innerHTML =
-          '<tr><td colspan="8">لا توجد بيانات محفوظة بعد.</td></tr>';
+          '<tr><td colspan="8" style="padding:20px; color:#607d8b;">لا توجد قراءات محفوظة بعد. قم بأخذ قراءة من الواجهة الرئيسية واضغط على "حفظ الجلسة".</td></tr>';
         statusEl.textContent = "لا توجد بيانات";
         statusEl.classList.remove("error");
-        rangeEl.textContent = "لا توجد قراءات بعد.";
+        rangeEl.textContent = "لا توجد قراءات محفوظة بعد.";
         return;
       }
 
@@ -599,14 +622,14 @@
       const last = historyData[historyData.length - 1];
 
       rangeEl.textContent =
-        "آخر " +
+        "عرض " +
         historyData.length +
         " قراءات من " +
         formatTime(last.timestamp) +
         " إلى " +
         formatTime(latest.timestamp);
 
-      statusEl.textContent = "تم التحديث";
+      statusEl.textContent = "تم التحديث ✅";
       statusEl.classList.remove("error");
 
       // Summary
@@ -623,17 +646,22 @@
       statPh.textContent = isFinite(avgPh) && avgPh > 0 ? avgPh.toFixed(2) : "--";
       statEc.textContent = isFinite(avgEc) && avgEc > 0 ? avgEc.toFixed(0) + " µS/cm" : "--";
 
-      stageLabel.textContent = latest.stage || "مرحلة غير محددة";
-      stageChip.textContent = latest.stage || "مرحلة غير محددة بعد";
+      stageChip.textContent = (latest.plantName ? latest.plantName + " - " : "") + (latest.stage || "مرحلة غير محددة بعد");
 
       // Table
       historyBody.innerHTML = "";
       historyData.forEach((row, idx) => {
         const tr = document.createElement("tr");
 
+        // تنظيف وعرض التوصية بشكل سليم دون تشويه من جداول متداخلة
+        let adviceContent = row.advice || "لا توجد توصية محفوظة.";
+        if (adviceContent.includes("<tr") && !adviceContent.includes("<table")) {
+          adviceContent = `<table dir="rtl">${adviceContent}</table>`;
+        }
+
         tr.innerHTML = `
           <td>${idx + 1}</td>
-          <td>${formatTime(row.timestamp)}</td>
+          <td style="white-space:nowrap;">${formatTime(row.timestamp)}</td>
           <td>${row.m != null && !isNaN(row.m) ? row.m.toFixed(1) : "--"}</td>
           <td>${row.t != null && !isNaN(row.t) ? row.t.toFixed(1) : "--"}</td>
           <td>${row.ph != null && !isNaN(row.ph) ? row.ph.toFixed(2) : "--"}</td>
@@ -645,9 +673,7 @@
                 : "--"
             }
           </td>
-          <td class="advice-cell">${
-            row.advice ? row.advice : "لا توجد توصية محفوظة."
-          }</td>
+          <td class="advice-cell">${adviceContent}</td>
         `;
         historyBody.appendChild(tr);
       });
@@ -685,12 +711,16 @@
               label: "رطوبة التربة ٪",
               data: moistArr,
               borderWidth: 2,
+              borderColor: "#2e7d32",
+              backgroundColor: "rgba(46, 125, 50, 0.1)",
               tension: 0.3
             },
             {
               label: "درجة الحرارة °م",
               data: tempArr,
               borderWidth: 2,
+              borderColor: "#e53935",
+              backgroundColor: "rgba(229, 57, 53, 0.1)",
               tension: 0.3
             }
           ]
@@ -718,18 +748,21 @@
               label: "N (mg/kg)",
               data: nArr,
               borderWidth: 2,
+              borderColor: "#1976d2",
               tension: 0.3
             },
             {
               label: "P (mg/kg)",
               data: pArr,
               borderWidth: 2,
+              borderColor: "#388e3c",
               tension: 0.3
             },
             {
               label: "K (mg/kg)",
               data: kArr,
               borderWidth: 2,
+              borderColor: "#f57c00",
               tension: 0.3
             }
           ]
@@ -748,63 +781,17 @@
       });
     }
 
-    // توليد قراءات وهمية واقعية لبيئة عمان
-    async function seedFakeHistoryToFirebase() {
-      const now = new Date();
-      const sessions = [];
-
-      for (let i = 9; i >= 0; i--) {
-        const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-        d.setHours(7 + Math.floor(Math.random() * 4));
-        d.setMinutes(Math.floor(Math.random() * 60));
-        d.setSeconds(0);
-        d.setMilliseconds(0);
-
-        const moisture = rand(30, 45);
-        const temp = rand(26, 32);
-        const ph = rand(7.5, 8.1);
-        const ec = rand(1200, 1800);
-        const n = rand(110, 150);
-        const p = rand(10, 25);
-        const k = rand(100, 180);
-
-        let advice = "<tr><td>نقص النيتروجين</td><td>أخوي، يفضل إضافة سماد يوريا بكمية بسيطة</td><td>15 جرام/متر مربع</td></tr>";
-
-        sessions.push({
-          plantName: "طماطم",
-          stage: "مرحلة النمو الخضري",
-          soil: { temp, moisture, ph, ec, n, p, k },
-          advice,
-          timestamp: d.toISOString()
-        });
-      }
-
-      for (const s of sessions) {
-        await fetch(`${FIREBASE_DB_URL}/soil_history.json`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(s)
-        });
-      }
-    }
-
-    async function loadHistory(alreadySeeded = false) {
+    async function loadHistory() {
       const statusEl = document.getElementById("historyStatus");
       statusEl.textContent = "جاري التحميل...";
       statusEl.classList.remove("error");
 
       try {
-        // تم تعديل المسار هنا إلى soil_history.json
         const res = await fetch(`${FIREBASE_DB_URL}/soil_history.json`);
         if (!res.ok) {
           throw new Error("HTTP " + res.status);
         }
         const raw = await res.json();
-
-        if ((!raw || Object.keys(raw).length === 0) && !alreadySeeded) {
-          await seedFakeHistoryToFirebase();
-          return loadHistory(true);
-        }
 
         const arr = [];
         if (raw) {
