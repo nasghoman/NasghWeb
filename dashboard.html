@@ -253,7 +253,6 @@
       white-space: normal !important;
     }
 
-    /* تحسين تنسيق الجدول الداخلي داخل خانة التوصية */
     .advice-cell table {
       width: 100% !important;
       min-width: unset !important;
@@ -406,10 +405,40 @@
       border: 1px solid var(--border);
     }
 
+    /* معاينة الصورة المرفقة داخل الشات */
+    .chat-image-preview {
+      display: none;
+      padding: 6px 10px;
+      background: #f0fdf4;
+      border-top: 1px solid #e0f2e9;
+      position: relative;
+    }
+
+    .chat-image-preview img {
+      max-height: 70px;
+      border-radius: 8px;
+      border: 1px solid #a7f3d0;
+    }
+
+    .chat-image-preview .remove-img-btn {
+      position: absolute;
+      top: 4px;
+      right: 12px;
+      background: #e53935;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
     .chat-input-row {
       border-top: 1px solid #e0f2e9;
       padding: 6px;
       display: flex;
+      align-items: center;
       gap: 6px;
       background: #fafafa;
     }
@@ -425,10 +454,30 @@
       max-height: 70px;
     }
 
-    .chat-input-row button {
+    .chat-btn-icon {
+      border-radius: 50%;
+      border: none;
+      width: 34px;
+      height: 34px;
+      font-size: 14px;
+      background: #e0f2e1;
+      color: #00796b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+    }
+
+    .chat-btn-icon:hover {
+      background: #b2dfdb;
+    }
+
+    .chat-input-row button#chatSend {
       border-radius: 999px;
       border: none;
       padding: 0 12px;
+      height: 34px;
       font-size: 12px;
       background: var(--nasgh-green);
       color: #ffffff;
@@ -568,9 +617,21 @@
       </div>
       <button class="chat-close" id="chatCloseBtn">&times;</button>
     </div>
+    
     <div id="chatMessages" class="chat-messages"></div>
+
+    <!-- معاينة الصورة المرفقة داخل الشات -->
+    <div id="chatImagePreviewArea" class="chat-image-preview">
+      <img id="chatImagePreview" src="" alt="المعاينة" />
+      <button id="chatRemoveImageBtn" class="remove-img-btn" type="button">&times;</button>
+    </div>
+
     <div class="chat-input-row">
-      <textarea id="chatInput" placeholder="اكتب سؤالك عن التربة أو الري أو التسميد..."></textarea>
+      <!-- زر الكاميرا داخل الشات -->
+      <input type="file" id="chatCameraInput" accept="image/*" capture="environment" style="display: none;" />
+      <button id="chatCameraBtn" class="chat-btn-icon" type="button" title="التقاط/ارفاق صورة">📷</button>
+
+      <textarea id="chatInput" placeholder="اكتب سؤالك أو ارفق صورة للنبات..."></textarea>
       <button id="chatSend">إرسال</button>
     </div>
   </section>
@@ -653,7 +714,6 @@
       historyData.forEach((row, idx) => {
         const tr = document.createElement("tr");
 
-        // تنظيف وعرض التوصية بشكل سليم دون تشويه من جداول متداخلة
         let adviceContent = row.advice || "لا توجد توصية محفوظة.";
         if (adviceContent.includes("<tr") && !adviceContent.includes("<table")) {
           adviceContent = `<table dir="rtl">${adviceContent}</table>`;
@@ -826,7 +886,7 @@
       }
     }
 
-    // ======== CHAT BOT ========
+    // ======== CHAT BOT + CAMERA LOGIC ========
     const CHAT_API_URL = "/api/nasgh-chat";
     const chatToggle = document.getElementById("chatToggle");
     const chatPanel = document.getElementById("chatPanel");
@@ -836,29 +896,91 @@
     const chatSend = document.getElementById("chatSend");
     const chatStatus = document.getElementById("chatStatus");
 
-    let chatHistory = [];
+    // عناصر الكاميرا داخل الشات
+    const chatCameraBtn = document.getElementById("chatCameraBtn");
+    const chatCameraInput = document.getElementById("chatCameraInput");
+    const chatImagePreviewArea = document.getElementById("chatImagePreviewArea");
+    const chatImagePreview = document.getElementById("chatImagePreview");
+    const chatRemoveImageBtn = document.getElementById("chatRemoveImageBtn");
 
-    function appendMessage(role, text) {
+    let chatHistory = [];
+    let chatSelectedImageBase64 = null;
+
+    // فتح أداة التقاط/رفع الصور
+    chatCameraBtn.addEventListener("click", () => {
+      chatCameraInput.click();
+    });
+
+    chatCameraInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        chatSelectedImageBase64 = evt.target.result;
+        chatImagePreview.src = chatSelectedImageBase64;
+        chatImagePreviewArea.style.display = "block";
+      };
+      reader.readAsDataURL(file);
+    });
+
+    chatRemoveImageBtn.addEventListener("click", () => {
+      chatSelectedImageBase64 = null;
+      chatCameraInput.value = "";
+      chatImagePreview.src = "";
+      chatImagePreviewArea.style.display = "none";
+    });
+
+    function appendMessage(role, text, imageBase64 = null) {
       const div = document.createElement("div");
       div.className = "chat-msg " + role;
-      div.textContent = text;
+      
+      if (imageBase64) {
+        const img = document.createElement("img");
+        img.src = imageBase64;
+        img.style.maxWidth = "100%";
+        img.style.borderRadius = "8px";
+        img.style.marginBottom = "4px";
+        img.style.display = "block";
+        div.appendChild(img);
+      }
+
+      if (text) {
+        const textSpan = document.createElement("span");
+        textSpan.textContent = text;
+        div.appendChild(textSpan);
+      }
+
       chatMessages.appendChild(div);
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
     async function sendChatMessage() {
       const text = chatInput.value.trim();
-      if (!text) return;
+      const imageToSend = chatSelectedImageBase64;
 
-      appendMessage("user", text);
-      chatHistory.push({ role: "user", content: text });
+      if (!text && !imageToSend) return;
+
+      // إظهار الرسالة والصورة في واجهة المحادثة
+      appendMessage("user", text, imageToSend);
+      chatHistory.push({ role: "user", content: text || "قام المستخدم بإرسال صورة للنبات/التربة." });
+
+      // إعادة ضبط الحقول
       chatInput.value = "";
-      chatStatus.textContent = "نَسغ يحضّر لك جواب مبسط...";
+      chatSelectedImageBase64 = null;
+      chatCameraInput.value = "";
+      chatImagePreviewArea.style.display = "none";
+
+      chatStatus.textContent = imageToSend 
+        ? "جاري فحص الصورة والتحليل..." 
+        : "نَسغ يحضّر لك جواب مبسط...";
 
       try {
         const payload = {
           message: text,
-          history: chatHistory
+          image: imageToSend || null,
+          history: chatHistory,
+          latestReading: historyData.length ? historyData[0] : null
         };
 
         const res = await fetch(CHAT_API_URL, {
@@ -921,7 +1043,7 @@
       loadHistory();
       appendMessage(
         "assistant",
-        "حياك أخوي، أنا مساعد نَسغ الزراعي. اسألني عن التربة، الري أو التسميد وبجاوبك بأبسط طريقة أقدر عليها 🌿"
+        "حياك أخوي، أنا مساعد نَسغ الزراعي. اسألني عن نتائجك، أو صور لي النبات 📷 للتحليل والمساعدة! 🌿"
       );
     });
   </script>
