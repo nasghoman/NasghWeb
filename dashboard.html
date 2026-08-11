@@ -110,7 +110,6 @@
     }
 
     /* ====== CARDS / GRID ====== */
-
     .grid-main {
       display: grid;
       grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr);
@@ -163,7 +162,6 @@
     }
 
     /* ====== SUMMARY STATS ====== */
-
     .stats-row {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -208,7 +206,6 @@
     }
 
     /* ====== TABLE ====== */
-
     .table-wrapper {
       margin-top: 8px;
       overflow-x: auto;
@@ -216,13 +213,12 @@
 
     table {
       width: 100%;
-      min-width: 650px;
+      min-width: 600px;
       border-collapse: collapse;
       font-size: 12px;
     }
 
-    th,
-    td {
+    th, td {
       border: 1px solid #e0e0e0;
       padding: 6px 4px;
       text-align: center;
@@ -259,7 +255,6 @@
     }
 
     /* ====== CHARTS ====== */
-
     .chart-tabs {
       display: flex;
       gap: 6px;
@@ -287,10 +282,10 @@
       font-size: 12px;
       color: var(--text-sub);
       margin-top: 4px;
+      margin-bottom: 12px;
     }
 
     /* ====== CHAT BOT ====== */
-
     .chat-toggle {
       position: fixed;
       bottom: 14px;
@@ -307,10 +302,6 @@
       align-items: center;
       gap: 6px;
       z-index: 1000;
-    }
-
-    .chat-toggle span {
-      font-size: 16px;
     }
 
     .chat-panel {
@@ -417,33 +408,16 @@
       align-items: center;
     }
 
-    /* ====== RESPONSIVE ====== */
-
     @media (max-width: 860px) {
-      .grid-main {
-        grid-template-columns: minmax(0, 1fr);
-      }
-
-      .stats-row {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .topbar {
-        flex-direction: column;
-        align-items: flex-start;
-      }
+      .grid-main { grid-template-columns: minmax(0, 1fr); }
+      .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .topbar { flex-direction: column; align-items: flex-start; }
     }
 
     @media (max-width: 480px) {
-      .layout {
-        padding: 10px 8px 80px;
-      }
-      .card {
-        padding: 10px 10px 12px;
-      }
-      .chart-container {
-        height: 190px;
-      }
+      .layout { padding: 10px 8px 80px; }
+      .card { padding: 10px 10px 12px; }
+      .chart-container { height: 190px; }
     }
   </style>
 </head>
@@ -478,14 +452,14 @@
           <div id="historyStatus" class="status-badge">جاري الاتصال...</div>
         </div>
 
-        <!-- SUMMARY -->
+        <!-- SUMMARY STATS (بدون SHS) -->
         <div class="stats-row">
           <div class="stat">
             <div class="stat-label">آخر رطوبة</div>
             <div id="statMoisture" class="stat-value">-- ٪</div>
           </div>
           <div class="stat">
-            <div class="stat-label">آخر درجة حرارة</div>
+            <div class="stat-label">آخر حرارة</div>
             <div id="statTemp" class="stat-value">-- °م</div>
           </div>
           <div class="stat">
@@ -493,8 +467,8 @@
             <div id="statPh" class="stat-value">--</div>
           </div>
           <div class="stat">
-            <div class="stat-label">متوسط SHS</div>
-            <div id="statShs" class="stat-value">--</div>
+            <div class="stat-label">متوسط الملوحة</div>
+            <div id="statEc" class="stat-value">-- µS/cm</div>
           </div>
         </div>
 
@@ -502,7 +476,7 @@
         <div id="plantStageLabel" class="card-sub" style="margin-top:2px;">-</div>
         <div id="plantStageChip" class="plant-stage-chip">مرحلة غير محددة بعد</div>
 
-        <!-- TABLE -->
+        <!-- TABLE (بدون SHS) -->
         <div class="table-wrapper">
           <table>
             <thead>
@@ -513,33 +487,31 @@
                 <th>°م</th>
                 <th>pH</th>
                 <th>EC µS/cm</th>
-                <th>SHS</th>
                 <th>مرحلة النمو</th>
-                <th>نصيحة نَسغ AI</th>
+                <th>توصية نَسغ AI</th>
               </tr>
             </thead>
             <tbody id="historyBody">
               <tr>
-                <td colspan="9">لا توجد بيانات بعد</td>
+                <td colspan="8">لا توجد بيانات بعد</td>
               </tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      <!-- RIGHT: charts -->
+      <!-- RIGHT: charts (بدون SHS) -->
       <section class="card">
         <div class="card-header">
           <div>
             <div class="card-title">رسوم بيانية</div>
-            <div class="card-sub">Moisture &amp; Temp · NPK · SHS</div>
+            <div class="card-sub">Moisture &amp; Temp · NPK</div>
           </div>
         </div>
 
         <div class="chart-tabs">
           <span class="chart-tab">Moisture &amp; Temperature</span>
           <span class="chart-tab">N · P · K</span>
-          <span class="chart-tab">SHS Index</span>
         </div>
 
         <div class="chart-container">
@@ -551,11 +523,6 @@
           <canvas id="chartNpk"></canvas>
         </div>
         <div class="chart-title">NPK (mg/kg) عبر الوقت</div>
-
-        <div class="chart-container">
-          <canvas id="chartShs"></canvas>
-        </div>
-        <div class="chart-title">مؤشر صحة التربة SHS عبر الوقت</div>
       </section>
     </div>
   </div>
@@ -588,7 +555,6 @@
     let historyData = [];
     let chartMoistTemp = null;
     let chartNpk = null;
-    let chartShs = null;
 
     function rand(min, max) {
       return Math.random() * (max - min) + min;
@@ -613,13 +579,13 @@
       const statMoisture = document.getElementById("statMoisture");
       const statTemp = document.getElementById("statTemp");
       const statPh = document.getElementById("statPh");
-      const statShs = document.getElementById("statShs");
+      const statEc = document.getElementById("statEc");
       const stageLabel = document.getElementById("plantStageLabel");
       const stageChip = document.getElementById("plantStageChip");
 
       if (!historyData.length) {
         historyBody.innerHTML =
-          '<tr><td colspan="9">لا توجد بيانات محفوظة بعد.</td></tr>';
+          '<tr><td colspan="8">لا توجد بيانات محفوظة بعد.</td></tr>';
         statusEl.textContent = "لا توجد بيانات";
         statusEl.classList.remove("error");
         rangeEl.textContent = "لا توجد قراءات بعد.";
@@ -650,16 +616,12 @@
         (latest.t != null && !isNaN(latest.t) ? latest.t.toFixed(1) : "--") + " °م";
 
       const avgPh =
-        historyData.reduce((sum, r) => sum + (r.ph || 0), 0) /
-        historyData.length;
-      const avgShs =
-        historyData.reduce((sum, r) => sum + (r.shs || 0), 0) /
-        historyData.length;
+        historyData.reduce((sum, r) => sum + (r.ph || 0), 0) / historyData.length;
+      const avgEc =
+        historyData.reduce((sum, r) => sum + (r.ec || 0), 0) / historyData.length;
 
-      statPh.textContent =
-        isFinite(avgPh) && avgPh > 0 ? avgPh.toFixed(2) : "--";
-      statShs.textContent =
-        isFinite(avgShs) && avgShs > 0 ? avgShs.toFixed(1) : "--";
+      statPh.textContent = isFinite(avgPh) && avgPh > 0 ? avgPh.toFixed(2) : "--";
+      statEc.textContent = isFinite(avgEc) && avgEc > 0 ? avgEc.toFixed(0) + " µS/cm" : "--";
 
       stageLabel.textContent = latest.stage || "مرحلة غير محددة";
       stageChip.textContent = latest.stage || "مرحلة غير محددة بعد";
@@ -676,7 +638,6 @@
           <td>${row.t != null && !isNaN(row.t) ? row.t.toFixed(1) : "--"}</td>
           <td>${row.ph != null && !isNaN(row.ph) ? row.ph.toFixed(2) : "--"}</td>
           <td>${row.ec != null && !isNaN(row.ec) ? row.ec.toFixed(0) : "--"}</td>
-          <td>${row.shs != null && !isNaN(row.shs) ? row.shs.toFixed(1) : "--"}</td>
           <td class="stage-cell">
             ${
               row.stage
@@ -711,12 +672,8 @@
       const pArr = sorted.map((r) => (r.p && !isNaN(r.p) ? r.p : 0));
       const kArr = sorted.map((r) => (r.k && !isNaN(r.k) ? r.k : 0));
 
-      const shsArr = sorted.map((r) => (r.shs && !isNaN(r.shs) ? r.shs : 0));
-
-      // Destroy old charts if they exist
       if (chartMoistTemp) chartMoistTemp.destroy();
       if (chartNpk) chartNpk.destroy();
-      if (chartShs) chartShs.destroy();
 
       const ctx1 = document.getElementById("chartMoistTemp").getContext("2d");
       chartMoistTemp = new Chart(ctx1, {
@@ -789,93 +746,39 @@
           }
         }
       });
-
-      const ctx3 = document.getElementById("chartShs").getContext("2d");
-      chartShs = new Chart(ctx3, {
-        type: "line",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "SHS",
-              data: shsArr,
-              borderWidth: 2,
-              tension: 0.3
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: "top", labels: { font: { size: 11 } } }
-          },
-          scales: {
-            x: { ticks: { font: { size: 10 } } },
-            y: { ticks: { font: { size: 10 } } }
-          }
-        }
-      });
     }
 
-    // إنشاء 10 قراءات وهمية واقعـية لآخر 10 أيام + حفظها في Firebase
+    // توليد قراءات وهمية واقعية لبيئة عمان (بدون SHS و humic)
     async function seedFakeHistoryToFirebase() {
       const now = new Date();
       const sessions = [];
 
       for (let i = 9; i >= 0; i--) {
         const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-        // خلي الوقت بين ٧:٣٠ و ١١:٣٠ صباحاً عشوائي
         d.setHours(7 + Math.floor(Math.random() * 4));
         d.setMinutes(Math.floor(Math.random() * 60));
         d.setSeconds(0);
         d.setMilliseconds(0);
 
-        const moisture = rand(40, 65);
-        const temp = rand(22, 30);
-        const ph = rand(6.3, 7.1);
-        const ec = rand(900, 1900);
-        const n = rand(110, 180);
-        const p = rand(80, 130);
-        const k = rand(150, 260);
-        const shs = rand(60, 85);
-        const humic = rand(10, 20);
+        const moisture = rand(30, 45);
+        const temp = rand(26, 32);
+        const ph = rand(7.5, 8.1);
+        const ec = rand(1200, 1800);
+        const n = rand(110, 150);
+        const p = rand(10, 25);
+        const k = rand(100, 180);
 
-        let advice;
-        if (moisture < 45) {
-          advice =
-            "حياك أخوي، رطوبة التربة أقل من المطلوب، زد الري شوي مع توزيع الماء على دفعات لتفادي الغسل الزائد للعناصر. راقب التربة بعد الري بيوم.";
-        } else if (ec > 1700) {
-          advice =
-            "حياك أخوي، الملوحة مرتفعة شوي، جرّب زيادة فترات الري بمياه قليلة الملوحة أو عمل غسيل للتربة على دفعات عشان تتخفف الأملاح.";
-        } else if (n < 130 || p < 90 || k < 170) {
-          advice =
-            "حياك أخوي، في نقص بسيط في بعض عناصر NPK، ممكن تضيف سماد مركب متوازن أو سماد عضوي متحلل بكميات معتدلة وتحافظ على رطوبة مستقرة.";
-        } else {
-          advice =
-            "حياك أخوي، قراءات التربة الحالية قريبة من المدى المثالي، استمر على نظام الري والتسميد الحالي مع متابعة القراءات كل كم يوم.";
-        }
+        let advice = "<tr><td>نقص النيتروجين</td><td>أخوي، يفضل إضافة سماد يوريا بكمية بسيطة</td><td>15 جرام/متر مربع</td></tr>";
 
         sessions.push({
           plantName: "طماطم",
           stage: "مرحلة النمو الخضري",
-          soil: {
-            temp,
-            moisture,
-            ph,
-            ec,
-            n,
-            p,
-            k,
-            shs,
-            humic
-          },
+          soil: { temp, moisture, ph, ec, n, p, k },
           advice,
           timestamp: d.toISOString()
         });
       }
 
-      // حفظ في Firebase
       for (const s of sessions) {
         await fetch(`${FIREBASE_DB_URL}/soil-history.json`, {
           method: "POST",
@@ -897,14 +800,11 @@
         }
         const raw = await res.json();
 
-        // لو ما فيه أي بيانات → نسوي قراءات وهمية مرة واحدة
         if ((!raw || Object.keys(raw).length === 0) && !alreadySeeded) {
           await seedFakeHistoryToFirebase();
-          // بعد ما نزرع البيانات نعيد التحميل مرة ثانية
           return loadHistory(true);
         }
 
-        // نحول كائن Firebase إلى مصفوفة
         const arr = [];
         if (raw) {
           for (const key in raw) {
@@ -912,14 +812,13 @@
             const soil = session.soil || session;
             arr.push({
               timestamp: session.timestamp || soil.timestamp || null,
-              t:   Number(soil.temp     ?? soil.t  ?? NaN),
-              m:   Number(soil.moisture ?? soil.m  ?? NaN),
-              ec:  Number(soil.ec ?? NaN),
-              ph:  Number(soil.ph ?? NaN),
-              n:   Number(soil.n ?? NaN),
-              p:   Number(soil.p ?? NaN),
-              k:   Number(soil.k ?? NaN),
-              shs: Number(soil.shs ?? NaN),
+              t:    Number(soil.temp     ?? soil.t  ?? NaN),
+              m:    Number(soil.moisture ?? soil.m  ?? NaN),
+              ec:   Number(soil.ec ?? NaN),
+              ph:   Number(soil.ph ?? NaN),
+              n:    Number(soil.n ?? NaN),
+              p:    Number(soil.p ?? NaN),
+              k:    Number(soil.k ?? NaN),
               plantName: session.plantName || "",
               stage:     session.stage || "",
               advice:    session.advice || ""
@@ -927,7 +826,6 @@
           }
         }
 
-        // نخليها أحدث ١٠ فقط
         arr.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         historyData = arr.slice(0, 10);
 
@@ -985,7 +883,6 @@
           throw new Error("HTTP " + res.status);
         }
 
-        // 🟢 تم التصحيح هنا لاستقبال النص الصريح مباشرة مثل الصفحة الأخرى
         const reply = await res.text() || "صار عندي تعذّر بسيط في الرد، جرّب تعيد سؤالك أو غيّر صياغته شوي أخوي.";
 
         appendMessage("assistant", reply);
@@ -1019,7 +916,6 @@
       }
     });
 
-    // رفع لوحة الشات فوق الكيبورد في الموبايل
     chatInput.addEventListener("focus", () => {
       chatPanel.style.bottom = "280px";
     });
@@ -1028,14 +924,13 @@
       chatPanel.style.bottom = "70px";
     });
 
-    // زر تبديل الحساب
     document.getElementById("switchAccountBtn").addEventListener("click", () => {
       window.location.href = "login.html";
     });
 
     // ======== INIT ========
     document.addEventListener("DOMContentLoaded", () => {
-      loadHistory(); // يحمّل من Firebase ولو ما فيه بيانات يولّد ١٠ قراءات وهمية واقعية
+      loadHistory();
       appendMessage(
         "assistant",
         "حياك أخوي، أنا مساعد نَسغ الزراعي. اسألني عن التربة، الري أو التسميد وبجاوبك بأبسط طريقة أقدر عليها 🌿"
