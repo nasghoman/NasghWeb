@@ -415,7 +415,6 @@
       border: 1px solid #e0f2e9;
     }
 
-    /* معاينة الصورة المرفقة داخل الشات */
     .chat-image-preview {
       display: none;
       padding: 6px 10px;
@@ -671,14 +670,12 @@
     
     <div id="chatMessages" class="chat-messages"></div>
 
-    <!-- معاينة الصورة المرفقة داخل الشات -->
     <div id="chatImagePreviewArea" class="chat-image-preview">
       <img id="chatImagePreview" src="" alt="المعاينة" />
       <button id="chatRemoveImageBtn" class="remove-img-btn" type="button">&times;</button>
     </div>
 
     <div class="chat-input-row">
-      <!-- زر الكاميرا داخل الشات -->
       <input type="file" id="chatCameraInput" accept="image/*" capture="environment" style="display: none;" />
       <button id="chatCameraBtn" class="chat-btn-icon" type="button" title="التقاط/ارفاق صورة">📷</button>
       
@@ -720,10 +717,13 @@
 
     let device = null;
     let characteristic = null;
-    let lastData = null;           // آخر JSON من العصا
-    let lastTargets = null;        // آخر مدى مثالي
-    let lastStatusSummary = null;  // ملخص حالة العناصر
-    let lastAdviceText = "";       // آخر توصية
+    let lastData = null;             // آخر JSON من العصا
+    let lastReadingTimestamp = null; // وقت تسجيل آخر قراءة بالميللي ثانية
+    let lastTargets = null;          // آخر مدى مثالي
+    let lastStatusSummary = null;    // ملخص حالة العناصر
+    let lastAdviceText = "";         // آخر توصية
+
+    const TEN_MINUTES_MS = 10 * 60 * 1000; // 10 دقائق لتحديد الجلسة
 
     const statusEl   = document.getElementById("status");
     const connectBtn = document.getElementById("connectBtn");
@@ -779,28 +779,31 @@
       }
     }
 
-    // ============ توليد وتعديل بقية القراءات بتغير طفيف (أقل من ±5%) ============
+    // ============ توليد وتعديل بقية القراءات بتنوع واقِعي قريب من الحدود ============
     function generateSimulatedSoilData(rawSensorData) {
-      // القراءة الحقيقية الوحيدة من العصا هي درجة الحرارة
+      const now = Date.now();
+
+      // درجة الحرارة الحقيقية من المستشعر
       let realTemp = rawSensorData.t !== undefined ? rawSensorData.t : rawSensorData.temp;
       if (realTemp === undefined || realTemp === null || isNaN(Number(realTemp))) {
-        realTemp = 28.5; // قيمة افتراضية للحرارة إن لم تتوفر
+        realTemp = 28.5;
       } else {
         realTemp = Number(realTemp);
       }
 
-      // القواعد الزراعية المرجعية للتربة
+      // 🎯 قيم مرجعية متوازنة (بعضها داخل المدى وبعضها خارجه قليلاً بشكل متناسق ومستوحى من جدولك)
       const BASELINES = {
-        m: 42.0,    // رطوبة التربة %
-        ec: 820,    // الملوحة µS/cm
-        ph: 7.20,   // درجة الحموضة
-        n: 350,     // النيتروجين mg/kg
-        p: 12,      // الفوسفور mg/kg
-        k: 180      // البوتاسيوم mg/kg
+        m: 48.0,    // رطوبة التربة % (نقص بسيط عن المدى 55 - 75%)
+        ec: 2400,   // الملوحة µS/cm (زيادة بسيطة عن المدى 1200 - 2200)
+        ph: 7.10,   // درجة الحموضة pH (زيادة خفيفة عن المدى 6.00 - 6.80)
+        n: 120,     // النيتروجين mg/kg (مناسب تماماً ضمن 100 - 150)
+        p: 62,      // الفوسفور mg/kg (نقص خفيف عن المدى 70 - 110)
+        k: 210      // البوتاسيوم mg/kg (مناسب تماماً ضمن 180 - 260)
       };
 
-      // إذا لم تكن هناك قراءات محاكاة سابقة، نضع القيم المرجعية الابتدائية
-      if (!lastData) {
+      // إذا مرت أكثر من 10 دقائق بدون قراءة جديدة، نعيد ضبط الجلسة لنفس القيم المرجعية
+      if (!lastData || (lastReadingTimestamp && (now - lastReadingTimestamp > TEN_MINUTES_MS))) {
+        lastReadingTimestamp = now;
         return {
           id: rawSensorData.id || "NASGH-1",
           t: realTemp,
@@ -813,9 +816,11 @@
         };
       }
 
-      // دالة تعطي تغيراً طفيفاً عشوائياً بين -5% إلى +5% من القراءة السابق
+      lastReadingTimestamp = now;
+
+      // دالة التغير المتذبذب بين (-5% إلى +5%)
       function applyMax5PercentVariation(prevValue, minBound, maxBound, decimals = 0) {
-        const factor = 1 + (Math.random() * 0.1 - 0.05); // التغير بين -0.05 و +0.05
+        const factor = 1 + (Math.random() * 0.1 - 0.05); // التغير التدريجي
         let newVal = prevValue * factor;
         if (minBound !== undefined) newVal = Math.max(minBound, newVal);
         if (maxBound !== undefined) newVal = Math.min(maxBound, newVal);
@@ -824,20 +829,19 @@
 
       return {
         id: rawSensorData.id || lastData.id || "NASGH-1",
-        t: realTemp, // درجة الحرارة دائماً قادمة مباشرة حقيقية من العصا
+        t: realTemp, // درجة الحرارة حقيقية
         m: applyMax5PercentVariation(lastData.m || BASELINES.m, 5, 95, 1),
         ec: applyMax5PercentVariation(lastData.ec || BASELINES.ec, 100, 4000, 0),
         ph: applyMax5PercentVariation(lastData.ph || BASELINES.ph, 5.5, 8.8, 2),
-        n: applyMax5PercentVariation(lastData.n || BASELINES.n, 50, 800, 0),
-        p: applyMax5PercentVariation(lastData.p || BASELINES.p, 2, 100, 0),
-        k: applyMax5PercentVariation(lastData.k || BASELINES.k, 30, 600, 0)
+        n: applyMax5PercentVariation(lastData.n || BASELINES.n, 10, 800, 0),
+        p: applyMax5PercentVariation(lastData.p || BASELINES.p, 2, 300, 0),
+        k: applyMax5PercentVariation(lastData.k || BASELINES.k, 10, 600, 0)
       };
     }
 
     function applyReading(rawData, sourceLabel = "عصا نَسغ") {
       if (!rawData) return;
 
-      // تطبيق المحاكاة للتربة واستخراج الحرارة الحقيقية فقط
       const processedData = generateSimulatedSoilData(rawData);
       lastData = processedData;
 
@@ -845,7 +849,7 @@
       readingMetaEl.textContent = "آخر قراءة من: " + (rawData.id || sourceLabel);
       timeLabelEl.textContent   = "الوقت: " + formatTime(now);
 
-      // تحديث الجدول بالواجهة
+      // تحديث الجدول المباشر
       document.getElementById("tValue").textContent = Number(processedData.t).toFixed(1) + " °م";
       document.getElementById("mValue").textContent = Number(processedData.m).toFixed(1) + " ٪";
       document.getElementById("ecValue").textContent = Number(processedData.ec).toFixed(0) + " µS/cm";
@@ -1212,7 +1216,6 @@
     const chatSend = document.getElementById("chatSend");
     const chatStatus = document.getElementById("chatStatus");
 
-    // الكاميرا داخل الشات
     const chatCameraBtn = document.getElementById("chatCameraBtn");
     const chatCameraInput = document.getElementById("chatCameraInput");
     const chatImagePreviewArea = document.getElementById("chatImagePreviewArea");
@@ -1222,7 +1225,6 @@
     let chatHistory = [];
     let chatSelectedImageBase64 = null;
 
-    // فتح الكاميرا/الاستوديو عند الضغط على أزرار الكاميرا في الشات
     chatCameraBtn.addEventListener("click", () => {
       chatCameraInput.click();
     });
@@ -1277,11 +1279,9 @@
 
       if (!text && !imageToSend) return;
 
-      // إظهار الرسالة والصورة في الواجهة
       appendMessage("user", text, imageToSend);
       chatHistory.push({ role: "user", content: text || "قام المستخدم بإرسال صورة للنبات/التربة." });
 
-      // إعادة ضبط الحقول
       chatInput.value = "";
       chatSelectedImageBase64 = null;
       chatCameraInput.value = "";
@@ -1350,11 +1350,10 @@
       chatPanel.style.bottom = "70px";
     });
 
-    // رسالة الترحيب الابتدائية للمساعد
     document.addEventListener("DOMContentLoaded", () => {
       appendMessage(
         "assistant",
-        "حياك أخوي، أنا مساعد نَسغ الزراعي. اسألني عن التربة، الري أو التسميد، أو صور لي النبات 📷 وجمعتهم لك هنا! 🌿"
+        "حياك أخوي، أنا مساعد نَسغ الزراعي. اسألني عن التربة، الري أو التسميد، أو صور لي النبات 📷! 🌿"
       );
     });
   </script>
