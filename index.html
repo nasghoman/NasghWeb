@@ -165,6 +165,12 @@
       margin-top: 4px;
     }
 
+    .btn.camera {
+      background: #00796b;
+      box-shadow: 0 6px 16px rgba(0, 121, 107, 0.25);
+      margin-left: 6px;
+    }
+
     .btn:active {
       transform: scale(0.98);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
@@ -175,6 +181,25 @@
       box-shadow: none;
       cursor: default;
       transform: none;
+    }
+
+    /* تنسيق المعاينة للكاميرا */
+    .image-preview-container {
+      display: none;
+      margin: 10px 0;
+      text-align: center;
+      background: #f0fdf4;
+      border: 1px dashed #a7f3d0;
+      padding: 10px;
+      border-radius: 12px;
+    }
+
+    .image-preview-container img {
+      max-width: 100%;
+      max-height: 180px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      margin-bottom: 8px;
     }
 
     table {
@@ -457,8 +482,22 @@
     <!-- بطاقة توصية الذكاء الاصطناعي -->
     <div class="card">
       <div class="ai-title">توصية نَسغ بالذكاء الاصطناعي</div>
-      <div class="ai-status" id="aiStatus">لم يتم طلب التوصية بعد.</div>
-      <button id="aiBtn" class="btn ai">تحليل القراءات وإعطاء توصية</button>
+      <div class="ai-status" id="aiStatus">لم يتم طلب التوصية بعد. يمكنك كذلك التقاط صورة للنبات أو التربة للفحص.</div>
+      
+      <!-- عناصر الكاميرا والمعاينة -->
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" />
+      
+      <div id="imagePreviewContainer" class="image-preview-container">
+        <img id="imagePreview" src="" alt="صورة النبات/التربة" />
+        <div>
+          <button id="removeImageBtn" class="btn secondary" style="background: #e53935; padding: 4px 10px; font-size: 11px;">إلغاء الصورة 🗑️</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button id="cameraBtn" class="btn camera" type="button">📷 تصوير / رفع صورة</button>
+        <button id="aiBtn" class="btn ai">تحليل القراءات وإعطاء توصية</button>
+      </div>
       
       <table class="advice-table">
         <thead>
@@ -519,6 +558,7 @@
     let lastTargets = null;        // آخر مدى مثالي
     let lastStatusSummary = null;  // ملخص حالة العناصر
     let lastAdviceText = "";       // آخر توصية
+    let selectedImageBase64 = null; // الصورة المحولة إلى Base64
 
     const statusEl   = document.getElementById("status");
     const connectBtn = document.getElementById("connectBtn");
@@ -533,6 +573,13 @@
     const saveSessionBtn = document.getElementById("saveSessionBtn");
     const saveStatusEl   = document.getElementById("saveStatus");
 
+    // عناصر الكاميرا والمعاينة
+    const cameraBtn = document.getElementById("cameraBtn");
+    const cameraInput = document.getElementById("cameraInput");
+    const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+    const imagePreview = document.getElementById("imagePreview");
+    const removeImageBtn = document.getElementById("removeImageBtn");
+
     // عناصر إعداد النبات والجدول
     const plantNameInput = document.getElementById("plantNameInput");
     const plantStageSelect = document.getElementById("plantStageSelect");
@@ -544,6 +591,33 @@
     const CLOUD_API_URL   = "/api/soil-data";
     const AI_API_URL      = "/api/nasgh-ai";
     const TARGETS_API_URL = "/api/nasgh-targets";
+
+    // ============ إدارة التقاط المعاينة وتحويل الصورة ============
+    cameraBtn.addEventListener("click", () => {
+      cameraInput.click();
+    });
+
+    cameraInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        selectedImageBase64 = event.target.result;
+        imagePreview.src = selectedImageBase64;
+        imagePreviewContainer.style.display = "block";
+        aiStatusEl.textContent = "تم إرفاق الصورة جاهزة للتحليل 📸";
+      };
+      reader.readAsDataURL(file);
+    });
+
+    removeImageBtn.addEventListener("click", () => {
+      selectedImageBase64 = null;
+      cameraInput.value = "";
+      imagePreview.src = "";
+      imagePreviewContainer.style.display = "none";
+      aiStatusEl.textContent = "تم إلغاء الصورة المرفقة.";
+    });
 
     function setStatus(text, isError = false) {
       statusEl.textContent = "الحالة: " + text;
@@ -684,7 +758,10 @@
       }
 
       aiBtn.disabled = true;
-      aiStatusEl.textContent = "جاري إرسال البيانات وتحليلها...";
+      aiStatusEl.textContent = selectedImageBase64 
+        ? "جاري إرسال البيانات والصورة وتحليلهما عبر الذكاء الاصطناعي..." 
+        : "جاري إرسال البيانات وتحليلها...";
+        
       adviceTableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #607d8b;">جاري التواصل مع نموذج الذكاء الاصطناعي لتعبئة الجدول...</td></tr>`;
 
       try {
@@ -699,6 +776,7 @@
             p:        lastData.p,
             k:        lastData.k
           },
+          image: selectedImageBase64 || null, // إرسال الصورة إذا توفرت
           language: "ar",
           plantName: plantNameInput.value.trim() || null,
           stage: plantStageSelect.value || null,
@@ -862,7 +940,7 @@
       const stage = plantStageSelect.value;
 
       if (!plantName || !stage) {
-        targetsStatusEl.textContent = "الرجاء إدخال نوع النبات واختيار مرحلة النمو.";
+        targetsStatusEl.textContent = "الرجاء إدخال نوع النبات وااختيار مرحلة النمو.";
         return;
       }
 
