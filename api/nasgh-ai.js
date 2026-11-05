@@ -146,13 +146,14 @@ ${omanSoilReference}
       ],
     };
 
+    // الموديلات الرسمية المعتمدة حالياً من جوجل
     const MODELS = [
-      "gemini-3.5-flash",
-      "gemini-3.1-flash-lite",
-      "gemini-3.1-pro",
+      "gemini-1.5-flash",
+      "gemini-2.0-flash",
+      "gemini-1.5-pro"
     ];
 
-    const baseUrl = "https://generativelanguage.googleapis.com/v1/models";
+    const baseUrl = "https://generativelanguage.googleapis.com/v1beta/models";
     let lastError = null;
 
     for (const model of MODELS) {
@@ -169,6 +170,7 @@ ${omanSoilReference}
 
         if (!response.ok) {
           lastError = json.error || response.statusText;
+          console.error(`❌ [Backend Log] فشل الموديل ${model}:`, lastError);
           continue;
         }
 
