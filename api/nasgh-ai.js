@@ -147,9 +147,10 @@ ${omanSoilReference}
     };
 
     const MODELS = [
-      "gemini-3.5-flash",
-      "gemini-3.1-flash-lite",
-      "gemini-3.1-pro",
+  "gemini-flash-latest",
+  "gemini-2.5-flash",
+  "gemini-3.5-flash",
+  "gemini-3.1-flash-lite"
     ];
 
     const baseUrl = "https://generativelanguage.googleapis.com/v1/models";
